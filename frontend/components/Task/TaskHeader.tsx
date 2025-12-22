@@ -42,7 +42,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
     onTaskClick,
     onToggleCompletion,
     hideProjectName = false,
-    onToggleToday: _onToggleToday,
+    onToggleToday,
     onTaskUpdate,
     showSubtasks,
     hasSubtasks,
@@ -53,7 +53,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
     isUpcomingView = false,
 }) => {
     const { t } = useTranslation();
-    void _onToggleToday;
     void _onEdit;
     void _onDelete;
     const SubtasksToggleButton = () => {

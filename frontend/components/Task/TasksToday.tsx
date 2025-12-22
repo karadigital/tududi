@@ -1713,7 +1713,7 @@ const TasksToday: React.FC = () => {
                                                 {
                                                     current:
                                                         todayPlanTasksFiltered.length,
-                                                    total: pagination.total,
+                                                    total: plannedTasks.length,
                                                 }
                                             )}
                                         </div>
