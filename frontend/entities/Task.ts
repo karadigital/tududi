@@ -64,7 +64,9 @@ export type StatusType =
     | 'in_progress'
     | 'done'
     | 'archived'
-    | 'waiting';
+    | 'waiting'
+    | 'cancelled'
+    | 'planned';
 export type PriorityType = 'low' | 'medium' | 'high' | null | undefined;
 export type RecurrenceType =
     | 'none'
