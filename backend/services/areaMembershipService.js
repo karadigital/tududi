@@ -184,13 +184,14 @@ async function removeAreaMember(areaId, userId, removedBy) {
                 `Ownership transfer: Area "${area.name}" (${area.uid}) transferred from ${oldOwner?.email} to ${newOwner?.email} by admin`
             );
 
-            // Remove all permissions for the old owner
+            // Remove area_membership permissions for the old owner
             const { Permission } = require('../models');
             await Permission.destroy({
                 where: {
                     user_id: userId,
                     resource_type: 'area',
                     resource_uid: area.uid,
+                    propagation: 'area_membership',
                 },
             });
 

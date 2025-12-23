@@ -92,18 +92,21 @@ async function calculateProjectPerms(ctx, action) {
             userId: action.targetUserId,
             resourceType: 'project',
             resourceUid: action.resourceUid,
+            propagation: 'direct',
         });
         for (const tuid of taskUids)
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'task',
                 resourceUid: tuid,
+                propagation: 'inherited',
             });
         for (const nuid of noteUids)
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'note',
                 resourceUid: nuid,
+                propagation: 'inherited',
             });
     }
 
@@ -155,6 +158,8 @@ async function calculateTaskPerms(ctx, action) {
                 userId: action.targetUserId,
                 resourceType: 'task',
                 resourceUid: tuid,
+                propagation:
+                    tuid === action.resourceUid ? 'direct' : 'inherited',
             });
     }
 
@@ -177,6 +182,7 @@ async function calculateNotePerms(ctx, action) {
             userId: action.targetUserId,
             resourceType: 'note',
             resourceUid: action.resourceUid,
+            propagation: 'direct',
         });
     }
     return changes;
@@ -261,37 +267,41 @@ async function calculateAreaPerms(ctx, action) {
             });
         }
     } else if (action.verb === 'area_member_remove') {
-        // Remove area permission
+        // Remove area permission (only area_membership propagation)
         pushDelete(changes, {
             userId: action.targetUserId,
             resourceType: 'area',
             resourceUid: action.resourceUid,
+            propagation: 'area_membership',
         });
 
-        // Remove cascaded permissions for projects
+        // Remove cascaded permissions for projects (only inherited)
         for (const project of projects) {
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'project',
                 resourceUid: project.uid,
+                propagation: 'inherited',
             });
         }
 
-        // Remove cascaded permissions for tasks
+        // Remove cascaded permissions for tasks (only inherited)
         for (const tuid of allTaskUids) {
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'task',
                 resourceUid: tuid,
+                propagation: 'inherited',
             });
         }
 
-        // Remove cascaded permissions for notes
+        // Remove cascaded permissions for notes (only inherited)
         for (const nuid of allNoteUids) {
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'note',
                 resourceUid: nuid,
+                propagation: 'inherited',
             });
         }
     }

@@ -53,12 +53,19 @@ async function applyPerms(tx, changes) {
 
     // Deletes
     for (const d of deletes) {
+        const where = {
+            user_id: d.userId,
+            resource_type: d.resourceType,
+            resource_uid: d.resourceUid,
+        };
+
+        // Include propagation in WHERE clause if specified
+        if (d.propagation !== undefined) {
+            where.propagation = d.propagation;
+        }
+
         await Permission.destroy({
-            where: {
-                user_id: d.userId,
-                resource_type: d.resourceType,
-                resource_uid: d.resourceUid,
-            },
+            where,
             transaction: tx,
         });
     }
