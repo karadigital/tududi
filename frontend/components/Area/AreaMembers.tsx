@@ -28,8 +28,8 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const departmentHeads = members.filter(
-        (m) => m.areas_members?.role === 'head'
+    const departmentAdmins = members.filter(
+        (m) => m.areas_members?.role === 'admin'
     );
     const regularMembers = members.filter(
         (m) => m.areas_members?.role === 'member'
@@ -61,7 +61,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         }
     };
 
-    const handleAddMember = async (userId: number, role: 'member' | 'head' = 'member') => {
+    const handleAddMember = async (userId: number, role: 'member' | 'admin' = 'member') => {
         if (!area.uid) return;
 
         setLoading(true);
@@ -108,7 +108,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         }
     };
 
-    const handleChangeRole = async (userId: number, newRole: 'member' | 'head') => {
+    const handleChangeRole = async (userId: number, newRole: 'member' | 'admin') => {
         if (!area.uid) return;
 
         setLoading(true);
@@ -179,14 +179,14 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
 
             {/* Members list */}
             <div className="space-y-3">
-                {/* Department Heads */}
-                {departmentHeads.length > 0 && (
+                {/* Department Admins */}
+                {departmentAdmins.length > 0 && (
                     <div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                            {t('area.department_heads', 'Department Heads')}
+                            {t('area.department_admins', 'Department Admins')}
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            {departmentHeads.map(renderMemberBadge)}
+                            {departmentAdmins.map(renderMemberBadge)}
                         </div>
                     </div>
                 )}
@@ -279,7 +279,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                         onChange={(e) =>
                                                             handleChangeRole(
                                                                 user.id,
-                                                                e.target.value as 'member' | 'head'
+                                                                e.target.value as 'member' | 'admin'
                                                             )
                                                         }
                                                         disabled={loading}
@@ -288,8 +288,8 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                         <option value="member">
                                                             {t('area.role_member', 'Member')}
                                                         </option>
-                                                        <option value="head">
-                                                            {t('area.role_head', 'Head')}
+                                                        <option value="admin">
+                                                            {t('area.role_admin', 'Admin')}
                                                         </option>
                                                     </select>
                                                 )}

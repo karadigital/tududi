@@ -5,7 +5,7 @@ const { isAdmin } = require('./rolesService');
 
 /**
  * Check if user can manage area membership
- * (owner, department head, or admin)
+ * (owner, department admin, or admin)
  */
 async function canManageAreaMembers(areaId, userId) {
     try {
@@ -30,7 +30,7 @@ async function canManageAreaMembers(areaId, userId) {
         // Admin can always manage
         if (await isAdmin(userUid)) return true;
 
-        // Check if user is a department head
+        // Check if user is a department admin
         const membership = await sequelize.query(
             `SELECT role FROM areas_members WHERE area_id = :areaId AND user_id = :userId`,
             {
@@ -43,7 +43,7 @@ async function canManageAreaMembers(areaId, userId) {
         if (
             membership &&
             membership.length > 0 &&
-            membership[0].role === 'head'
+            membership[0].role === 'admin'
         ) {
             return true;
         }
@@ -103,7 +103,7 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
             targetUserId: userId,
             resourceType: 'area',
             resourceUid: area.uid,
-            accessLevel: role === 'head' ? 'admin' : 'rw',
+            accessLevel: role === 'admin' ? 'admin' : 'rw',
         });
 
         return area;
@@ -226,7 +226,7 @@ async function removeAreaMember(areaId, userId, removedBy) {
 }
 
 /**
- * Update member role (member <-> head)
+ * Update member role (member <-> admin)
  */
 async function updateMemberRole(areaId, userId, newRole, updatedBy) {
     try {
@@ -249,7 +249,7 @@ async function updateMemberRole(areaId, userId, newRole, updatedBy) {
 
         // Update permissions
         const { Permission } = require('../models');
-        const accessLevel = newRole === 'head' ? 'admin' : 'rw';
+        const accessLevel = newRole === 'admin' ? 'admin' : 'rw';
 
         await Permission.update(
             { access_level: accessLevel },

@@ -2,7 +2,7 @@
 
 module.exports = {
     async up(queryInterface, Sequelize) {
-        // Create junction table for area members and department heads
+        // Create junction table for area members and department admins
         await queryInterface.createTable('areas_members', {
             id: {
                 type: Sequelize.INTEGER,
@@ -30,7 +30,7 @@ module.exports = {
                 onUpdate: 'CASCADE',
             },
             role: {
-                type: Sequelize.ENUM('member', 'head'),
+                type: Sequelize.ENUM('member', 'admin'),
                 allowNull: false,
                 defaultValue: 'member',
             },

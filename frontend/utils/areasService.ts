@@ -87,7 +87,7 @@ export const getAreaMembers = async (
 export const addAreaMember = async (
     areaUid: string,
     userId: number,
-    role: 'member' | 'head' = 'member'
+    role: 'member' | 'admin' = 'member'
 ): Promise<AreaMember[]> => {
     const response = await fetch(getApiPath(`areas/${areaUid}/members`), {
         method: 'POST',
@@ -131,7 +131,7 @@ export const removeAreaMember = async (
 export const updateAreaMemberRole = async (
     areaUid: string,
     userId: number,
-    role: 'member' | 'head'
+    role: 'member' | 'admin'
 ): Promise<AreaMember[]> => {
     const response = await fetch(
         getApiPath(`areas/${areaUid}/members/${userId}/role`),

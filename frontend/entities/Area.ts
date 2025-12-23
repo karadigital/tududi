@@ -6,7 +6,7 @@ export interface AreaMember {
     surname?: string;
     avatar_image?: string;
     areas_members?: {
-        role: 'member' | 'head';
+        role: 'member' | 'admin';
         created_at: string;
     };
 }

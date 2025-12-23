@@ -117,8 +117,8 @@ async function getAccess(userId, resourceType, resourceUid) {
         );
 
         if (membership && membership.length > 0) {
-            // Department head has admin access, member has rw
-            return membership[0].role === 'head' ? ACCESS.ADMIN : ACCESS.RW;
+            // Department admin has admin access, member has rw
+            return membership[0].role === 'admin' ? ACCESS.ADMIN : ACCESS.RW;
         }
     }
 
