@@ -5,6 +5,7 @@ import { useSidebar } from '../contexts/SidebarContext';
 import TaskList from './Task/TaskList';
 import GroupedTaskList from './Task/GroupedTaskList';
 import NewTask from './Task/NewTask';
+import TaskModal from './Task/TaskModal';
 import { Task } from '../entities/Task';
 import { getTitleAndIcon } from './Task/getTitleAndIcon';
 import { getDescription } from './Task/getDescription';
@@ -59,10 +60,16 @@ const Tasks: React.FC = () => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showCompleted, setShowCompleted] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [groupBy, setGroupBy] = useState<'none' | 'project' | 'assignee'>('none');
+    const [groupBy, setGroupBy] = useState<'none' | 'project' | 'assignee'>(
+        'none'
+    );
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>([]);
-    const [includeUnassignedFilter, setIncludeUnassignedFilter] = useState(false);
+    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
+        []
+    );
+    const [includeUnassignedFilter, setIncludeUnassignedFilter] =
+        useState(false);
+    const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -80,6 +87,7 @@ const Tasks: React.FC = () => {
         query.get('type') === 'upcoming' || location.pathname === '/upcoming';
     const status = query.get('status');
     const tag = query.get('tag');
+    const createTaskParam = query.get('createTask');
 
     useEffect(() => {
         if (status === 'completed') {
@@ -90,6 +98,21 @@ const Tasks: React.FC = () => {
             setShowCompleted(true);
         }
     }, [status, isUpcomingView]);
+
+    useEffect(() => {
+        if (createTaskParam === 'true') {
+            setShowCreateTaskModal(true);
+            const params = new URLSearchParams(location.search);
+            params.delete('createTask');
+            navigate(
+                {
+                    pathname: location.pathname,
+                    search: params.toString(),
+                },
+                { replace: true }
+            );
+        }
+    }, [createTaskParam, location.pathname]);
 
     const displayTasks = useMemo(() => {
         let filteredTasks: Task[] = tasks;
@@ -141,7 +164,15 @@ const Tasks: React.FC = () => {
         }
 
         return filteredTasks;
-    }, [tasks, showCompleted, status, taskSearchQuery, isUpcomingView, selectedAssigneeIds, includeUnassignedFilter]);
+    }, [
+        tasks,
+        showCompleted,
+        status,
+        taskSearchQuery,
+        isUpcomingView,
+        selectedAssigneeIds,
+        includeUnassignedFilter,
+    ]);
 
     if (location.pathname === '/upcoming' && !query.get('type')) {
         query.set('type', 'upcoming');
@@ -158,8 +189,10 @@ const Tasks: React.FC = () => {
             localStorage.getItem('order_by') || 'created_at:desc';
         setOrderBy(savedOrderBy);
         const savedGroupBy =
-            (localStorage.getItem('tasks_group_by') as 'none' | 'project' | 'assignee') ||
-            'none';
+            (localStorage.getItem('tasks_group_by') as
+                | 'none'
+                | 'project'
+                | 'assignee') || 'none';
         setGroupBy(savedGroupBy);
 
         const params = new URLSearchParams(location.search);
@@ -324,7 +357,8 @@ const Tasks: React.FC = () => {
         if (!hasMore && !all) return;
         setIsLoadingMore(true);
         const shouldDisablePagination =
-            !isUpcomingView && (groupBy === 'project' || groupBy === 'assignee');
+            !isUpcomingView &&
+            (groupBy === 'project' || groupBy === 'assignee');
         if (all || shouldDisablePagination) {
             const newLimit = totalCount > 0 ? totalCount : 10000;
             await fetchData(true, {
@@ -344,7 +378,8 @@ const Tasks: React.FC = () => {
     };
 
     useEffect(() => {
-        const shouldDisablePagination = isUpcomingView || groupBy === 'project' || groupBy === 'assignee';
+        const shouldDisablePagination =
+            isUpcomingView || groupBy === 'project' || groupBy === 'assignee';
         fetchData(
             true,
             shouldDisablePagination
@@ -450,6 +485,21 @@ const Tasks: React.FC = () => {
             setError('Error creating task.');
             throw error;
         }
+    };
+
+    const handleModalTaskCreate = async (task: Task) => {
+        await handleTaskCreate(task);
+        setShowCreateTaskModal(false);
+    };
+
+    const handleCreateProject = async (name: string) => {
+        const response = await fetch(getApiPath('projects'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name }),
+        });
+        if (!response.ok) throw new Error('Failed to create project');
+        return await response.json();
     };
 
     const handleTaskUpdate = async (updatedTask: Task) => {
@@ -628,7 +678,8 @@ const Tasks: React.FC = () => {
 
     const isNewTaskAllowed = () => {
         const type = query.get('type');
-        return status !== 'done' && type !== 'upcoming';
+        const hasSearchQuery = taskSearchQuery.trim().length > 0;
+        return status !== 'done' && type !== 'upcoming' && !hasSearchQuery;
     };
 
     return (
@@ -733,52 +784,53 @@ const Tasks: React.FC = () => {
                                                 {t('tasks.groupBy', 'Group by')}
                                             </div>
                                             <div className="py-1">
-                                                {['none', 'project', 'assignee'].map(
-                                                    (val) => (
-                                                        <button
-                                                            key={val}
-                                                            onClick={() => {
-                                                                setGroupBy(
-                                                                    val as
-                                                                        | 'none'
-                                                                        | 'project'
-                                                                        | 'assignee'
-                                                                );
-                                                                localStorage.setItem(
-                                                                    'tasks_group_by',
-                                                                    val
-                                                                );
-                                                            }}
-                                                            className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${
-                                                                groupBy === val
-                                                                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                                                            }`}
-                                                        >
-                                                            <span>
-                                                                {val ===
-                                                                'project'
-                                                                    ? t(
-                                                                          'tasks.groupByProject',
-                                                                          'Project'
-                                                                      )
-                                                                    : val === 'assignee'
-                                                                      ? t(
-                                                                            'tasks.groupByAssignee',
-                                                                            'Assignee'
-                                                                        )
-                                                                      : t(
-                                                                            'tasks.grouping.none',
-                                                                            'None'
-                                                                        )}
-                                                            </span>
-                                                            {groupBy ===
-                                                                val && (
-                                                                <CheckIcon className="h-4 w-4" />
-                                                            )}
-                                                        </button>
-                                                    )
-                                                )}
+                                                {[
+                                                    'none',
+                                                    'project',
+                                                    'assignee',
+                                                ].map((val) => (
+                                                    <button
+                                                        key={val}
+                                                        onClick={() => {
+                                                            setGroupBy(
+                                                                val as
+                                                                    | 'none'
+                                                                    | 'project'
+                                                                    | 'assignee'
+                                                            );
+                                                            localStorage.setItem(
+                                                                'tasks_group_by',
+                                                                val
+                                                            );
+                                                        }}
+                                                        className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${
+                                                            groupBy === val
+                                                                ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                                        }`}
+                                                    >
+                                                        <span>
+                                                            {val === 'project'
+                                                                ? t(
+                                                                      'tasks.groupByProject',
+                                                                      'Project'
+                                                                  )
+                                                                : val ===
+                                                                    'assignee'
+                                                                  ? t(
+                                                                        'tasks.groupByAssignee',
+                                                                        'Assignee'
+                                                                    )
+                                                                  : t(
+                                                                        'tasks.grouping.none',
+                                                                        'None'
+                                                                    )}
+                                                        </span>
+                                                        {groupBy === val && (
+                                                            <CheckIcon className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
                                     )}
@@ -1199,6 +1251,26 @@ const Tasks: React.FC = () => {
                             </div>
                         )}
                     </>
+                )}
+
+                {/* Create Task Modal */}
+                {showCreateTaskModal && (
+                    <TaskModal
+                        isOpen={showCreateTaskModal}
+                        onClose={() => setShowCreateTaskModal(false)}
+                        task={
+                            {
+                                name: '',
+                                status: 'not_started',
+                                uid: '',
+                                id: 0,
+                            } as Task
+                        }
+                        onSave={handleModalTaskCreate}
+                        onDelete={async () => {}}
+                        projects={projects}
+                        onCreateProject={handleCreateProject}
+                    />
                 )}
             </div>
         </div>
