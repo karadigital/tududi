@@ -68,7 +68,7 @@ const Layout: React.FC<LayoutProps> = ({
     const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
 
     const {
-        notesStore: { notes, isLoading: isNotesLoading, isError: isNotesError },
+        notesStore: { isLoading: isNotesLoading, isError: isNotesError },
         areasStore: { areas, isLoading: isAreasLoading, isError: isAreasError },
         tasksStore: { isLoading: isTasksLoading, isError: isTasksError },
         projectsStore: {
@@ -77,7 +77,7 @@ const Layout: React.FC<LayoutProps> = ({
             isLoading: isProjectsLoading,
             isError: isProjectsError,
         },
-        tagsStore: { tags, isLoading: isTagsLoading, isError: isTagsError },
+        tagsStore: { isLoading: isTagsLoading, isError: isTagsError },
     } = useStore();
 
     const openTaskModal = (type: 'simplified' | 'full' = 'simplified') => {

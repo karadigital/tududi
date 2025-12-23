@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Area } from '../../entities/Area';
+import { Area, AreaMember } from '../../entities/Area';
 import { useToast } from '../Shared/ToastContext';
 import { useTranslation } from 'react-i18next';
 import DiscardChangesDialog from '../Shared/DiscardChangesDialog';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import AreaMembers from './AreaMembers';
+import { getCurrentUser, setCurrentUser } from '../../utils/userUtils';
+import { getApiPath } from '../../config/paths';
 
 interface AreaModalProps {
     isOpen: boolean;
@@ -34,8 +37,47 @@ const AreaModal: React.FC<AreaModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [isClosing, setIsClosing] = useState(false);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
     const { showSuccessToast, showErrorToast } = useToast();
+
+    useEffect(() => {
+        const loadCurrentUser = async () => {
+            const user = getCurrentUser();
+            console.log('AreaModal - Initial user from localStorage:', user);
+
+            // If user exists but doesn't have id, fetch from server
+            if (user && !user.id) {
+                console.log('User missing id, fetching from server...');
+                try {
+                    const response = await fetch(getApiPath('current_user'), {
+                        credentials: 'include',
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Fetched user from server:', data.user);
+                        if (data.user && data.user.id) {
+                            setCurrentUser(data.user); // Save to localStorage
+                            setCurrentUserId(data.user.id);
+                            console.log('Set currentUserId to:', data.user.id);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch current user:', err);
+                }
+            }
+
+            if (user && user.id) {
+                setCurrentUserId(user.id);
+                console.log('Set currentUserId from localStorage:', user.id);
+            } else {
+                console.log('No user ID available');
+            }
+        };
+
+        loadCurrentUser();
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -44,6 +86,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                 uid: area?.uid || '',
                 name: area?.name || '',
                 description: area?.description || '',
+                Members: area?.Members || [],
             });
             setError(null);
 
@@ -181,6 +224,14 @@ const AreaModal: React.FC<AreaModalProps> = ({
         setShowDiscardDialog(false);
     };
 
+    const handleMembersUpdate = (updatedMembers: AreaMember[]) => {
+        // Update the formData with new members
+        setFormData((prev) => ({
+            ...prev,
+            Members: updatedMembers,
+        }));
+    };
+
     const handleDeleteArea = async () => {
         if (formData.uid && onDelete) {
             try {
@@ -265,6 +316,29 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                         }}
                                                     />
                                                 </div>
+
+                                                {/* Members Section - Only for existing areas */}
+                                                {(() => {
+                                                    const shouldShowMembers = !!(area && area.uid && currentUserId);
+                                                    console.log('AreaModal render check:', {
+                                                        area: area?.uid,
+                                                        areaUid: area?.uid,
+                                                        currentUserId,
+                                                        shouldShowMembers,
+                                                        formData: formData.uid,
+                                                        formDataMembers: formData.Members
+                                                    });
+                                                    return null;
+                                                })()}
+                                                {area && area.uid && currentUserId && (
+                                                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                                        <AreaMembers
+                                                            area={formData}
+                                                            currentUserId={currentUserId}
+                                                            onUpdate={handleMembersUpdate}
+                                                        />
+                                                    </div>
+                                                )}
 
                                                 {/* Error Message */}
                                                 {error && (

@@ -10,7 +10,19 @@ const {
 } = require('./permissionsCalculators');
 
 async function assertActorCanShare(actorUserId, resourceType, resourceOwnerId) {
-    if (await isAdmin(actorUserId)) return;
+    // Convert numeric userId to string UID for admin check
+    let userUid = actorUserId;
+    if (typeof actorUserId === 'number' || !isNaN(parseInt(actorUserId))) {
+        const { User } = require('../models');
+        const user = await User.findByPk(actorUserId, {
+            attributes: ['uid'],
+        });
+        if (user) {
+            userUid = user.uid;
+        }
+    }
+
+    if (await isAdmin(userUid)) return;
     if (resourceOwnerId !== actorUserId) {
         const err = new Error('Forbidden');
         err.status = 403;
@@ -21,7 +33,7 @@ async function assertActorCanShare(actorUserId, resourceType, resourceOwnerId) {
 async function execAction(action) {
     // action: { verb, actorUserId, targetUserId, resourceType, resourceUid, accessLevel? }
     return await sequelize.transaction(async (tx) => {
-        // Resolve owner id for authorization (basic impl for projects; extend later)
+        // Resolve owner id for authorization
         let ownerUserId = null;
         if (action.resourceType === 'project') {
             const { Project } = require('../models');
@@ -37,6 +49,20 @@ async function execAction(action) {
                 throw err;
             }
             ownerUserId = proj.user_id;
+        } else if (action.resourceType === 'area') {
+            const { Area } = require('../models');
+            const area = await Area.findOne({
+                where: { uid: action.resourceUid },
+                attributes: ['user_id'],
+                transaction: tx,
+                lock: tx.LOCK.UPDATE,
+            });
+            if (!area) {
+                const err = new Error('Resource not found');
+                err.status = 404;
+                throw err;
+            }
+            ownerUserId = area.user_id;
         }
 
         await assertActorCanShare(
