@@ -1263,7 +1263,7 @@ const Tasks: React.FC = () => {
                                 name: '',
                                 status: 'not_started',
                                 uid: '',
-                                id: 0,
+                                id: undefined,
                             } as Task
                         }
                         onSave={handleModalTaskCreate}
