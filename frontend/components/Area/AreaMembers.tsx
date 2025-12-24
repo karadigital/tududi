@@ -24,7 +24,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
     const { t } = useTranslation();
     const [showManageModal, setShowManageModal] = useState(false);
     const [allUsers, setAllUsers] = useState<AreaMember[]>([]);
-    const [members, setMembers] = useState<AreaMember[]>(area.members || []);
+    const [members, setMembers] = useState<AreaMember[]>(area.Members || []);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 

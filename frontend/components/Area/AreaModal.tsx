@@ -46,7 +46,6 @@ const AreaModal: React.FC<AreaModalProps> = ({
             const user = getCurrentUser();
             console.log('AreaModal - Initial user from localStorage:', user);
 
-            // If user exists but doesn't have id, fetch from server
             if (user && !user.id) {
                 console.log('User missing id, fetching from server...');
                 try {
@@ -56,7 +55,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                     if (response.ok) {
                         const data = await response.json();
                         console.log('Fetched user from server:', data.user);
-                        if (data.user && data.user.id) {
+                        if (data?.user?.id) {
                             setCurrentUser(data.user); // Save to localStorage
                             setCurrentUserId(data.user.id);
                             console.log('Set currentUserId to:', data.user.id);
@@ -68,7 +67,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                 }
             }
 
-            if (user && user.id) {
+            if (user?.id) {
                 setCurrentUserId(user.id);
                 console.log('Set currentUserId from localStorage:', user.id);
             } else {
@@ -225,7 +224,6 @@ const AreaModal: React.FC<AreaModalProps> = ({
     };
 
     const handleMembersUpdate = (updatedMembers: AreaMember[]) => {
-        // Update the formData with new members
         setFormData((prev) => ({
             ...prev,
             Members: updatedMembers,
@@ -317,20 +315,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                     />
                                                 </div>
 
-                                                {/* Members Section - Only for existing areas */}
-                                                {(() => {
-                                                    const shouldShowMembers = !!(area && area.uid && currentUserId);
-                                                    console.log('AreaModal render check:', {
-                                                        area: area?.uid,
-                                                        areaUid: area?.uid,
-                                                        currentUserId,
-                                                        shouldShowMembers,
-                                                        formData: formData.uid,
-                                                        formDataMembers: formData.Members
-                                                    });
-                                                    return null;
-                                                })()}
-                                                {area && area.uid && currentUserId && (
+                                                {area?.uid && !!currentUserId && (
                                                     <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
                                                         <AreaMembers
                                                             area={formData}
@@ -355,7 +340,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                 <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between sm:rounded-b-lg">
                                     {/* Left side: Delete and Cancel */}
                                     <div className="flex items-center space-x-3">
-                                        {area && area.uid && onDelete && (
+                                        {area?.uid && onDelete && (
                                             <button
                                                 type="button"
                                                 onClick={handleDeleteArea}
