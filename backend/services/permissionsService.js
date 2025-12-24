@@ -16,7 +16,19 @@ async function getSharedUidsForUser(resourceType, userId) {
 }
 
 async function getAccess(userId, resourceType, resourceUid) {
-    if (await isAdmin(userId)) return ACCESS.ADMIN;
+    // Convert numeric userId to string UID for admin check
+    let userUid = userId;
+    if (typeof userId === 'number' || !isNaN(parseInt(userId))) {
+        const { User } = require('../models');
+        const user = await User.findByPk(userId, {
+            attributes: ['uid'],
+        });
+        if (user) {
+            userUid = user.uid;
+        }
+    }
+
+    if (await isAdmin(userUid)) return ACCESS.ADMIN;
 
     // ownership via model
     if (resourceType === 'project') {
@@ -83,6 +95,30 @@ async function getAccess(userId, resourceType, resourceUid) {
                     return projectAccess; // Inherit access from project
                 }
             }
+        }
+    } else if (resourceType === 'area') {
+        const { Area } = require('../models');
+        const area = await Area.findOne({
+            where: { uid: resourceUid },
+            attributes: ['user_id'],
+            raw: true,
+        });
+        if (!area) return ACCESS.NONE;
+        if (area.user_id === userId) return ACCESS.ADMIN; // Owner has admin access
+
+        // Check if user is area member
+        const membership = await sequelize.query(
+            `SELECT role FROM areas_members WHERE area_id = (SELECT id FROM areas WHERE uid = ?) AND user_id = ?`,
+            {
+                replacements: [resourceUid, userId],
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+
+        if (membership && membership.length > 0) {
+            // Department admin has admin access, member has rw
+            return membership[0].role === 'admin' ? ACCESS.ADMIN : ACCESS.RW;
         }
     }
 
@@ -178,7 +214,37 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
         return result;
     }
 
-    // For other resource types (projects, etc.), use the original logic
+    // For projects, also include projects in areas the user is a member of
+    if (resourceType === 'project') {
+        // Get area IDs where user is a member
+        const areaMembers = await sequelize.query(
+            `SELECT area_id FROM areas_members WHERE user_id = :userId`,
+            {
+                replacements: { userId },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+
+        const conditions = [
+            { user_id: userId }, // Projects owned by user
+        ];
+
+        if (sharedUids.length > 0) {
+            conditions.push({ uid: { [Op.in]: sharedUids } }); // Projects directly shared with user
+        }
+
+        if (areaMembers.length > 0) {
+            const areaIds = areaMembers.map((row) => row.area_id);
+            conditions.push({ area_id: { [Op.in]: areaIds } }); // Projects in member areas
+        }
+
+        const result = { [Op.or]: conditions };
+        if (cache) cache.set(cacheKey, result);
+        return result;
+    }
+
+    // For other resource types, use the original logic
     const result = {
         [Op.or]: [
             { user_id: userId },

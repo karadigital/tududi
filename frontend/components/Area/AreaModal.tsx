@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Area } from '../../entities/Area';
+import { Area, AreaMember } from '../../entities/Area';
 import { useToast } from '../Shared/ToastContext';
 import { useTranslation } from 'react-i18next';
 import DiscardChangesDialog from '../Shared/DiscardChangesDialog';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import AreaMembers from './AreaMembers';
+import { getCurrentUser, setCurrentUser } from '../../utils/userUtils';
+import { getApiPath } from '../../config/paths';
 
 interface AreaModalProps {
     isOpen: boolean;
@@ -34,8 +37,46 @@ const AreaModal: React.FC<AreaModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [isClosing, setIsClosing] = useState(false);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
     const { showSuccessToast, showErrorToast } = useToast();
+
+    useEffect(() => {
+        const loadCurrentUser = async () => {
+            const user = getCurrentUser();
+            console.log('AreaModal - Initial user from localStorage:', user);
+
+            if (user && !user.id) {
+                console.log('User missing id, fetching from server...');
+                try {
+                    const response = await fetch(getApiPath('current_user'), {
+                        credentials: 'include',
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Fetched user from server:', data.user);
+                        if (data?.user?.id) {
+                            setCurrentUser(data.user); // Save to localStorage
+                            setCurrentUserId(data.user.id);
+                            console.log('Set currentUserId to:', data.user.id);
+                            return;
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch current user:', err);
+                }
+            }
+
+            if (user?.id) {
+                setCurrentUserId(user.id);
+                console.log('Set currentUserId from localStorage:', user.id);
+            } else {
+                console.log('No user ID available');
+            }
+        };
+
+        loadCurrentUser();
+    }, []);
 
     useEffect(() => {
         if (isOpen) {
@@ -44,6 +85,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                 uid: area?.uid || '',
                 name: area?.name || '',
                 description: area?.description || '',
+                Members: area?.Members || [],
             });
             setError(null);
 
@@ -181,6 +223,13 @@ const AreaModal: React.FC<AreaModalProps> = ({
         setShowDiscardDialog(false);
     };
 
+    const handleMembersUpdate = (updatedMembers: AreaMember[]) => {
+        setFormData((prev) => ({
+            ...prev,
+            Members: updatedMembers,
+        }));
+    };
+
     const handleDeleteArea = async () => {
         if (formData.uid && onDelete) {
             try {
@@ -266,6 +315,16 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                     />
                                                 </div>
 
+                                                {area?.uid && !!currentUserId && (
+                                                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                                        <AreaMembers
+                                                            area={formData}
+                                                            currentUserId={currentUserId}
+                                                            onUpdate={handleMembersUpdate}
+                                                        />
+                                                    </div>
+                                                )}
+
                                                 {/* Error Message */}
                                                 {error && (
                                                     <div className="text-red-500 px-4 mb-4">
@@ -281,7 +340,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                 <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between sm:rounded-b-lg">
                                     {/* Left side: Delete and Cancel */}
                                     <div className="flex items-center space-x-3">
-                                        {area && area.uid && onDelete && (
+                                        {area?.uid && onDelete && (
                                             <button
                                                 type="button"
                                                 onClick={handleDeleteArea}

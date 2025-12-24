@@ -1,4 +1,4 @@
-const { Project, Task, Note } = require('../models');
+const { Area, Project, Task, Note } = require('../models');
 
 function emptyChanges() {
     return { upserts: [], deletes: [] };
@@ -92,18 +92,21 @@ async function calculateProjectPerms(ctx, action) {
             userId: action.targetUserId,
             resourceType: 'project',
             resourceUid: action.resourceUid,
+            propagation: 'direct',
         });
         for (const tuid of taskUids)
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'task',
                 resourceUid: tuid,
+                propagation: 'inherited',
             });
         for (const nuid of noteUids)
             pushDelete(changes, {
                 userId: action.targetUserId,
                 resourceType: 'note',
                 resourceUid: nuid,
+                propagation: 'inherited',
             });
     }
 
@@ -155,6 +158,8 @@ async function calculateTaskPerms(ctx, action) {
                 userId: action.targetUserId,
                 resourceType: 'task',
                 resourceUid: tuid,
+                propagation:
+                    tuid === action.resourceUid ? 'direct' : 'inherited',
             });
     }
 
@@ -177,6 +182,7 @@ async function calculateNotePerms(ctx, action) {
             userId: action.targetUserId,
             resourceType: 'note',
             resourceUid: action.resourceUid,
+            propagation: 'direct',
         });
     }
     return changes;
@@ -184,7 +190,122 @@ async function calculateNotePerms(ctx, action) {
 
 async function calculateAreaPerms(ctx, action) {
     const changes = emptyChanges();
-    // TODO: implement area→projects→tasks/notes cascade later
+
+    // Find area
+    const area = await Area.findOne({
+        where: { uid: action.resourceUid },
+        attributes: ['id', 'user_id'],
+        transaction: ctx.tx,
+    });
+
+    if (!area) return changes;
+
+    // Get all projects in this area
+    const projects = await Project.findAll({
+        where: { area_id: area.id },
+        attributes: ['id', 'uid'],
+        transaction: ctx.tx,
+        raw: true,
+    });
+
+    // Collect descendants for each project
+    const allTaskUids = [];
+    const allNoteUids = [];
+
+    for (const project of projects) {
+        const { taskUids, noteUids } = await collectProjectDescendants(
+            project.id
+        );
+        allTaskUids.push(...taskUids);
+        allNoteUids.push(...noteUids);
+    }
+
+    if (action.verb === 'area_member_add') {
+        // Direct permission on area
+        pushUpsert(changes, {
+            userId: action.targetUserId,
+            resourceType: 'area',
+            resourceUid: action.resourceUid,
+            accessLevel: action.accessLevel,
+            propagation: 'area_membership',
+            grantedByUserId: action.actorUserId,
+        });
+
+        // Cascade to all projects
+        for (const project of projects) {
+            pushUpsert(changes, {
+                userId: action.targetUserId,
+                resourceType: 'project',
+                resourceUid: project.uid,
+                accessLevel: action.accessLevel,
+                propagation: 'inherited',
+                grantedByUserId: action.actorUserId,
+            });
+        }
+
+        // Cascade to all tasks
+        for (const tuid of allTaskUids) {
+            pushUpsert(changes, {
+                userId: action.targetUserId,
+                resourceType: 'task',
+                resourceUid: tuid,
+                accessLevel: action.accessLevel,
+                propagation: 'inherited',
+                grantedByUserId: action.actorUserId,
+            });
+        }
+
+        // Cascade to all notes
+        for (const nuid of allNoteUids) {
+            pushUpsert(changes, {
+                userId: action.targetUserId,
+                resourceType: 'note',
+                resourceUid: nuid,
+                accessLevel: action.accessLevel,
+                propagation: 'inherited',
+                grantedByUserId: action.actorUserId,
+            });
+        }
+    } else if (action.verb === 'area_member_remove') {
+        // Remove area permission (only area_membership propagation)
+        pushDelete(changes, {
+            userId: action.targetUserId,
+            resourceType: 'area',
+            resourceUid: action.resourceUid,
+            propagation: 'area_membership',
+        });
+
+        // Remove cascaded permissions for projects (only inherited)
+        for (const project of projects) {
+            pushDelete(changes, {
+                userId: action.targetUserId,
+                resourceType: 'project',
+                resourceUid: project.uid,
+                propagation: 'inherited',
+            });
+        }
+
+        // Remove cascaded permissions for tasks (only inherited)
+        for (const tuid of allTaskUids) {
+            pushDelete(changes, {
+                userId: action.targetUserId,
+                resourceType: 'task',
+                resourceUid: tuid,
+                propagation: 'inherited',
+            });
+        }
+
+        // Remove cascaded permissions for notes (only inherited)
+        for (const nuid of allNoteUids) {
+            pushDelete(changes, {
+                userId: action.targetUserId,
+                resourceType: 'note',
+                resourceUid: nuid,
+                propagation: 'inherited',
+            });
+        }
+    }
+
     return changes;
 }
 

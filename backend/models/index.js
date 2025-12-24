@@ -46,6 +46,20 @@ Project.belongsTo(User, { foreignKey: 'user_id' });
 Project.belongsTo(Area, { foreignKey: 'area_id', allowNull: true });
 Area.hasMany(Project, { foreignKey: 'area_id' });
 
+// Area-User members many-to-many relationship
+Area.belongsToMany(User, {
+    through: 'areas_members',
+    foreignKey: 'area_id',
+    otherKey: 'user_id',
+    as: 'Members',
+});
+User.belongsToMany(Area, {
+    through: 'areas_members',
+    foreignKey: 'user_id',
+    otherKey: 'area_id',
+    as: 'MemberAreas',
+});
+
 User.hasMany(Task, { foreignKey: 'user_id', as: 'OwnedTasks' });
 Task.belongsTo(User, { foreignKey: 'user_id', as: 'Owner' });
 User.hasMany(Task, { foreignKey: 'assigned_to_user_id', as: 'AssignedTasks' });

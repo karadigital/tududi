@@ -7,6 +7,7 @@ import AreaModal from './Area/AreaModal';
 import { useStore } from '../store/useStore';
 import {
     fetchAreas,
+    fetchArea,
     createArea,
     updateArea,
     deleteArea,
@@ -116,9 +117,24 @@ const Areas: React.FC = () => {
         }
     };
 
-    const handleEditArea = (area: Area) => {
-        setSelectedArea(area);
-        setIsAreaModalOpen(true);
+    const handleEditArea = async (area: Area) => {
+        if (!area.uid) {
+            setSelectedArea(area);
+            setIsAreaModalOpen(true);
+            return;
+        }
+
+        try {
+            // Fetch full area details including Members
+            const fullArea = await fetchArea(area.uid);
+            setSelectedArea(fullArea);
+            setIsAreaModalOpen(true);
+        } catch (error) {
+            console.error('Error fetching area details:', error);
+            // Fallback to using the area from the list
+            setSelectedArea(area);
+            setIsAreaModalOpen(true);
+        }
     };
 
     const openConfirmDialog = (area: Area) => {
