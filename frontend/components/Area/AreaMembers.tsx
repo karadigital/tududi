@@ -68,9 +68,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         setError(null);
 
         try {
-            console.log('Adding member:', { areaUid: area.uid, userId, role });
             const updatedMembers = await addAreaMember(area.uid, userId, role);
-            console.log('Member added successfully:', updatedMembers);
             setMembers(updatedMembers);
             if (onUpdate) {
                 onUpdate(updatedMembers);
