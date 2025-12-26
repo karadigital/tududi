@@ -19,13 +19,13 @@
  *         name: type
  *         schema:
  *           type: string
- *           enum: [today, upcoming, completed, archived, all]
+ *           enum: [today, upcoming, completed, archived, all, next, inbox, someday, waiting]
  *         description: Filter tasks by type
  *       - in: query
  *         name: status
  *         schema:
  *           type: string
- *           enum: [pending, completed, archived]
+ *           enum: [pending, completed, archived, active, done]
  *         description: Filter by task status
  *       - in: query
  *         name: project_id
@@ -43,7 +43,7 @@
  *         schema:
  *           type: string
  *           example: "created_at:desc"
- *         description: Sort order (field:direction)
+ *         description: Sort order (field:direction). Allowed columns are created_at, updated_at, name, priority, status, due_date, assigned
  *       - in: query
  *         name: assigned_to_me
  *         schema:
@@ -54,6 +54,50 @@
  *         schema:
  *           type: boolean
  *         description: If true, only return tasks created by the authenticated user that are assigned to someone else
+ *       - in: query
+ *         name: maxDays
+ *         schema:
+ *           type: integer
+ *           default: 7
+ *         description: Maximum number of days to expand recurring tasks (used with type=upcoming and groupBy=day)
+ *       - in: query
+ *         name: include_lists
+ *         schema:
+ *           type: boolean
+ *         description: Include dashboard lists in the response
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *         description: Maximum number of tasks to return (pagination)
+ *       - in: query
+ *         name: offset
+ *         schema:
+ *           type: integer
+ *           default: 0
+ *         description: Number of tasks to skip (pagination)
+ *       - in: query
+ *         name: tag
+ *         schema:
+ *           type: string
+ *         description: Filter tasks by tag name
+ *       - in: query
+ *         name: priority
+ *         schema:
+ *           type: string
+ *           enum: [low, medium, high]
+ *         description: Filter tasks by priority level
+ *       - in: query
+ *         name: include_instances
+ *         schema:
+ *           type: boolean
+ *         description: Include recurring task instances
+ *       - in: query
+ *         name: client_side_filtering
+ *         schema:
+ *           type: boolean
+ *         description: Enable client-side filtering (affects status filtering behavior)
  *     responses:
  *       200:
  *         description: List of tasks (use /api/tasks/metrics for dashboard statistics)
@@ -73,6 +117,22 @@
  *                     type: array
  *                     items:
  *                       $ref: '#/components/schemas/Task'
+ *                 pagination:
+ *                   type: object
+ *                   description: Pagination metadata (only present when limit or offset parameters are used)
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       description: Total number of tasks matching the query
+ *                     limit:
+ *                       type: integer
+ *                       description: Maximum number of tasks returned
+ *                     offset:
+ *                       type: integer
+ *                       description: Number of tasks skipped
+ *                     hasMore:
+ *                       type: boolean
+ *                       description: Whether there are more tasks beyond the current page
  *       401:
  *         description: Unauthorized
  */
@@ -87,6 +147,13 @@
  *     security:
  *       - cookieAuth: []
  *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [today, upcoming, completed, archived, all, next, inbox, someday, waiting]
+ *         description: Filter metrics by task type
  *     responses:
  *       200:
  *         description: Task metrics and statistics (counts only, no task arrays)
@@ -166,9 +233,16 @@
  *                 type: string
  *                 format: date-time
  *                 description: Task due date
+ *               defer_until:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Date when task becomes actionable (defer date)
  *               project_id:
  *                 type: integer
  *                 description: Associated project ID
+ *               parent_task_id:
+ *                 type: integer
+ *                 description: ID of parent task (to create this as a subtask)
  *               note:
  *                 type: string
  *                 description: Task description (Markdown supported)
@@ -180,6 +254,18 @@
  *                     name:
  *                       type: string
  *                 description: Array of tag objects
+ *               subtasks:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     priority:
+ *                       type: string
+ *                 description: Array of subtask objects to create with the task
  *               recurrence_type:
  *                 type: string
  *                 enum: [none, daily, weekly, monthly, yearly]
@@ -191,6 +277,31 @@
  *                 type: string
  *                 format: date-time
  *                 description: When to stop creating recurring instances
+ *               recurrence_weekday:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 6
+ *                 description: Day of week for weekly recurrence (0=Sunday, 6=Saturday)
+ *               recurrence_weekdays:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   minimum: 0
+ *                   maximum: 6
+ *                 description: Multiple weekdays for weekly recurrence
+ *               recurrence_month_day:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 31
+ *                 description: Day of month for monthly recurrence
+ *               recurrence_week_of_month:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 description: Week of month for monthly recurrence (1=first week, 5=last week)
+ *               completion_based:
+ *                 type: boolean
+ *                 description: Whether recurrence is based on completion date (true) or due date (false)
  *               today:
  *                 type: boolean
  *                 description: Add task to today's plan
@@ -275,9 +386,16 @@
  *                 type: string
  *                 format: date-time
  *                 description: Task due date
+ *               defer_until:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Date when task becomes actionable (defer date)
  *               project_id:
  *                 type: integer
  *                 description: Associated project ID
+ *               parent_task_id:
+ *                 type: integer
+ *                 description: ID of parent task (to move task as subtask, or null to remove parent)
  *               tags:
  *                 type: array
  *                 items:
@@ -286,6 +404,18 @@
  *                     name:
  *                       type: string
  *                 description: Array of tag objects
+ *               subtasks:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     name:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *                     priority:
+ *                       type: string
+ *                 description: Array of subtask objects to update
  *               today:
  *                 type: boolean
  *                 description: Add/remove task from today's plan
@@ -293,6 +423,41 @@
  *                 type: string
  *                 enum: [none, daily, weekly, monthly, yearly]
  *                 description: Recurring pattern
+ *               recurrence_interval:
+ *                 type: integer
+ *                 description: Interval for recurrence (e.g., every 2 days)
+ *               recurrence_end_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: When to stop creating recurring instances
+ *               recurrence_weekday:
+ *                 type: integer
+ *                 minimum: 0
+ *                 maximum: 6
+ *                 description: Day of week for weekly recurrence (0=Sunday, 6=Saturday)
+ *               recurrence_weekdays:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                   minimum: 0
+ *                   maximum: 6
+ *                 description: Multiple weekdays for weekly recurrence
+ *               recurrence_month_day:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 31
+ *                 description: Day of month for monthly recurrence
+ *               recurrence_week_of_month:
+ *                 type: integer
+ *                 minimum: 1
+ *                 maximum: 5
+ *                 description: Week of month for monthly recurrence (1=first week, 5=last week)
+ *               completion_based:
+ *                 type: boolean
+ *                 description: Whether recurrence is based on completion date (true) or due date (false)
+ *               update_parent_recurrence:
+ *                 type: boolean
+ *                 description: When editing a recurring task instance, update the parent task's recurrence settings
  *     responses:
  *       200:
  *         description: Task updated successfully
@@ -333,11 +498,45 @@
  *         description: Task not found
  */
 
+
 /**
  * @swagger
- * /api/task/{id}/toggle_completion:
- *   patch:
- *     summary: Toggle task completion status
+ * /api/task/{id}/subtasks:
+ *   get:
+ *     summary: Get subtasks of a parent task
+ *     tags: [Tasks]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Parent task ID or UID
+ *     responses:
+ *       200:
+ *         description: List of subtasks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Task'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - insufficient permissions
+ *       404:
+ *         description: Parent task not found (returns empty array)
+ */
+
+/**
+ * @swagger
+ * /api/task/{id}/next-iterations:
+ *   get:
+ *     summary: Calculate next iterations for a recurring task
  *     tags: [Tasks]
  *     security:
  *       - cookieAuth: []
@@ -349,93 +548,36 @@
  *         schema:
  *           type: integer
  *         description: Task ID
- *     responses:
- *       200:
- *         description: Task completion toggled successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Task'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
- *       404:
- *         description: Task not found
- */
-
-/**
- * @swagger
- * /api/task/{id}/subtasks:
- *   post:
- *     summary: Add a subtask to a parent task
- *     tags: [Tasks]
- *     security:
- *       - cookieAuth: []
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
+ *       - in: query
+ *         name: startFromDate
  *         schema:
- *           type: integer
- *         description: Parent task ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *             properties:
- *               name:
- *                 type: string
- *                 description: Subtask name
- *               priority:
- *                 type: string
- *                 enum: [low, medium, high]
- *               status:
- *                 type: string
- *                 enum: [pending, completed, archived]
- *               due_date:
- *                 type: string
- *                 format: date-time
- *     responses:
- *       201:
- *         description: Subtask created successfully
- *       400:
- *         description: Invalid request
- *       401:
- *         description: Unauthorized
- *       404:
- *         description: Parent task not found
- */
-
-/**
- * @swagger
- * /api/tasks/generate-recurring:
- *   post:
- *     summary: Manually trigger recurring task generation
- *     tags: [Tasks]
- *     security:
- *       - cookieAuth: []
- *       - BearerAuth: []
+ *           type: string
+ *           format: date
+ *         description: Start date for calculating iterations (optional)
  *     responses:
  *       200:
- *         description: Recurring tasks generated successfully
+ *         description: List of next iterations
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
- *                   type: string
- *                 count:
- *                   type: integer
+ *                 iterations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       due_date:
+ *                         type: string
+ *                         format: date
  *       401:
  *         description: Unauthorized
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Failed to get next iterations
  */
+
 
 /**
  * @swagger
@@ -513,4 +655,145 @@
  *         description: Forbidden - not authorized to unassign this task
  *       404:
  *         description: Task not found
+ */
+
+/**
+ * @swagger
+ * /api/task/{uid}/subscribe:
+ *   post:
+ *     summary: Subscribe a user to task notifications
+ *     tags: [Tasks]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Task UID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_id
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 description: ID of the user to subscribe to task notifications
+ *     responses:
+ *       200:
+ *         description: User subscribed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: Bad request (e.g., user_id missing, user not found, or user already subscribed)
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - not authorized to modify task subscribers
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Failed to subscribe to task
+ */
+
+/**
+ * @swagger
+ * /api/task/{uid}/unsubscribe:
+ *   post:
+ *     summary: Unsubscribe a user from task notifications
+ *     tags: [Tasks]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Task UID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - user_id
+ *             properties:
+ *               user_id:
+ *                 type: integer
+ *                 description: ID of the user to unsubscribe from task notifications
+ *     responses:
+ *       200:
+ *         description: User unsubscribed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: Bad request (e.g., user_id missing or user not subscribed to task)
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Failed to unsubscribe from task
+ */
+
+/**
+ * @swagger
+ * /api/task/{uid}/subscribers:
+ *   get:
+ *     summary: Get list of users subscribed to a task
+ *     tags: [Tasks]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Task UID
+ *     responses:
+ *       200:
+ *         description: List of subscribers
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 subscribers:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       uid:
+ *                         type: string
+ *                       email:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       surname:
+ *                         type: string
+ *                       avatar_image:
+ *                         type: string
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Failed to fetch subscribers
  */
