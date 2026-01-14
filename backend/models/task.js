@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
                 defaultValue: 0,
                 validate: {
                     min: 0,
-                    max: 2,
+                    max: 3,  // Changed from 2 to allow critical (3)
                 },
             },
             status: {
@@ -275,6 +275,7 @@ module.exports = (sequelize) => {
         LOW: 0,
         MEDIUM: 1,
         HIGH: 2,
+        CRITICAL: 3,
     };
 
     Task.STATUS = {
@@ -311,7 +312,7 @@ module.exports = (sequelize) => {
     };
 
     const getPriorityName = (priorityValue) => {
-        const priorities = ['low', 'medium', 'high'];
+        const priorities = ['low', 'medium', 'high', 'critical'];
         return priorities[priorityValue] || 'low';
     };
 
@@ -327,7 +328,7 @@ module.exports = (sequelize) => {
     };
 
     const getPriorityValue = (priorityName) => {
-        const priorities = { low: 0, medium: 1, high: 2 };
+        const priorities = { low: 0, medium: 1, high: 2, critical: 3 };
         return priorities[priorityName] !== undefined
             ? priorities[priorityName]
             : 0;
