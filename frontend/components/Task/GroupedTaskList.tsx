@@ -662,7 +662,9 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                     className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
                                 >
                                     <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                        <span className="truncate">{label}</span>
+                                        <span className="truncate">
+                                            {label}
+                                        </span>
                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                             {statusTasks.length}{' '}
                                             {t('tasks.tasks', 'tasks')}
@@ -681,44 +683,9 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                                 }
                                                 onTaskDelete={onTaskDelete}
                                                 projects={projects}
-                                                hideProjectName={hideProjectName}
-                                                onToggleToday={onToggleToday}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        }
-                    )
-                : groupBy === 'assignee' && groupedByAssignee
-                  ? groupedByAssignee.map(
-                        ({ key, label, tasks: assigneeTasks }, index) => {
-                            return (
-                                <div
-                                    key={key}
-                                    className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                                >
-                                    <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                        <span className="truncate">{label}</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            {assigneeTasks.length}{' '}
-                                            {t('tasks.tasks', 'tasks')}
-                                        </span>
-                                    </div>
-                                    {assigneeTasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                        >
-                                            <TaskItem
-                                                task={task}
-                                                onTaskUpdate={onTaskUpdate}
-                                                onTaskCompletionToggle={
-                                                    onTaskCompletionToggle
+                                                hideProjectName={
+                                                    hideProjectName
                                                 }
-                                                onTaskDelete={onTaskDelete}
-                                                projects={projects}
-                                                hideProjectName={hideProjectName}
                                                 onToggleToday={onToggleToday}
                                             />
                                         </div>
@@ -727,22 +694,65 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                             );
                         }
                     )
-                  : standaloneTask.map((task) => (
-                      <div
-                          key={task.id}
-                          className="task-item-wrapper transition-all duration-200 ease-in-out"
-                      >
-                          <TaskItem
-                              task={task}
-                              onTaskUpdate={onTaskUpdate}
-                              onTaskCompletionToggle={onTaskCompletionToggle}
-                              onTaskDelete={onTaskDelete}
-                              projects={projects}
-                              hideProjectName={hideProjectName}
-                              onToggleToday={onToggleToday}
-                          />
-                      </div>
-                  ))}
+                  : groupBy === 'assignee' && groupedByAssignee
+                    ? groupedByAssignee.map(
+                          ({ key, label, tasks: assigneeTasks }, index) => {
+                              return (
+                                  <div
+                                      key={key}
+                                      className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
+                                  >
+                                      <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                                          <span className="truncate">
+                                              {label}
+                                          </span>
+                                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                                              {assigneeTasks.length}{' '}
+                                              {t('tasks.tasks', 'tasks')}
+                                          </span>
+                                      </div>
+                                      {assigneeTasks.map((task) => (
+                                          <div
+                                              key={task.id}
+                                              className="task-item-wrapper transition-all duration-200 ease-in-out"
+                                          >
+                                              <TaskItem
+                                                  task={task}
+                                                  onTaskUpdate={onTaskUpdate}
+                                                  onTaskCompletionToggle={
+                                                      onTaskCompletionToggle
+                                                  }
+                                                  onTaskDelete={onTaskDelete}
+                                                  projects={projects}
+                                                  hideProjectName={
+                                                      hideProjectName
+                                                  }
+                                                  onToggleToday={onToggleToday}
+                                              />
+                                          </div>
+                                      ))}
+                                  </div>
+                              );
+                          }
+                      )
+                    : standaloneTask.map((task) => (
+                          <div
+                              key={task.id}
+                              className="task-item-wrapper transition-all duration-200 ease-in-out"
+                          >
+                              <TaskItem
+                                  task={task}
+                                  onTaskUpdate={onTaskUpdate}
+                                  onTaskCompletionToggle={
+                                      onTaskCompletionToggle
+                                  }
+                                  onTaskDelete={onTaskDelete}
+                                  projects={projects}
+                                  hideProjectName={hideProjectName}
+                                  onToggleToday={onToggleToday}
+                              />
+                          </div>
+                      ))}
 
             {/* Grouped recurring tasks */}
             {recurringGroups.map((group) => {
@@ -867,33 +877,36 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                 recurringGroups.length === 0 &&
                 (!groupedByAssignee || groupedByAssignee.length === 0) &&
                 (!groupedByStatus || groupedByStatus.length === 0) && (
-                <div className="flex justify-center items-center mt-4">
-                    <div className="w-full max-w bg-black/2 dark:bg-gray-900/25 rounded-l px-10 py-24 flex flex-col items-center opacity-95">
-                        <svg
-                            className="h-20 w-20 text-gray-400 opacity-30 mb-6"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                            />
-                        </svg>
-                        <p className="text-2xl font-light text-center text-gray-600 dark:text-gray-300 mb-2">
-                            {t('tasks.noTasksAvailable', 'No tasks available.')}
-                        </p>
-                        <p className="text-base text-center text-gray-400 dark:text-gray-400">
-                            {t(
-                                'tasks.blankSlateHint',
-                                'Start by creating a new task or changing your filters.'
-                            )}
-                        </p>
+                    <div className="flex justify-center items-center mt-4">
+                        <div className="w-full max-w bg-black/2 dark:bg-gray-900/25 rounded-l px-10 py-24 flex flex-col items-center opacity-95">
+                            <svg
+                                className="h-20 w-20 text-gray-400 opacity-30 mb-6"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                                />
+                            </svg>
+                            <p className="text-2xl font-light text-center text-gray-600 dark:text-gray-300 mb-2">
+                                {t(
+                                    'tasks.noTasksAvailable',
+                                    'No tasks available.'
+                                )}
+                            </p>
+                            <p className="text-base text-center text-gray-400 dark:text-gray-400">
+                                {t(
+                                    'tasks.blankSlateHint',
+                                    'Start by creating a new task or changing your filters.'
+                                )}
+                            </p>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
         </div>
     );
 };

@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UserGroupIcon, UserPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import {
+    UserGroupIcon,
+    UserPlusIcon,
+    XMarkIcon,
+} from '@heroicons/react/24/outline';
 import { Area, AreaMember } from '../../entities/Area';
 import {
     addAreaMember,
@@ -61,7 +65,10 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         }
     };
 
-    const handleAddMember = async (userId: number, role: 'member' | 'admin' = 'member') => {
+    const handleAddMember = async (
+        userId: number,
+        role: 'member' | 'admin' = 'member'
+    ) => {
         if (!area.uid) return;
 
         setLoading(true);
@@ -78,7 +85,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
             console.error('Error details:', {
                 message: err.message,
                 response: err.response,
-                status: err.status
+                status: err.status,
             });
             setError(err.message || 'Failed to add member');
         } finally {
@@ -106,14 +113,21 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         }
     };
 
-    const handleChangeRole = async (userId: number, newRole: 'member' | 'admin') => {
+    const handleChangeRole = async (
+        userId: number,
+        newRole: 'member' | 'admin'
+    ) => {
         if (!area.uid) return;
 
         setLoading(true);
         setError(null);
 
         try {
-            const updatedMembers = await updateAreaMemberRole(area.uid, userId, newRole);
+            const updatedMembers = await updateAreaMemberRole(
+                area.uid,
+                userId,
+                newRole
+            );
             setMembers(updatedMembers);
             if (onUpdate) {
                 onUpdate(updatedMembers);
@@ -234,8 +248,10 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                         (m) => m.id === user.id
                                     );
                                     const isMember = !!member;
-                                    const role = member?.areas_members?.role || 'member';
-                                    const isCurrentUser = user.id === currentUserId;
+                                    const role =
+                                        member?.areas_members?.role || 'member';
+                                    const isCurrentUser =
+                                        user.id === currentUserId;
 
                                     return (
                                         <div
@@ -245,21 +261,33 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                             <div className="flex items-center space-x-3">
                                                 {user.avatar_image ? (
                                                     <img
-                                                        src={getApiPath(user.avatar_image)}
-                                                        alt={user.name || user.email}
+                                                        src={getApiPath(
+                                                            user.avatar_image
+                                                        )}
+                                                        alt={
+                                                            user.name ||
+                                                            user.email
+                                                        }
                                                         className="h-8 w-8 rounded-full object-cover"
                                                     />
                                                 ) : (
                                                     <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
-                                                        {(user.name || user.email)[0].toUpperCase()}
+                                                        {(user.name ||
+                                                            user.email)[0].toUpperCase()}
                                                     </div>
                                                 )}
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {user.name || user.email}
+                                                        {user.name ||
+                                                            user.email}
                                                         {isCurrentUser && (
                                                             <span className="text-xs text-gray-500 ml-2">
-                                                                ({t('common.you', 'You')})
+                                                                (
+                                                                {t(
+                                                                    'common.you',
+                                                                    'You'
+                                                                )}
+                                                                )
                                                             </span>
                                                         )}
                                                     </p>
@@ -277,25 +305,39 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                         onChange={(e) =>
                                                             handleChangeRole(
                                                                 user.id,
-                                                                e.target.value as 'member' | 'admin'
+                                                                e.target
+                                                                    .value as
+                                                                    | 'member'
+                                                                    | 'admin'
                                                             )
                                                         }
                                                         disabled={loading}
                                                         className="text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     >
                                                         <option value="member">
-                                                            {t('area.role_member', 'Member')}
+                                                            {t(
+                                                                'area.role_member',
+                                                                'Member'
+                                                            )}
                                                         </option>
                                                         <option value="admin">
-                                                            {t('area.role_admin', 'Admin')}
+                                                            {t(
+                                                                'area.role_admin',
+                                                                'Admin'
+                                                            )}
                                                         </option>
                                                     </select>
                                                 )}
                                                 <button
                                                     onClick={() =>
                                                         isMember
-                                                            ? handleRemoveMember(user.id)
-                                                            : handleAddMember(user.id, 'member')
+                                                            ? handleRemoveMember(
+                                                                  user.id
+                                                              )
+                                                            : handleAddMember(
+                                                                  user.id,
+                                                                  'member'
+                                                              )
                                                     }
                                                     disabled={loading}
                                                     className={`px-3 py-1 text-sm rounded ${
@@ -305,8 +347,14 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                                                 >
                                                     {isMember
-                                                        ? t('common.remove', 'Remove')
-                                                        : t('common.add', 'Add')}
+                                                        ? t(
+                                                              'common.remove',
+                                                              'Remove'
+                                                          )
+                                                        : t(
+                                                              'common.add',
+                                                              'Add'
+                                                          )}
                                                 </button>
                                             </div>
                                         </div>

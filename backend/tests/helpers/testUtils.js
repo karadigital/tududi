@@ -1,5 +1,5 @@
 const bcrypt = require('bcrypt');
-const { User } = require('../../models');
+const { User, Role } = require('../../models');
 
 const createTestUser = async (userData = {}) => {
     const defaultUser = {
@@ -9,7 +9,30 @@ const createTestUser = async (userData = {}) => {
         ...userData,
     };
 
-    return await User.create(defaultUser);
+    const user = await User.create(defaultUser);
+
+    // Ensure the user has a non-admin role to prevent backfill-roles migration from making test users admins
+    // Update or create the role entry
+    if (userData.skipRole !== true) {
+        try {
+            const [role, created] = await Role.findOrCreate({
+                where: { user_id: user.id },
+                defaults: {
+                    user_id: user.id,
+                    is_admin: userData.is_admin || false,
+                },
+            });
+
+            // If role already exists (created by migration), update it to non-admin unless explicitly requested
+            if (!created && !userData.is_admin) {
+                await role.update({ is_admin: false });
+            }
+        } catch (error) {
+            // Continue even if role management fails (e.g., roles table doesn't exist yet)
+        }
+    }
+
+    return user;
 };
 
 const authenticateUser = async (request, user) => {

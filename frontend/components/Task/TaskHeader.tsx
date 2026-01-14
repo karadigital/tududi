@@ -558,13 +558,18 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     <div className="flex items-center">
                                         {task.AssignedTo.avatar_image ? (
                                             <img
-                                                src={getApiPath(task.AssignedTo.avatar_image)}
+                                                src={getApiPath(
+                                                    task.AssignedTo.avatar_image
+                                                )}
                                                 alt={getAssigneeDisplayName()}
                                                 className="h-4 w-4 rounded-full mr-1"
                                             />
                                         ) : (
                                             <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
-                                                {(task.AssignedTo.name?.[0] || task.AssignedTo.email[0]).toUpperCase()}
+                                                {(
+                                                    task.AssignedTo.name?.[0] ||
+                                                    task.AssignedTo.email[0]
+                                                ).toUpperCase()}
                                             </div>
                                         )}
                                         <span>{getAssigneeDisplayName()}</span>
@@ -1151,13 +1156,18 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                 <div className="flex items-center">
                                     {task.AssignedTo.avatar_image ? (
                                         <img
-                                            src={getApiPath(task.AssignedTo.avatar_image)}
+                                            src={getApiPath(
+                                                task.AssignedTo.avatar_image
+                                            )}
                                             alt={getAssigneeDisplayName()}
                                             className="h-4 w-4 rounded-full mr-1"
                                         />
                                     ) : (
                                         <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
-                                            {(task.AssignedTo.name?.[0] || task.AssignedTo.email[0]).toUpperCase()}
+                                            {(
+                                                task.AssignedTo.name?.[0] ||
+                                                task.AssignedTo.email[0]
+                                            ).toUpperCase()}
                                         </div>
                                     )}
                                     <UserCircleIcon className="h-3 w-3 mr-1" />

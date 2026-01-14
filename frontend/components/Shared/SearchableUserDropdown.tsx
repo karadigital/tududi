@@ -249,7 +249,10 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
                         <input
                             ref={searchInputRef}
                             type="text"
-                            placeholder={t('task.searchUsers', 'Search users...')}
+                            placeholder={t(
+                                'task.searchUsers',
+                                'Search users...'
+                            )}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             onKeyDown={handleKeyDown}
@@ -352,7 +355,10 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
                                     })
                                 ) : (
                                     <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                        {t('task.noUsersFound', 'No users found')}
+                                        {t(
+                                            'task.noUsersFound',
+                                            'No users found'
+                                        )}
                                     </div>
                                 )}
                             </>

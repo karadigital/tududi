@@ -178,14 +178,17 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
 
     // Get label for trigger button
     const getTriggerLabel = () => {
-        const totalSelected = selectedUserIds.length + (includeUnassigned ? 1 : 0);
+        const totalSelected =
+            selectedUserIds.length + (includeUnassigned ? 1 : 0);
 
         if (totalSelected === 0) {
             return t('task.allAssignees', 'All Assignees');
         } else if (totalSelected === 1) {
             return t('task.assigneeCount', '{{count}} Assignee', { count: 1 });
         } else {
-            return t('task.assigneeCount_plural', '{{count}} Assignees', { count: totalSelected });
+            return t('task.assigneeCount_plural', '{{count}} Assignees', {
+                count: totalSelected,
+            });
         }
     };
 
@@ -219,7 +222,10 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                         <input
                             ref={searchInputRef}
                             type="text"
-                            placeholder={t('task.searchUsers', 'Search users...')}
+                            placeholder={t(
+                                'task.searchUsers',
+                                'Search users...'
+                            )}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -248,9 +254,7 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                         ) : (
                             <>
                                 {/* Unassigned Option */}
-                                <label
-                                    className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
-                                >
+                                <label className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                                     <input
                                         type="checkbox"
                                         checked={includeUnassigned}
@@ -271,8 +275,10 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                                 {/* User List */}
                                 {filteredUsers.length > 0 ? (
                                     filteredUsers.map((user) => {
-                                        const isSelected = selectedUserIds.includes(user.id);
-                                        const isCurrentUser = user.id === currentUserId;
+                                        const isSelected =
+                                            selectedUserIds.includes(user.id);
+                                        const isCurrentUser =
+                                            user.id === currentUserId;
 
                                         return (
                                             <label
@@ -282,7 +288,11 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                                                 <input
                                                     type="checkbox"
                                                     checked={isSelected}
-                                                    onChange={() => handleUserToggle(user.id)}
+                                                    onChange={() =>
+                                                        handleUserToggle(
+                                                            user.id
+                                                        )
+                                                    }
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
                                                 />
                                                 <div className="flex-shrink-0">
@@ -291,11 +301,16 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2">
                                                         <span className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                                                            {getUserDisplayName(user)}
+                                                            {getUserDisplayName(
+                                                                user
+                                                            )}
                                                         </span>
                                                         {isCurrentUser && (
                                                             <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-                                                                {t('task.youLabel', 'You')}
+                                                                {t(
+                                                                    'task.youLabel',
+                                                                    'You'
+                                                                )}
                                                             </span>
                                                         )}
                                                     </div>
@@ -311,7 +326,10 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                                     })
                                 ) : (
                                     <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
-                                        {t('task.noUsersFound', 'No users found')}
+                                        {t(
+                                            'task.noUsersFound',
+                                            'No users found'
+                                        )}
                                     </div>
                                 )}
                             </>

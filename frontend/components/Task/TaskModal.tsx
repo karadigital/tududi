@@ -780,7 +780,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                                                 formData.assigned_to_user_id ||
                                                                 null
                                                             }
-                                                            onChange={(userId) =>
+                                                            onChange={(
+                                                                userId
+                                                            ) =>
                                                                 setFormData({
                                                                     ...formData,
                                                                     assigned_to_user_id:

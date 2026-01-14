@@ -80,6 +80,24 @@ describe('Notification Preferences', () => {
                     push: false,
                     telegram: false,
                 },
+                subscribedTaskStatusChanged: {
+                    inApp: true,
+                    email: false,
+                    push: false,
+                    telegram: false,
+                },
+                subscribedTaskUpdated: {
+                    inApp: true,
+                    email: false,
+                    push: false,
+                    telegram: false,
+                },
+                subscribedTaskAssignmentChanged: {
+                    inApp: true,
+                    email: false,
+                    push: false,
+                    telegram: false,
+                },
             });
         });
 

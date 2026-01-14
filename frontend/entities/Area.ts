@@ -17,5 +17,5 @@ export interface Area {
     name: string;
     description?: string;
     active?: boolean;
-    Members?: AreaMember[];  // This is using capital letters because of the Sequelize association naming convention
+    Members?: AreaMember[]; // This is using capital letters because of the Sequelize association naming convention
 }
