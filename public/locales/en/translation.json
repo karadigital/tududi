@@ -443,6 +443,7 @@
       "labels": {
         "tags": "Tags",
         "project": "Project",
+        "assignee": "Assignee",
         "status": "Status",
         "priority": "Priority",
         "dueDate": "Due Date",

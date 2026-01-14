@@ -26,6 +26,7 @@ import TaskPrioritySection from './TaskForm/TaskPrioritySection';
 import TaskDueDateSection from './TaskForm/TaskDueDateSection';
 import TaskDeferUntilSection from './TaskForm/TaskDeferUntilSection';
 import TaskAttachmentsSection from './TaskForm/TaskAttachmentsSection';
+import TaskAssigneeSection from './TaskForm/TaskAssigneeSection';
 import TaskSectionToggle from './TaskForm/TaskSectionToggle';
 import TaskModalActions from './TaskForm/TaskModalActions';
 
@@ -86,6 +87,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
     const [baseSections, setBaseSections] = useState({
         tags: false,
         project: false,
+        assignee: false,
         priority: false,
         dueDate: false,
         deferUntil: false,
@@ -167,6 +169,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             setBaseSections({
                 tags: false,
                 project: false,
+                assignee: false,
                 priority: false,
                 dueDate: false,
                 deferUntil: false,
@@ -756,6 +759,35 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                                             onClearProject={
                                                                 handleClearProject
                                                             }
+                                                        />
+                                                    </div>
+                                                )}
+
+                                                {expandedSections.assignee && (
+                                                    <div
+                                                        data-testid="assignee-section"
+                                                        data-state="expanded"
+                                                        className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 px-4"
+                                                    >
+                                                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                            {t(
+                                                                'forms.task.labels.assignee',
+                                                                'Assignee'
+                                                            )}
+                                                        </h3>
+                                                        <TaskAssigneeSection
+                                                            selectedUserId={
+                                                                formData.assigned_to_user_id ||
+                                                                null
+                                                            }
+                                                            onChange={(userId) =>
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    assigned_to_user_id:
+                                                                        userId,
+                                                                })
+                                                            }
+                                                            disabled={isSaving}
                                                         />
                                                     </div>
                                                 )}
