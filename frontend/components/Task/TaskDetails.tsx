@@ -935,7 +935,8 @@ const TaskDetails: React.FC = () => {
 
         try {
             const nextStatusPayload: Task = {
-                ...task,
+                id: task.id,
+                uid: task.uid,
                 status: isCurrentlyInProgress ? 0 : 1,
                 today: isCurrentlyInProgress ? task.today : true,
             };
@@ -981,7 +982,8 @@ const TaskDetails: React.FC = () => {
 
         try {
             await updateTask(task.uid, {
-                ...task,
+                id: task.id,
+                uid: task.uid,
                 status: newStatus,
             });
 
