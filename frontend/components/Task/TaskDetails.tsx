@@ -772,9 +772,7 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error assigning task:', error);
-            showErrorToast(
-                t('task.assignedError', 'Failed to assign task')
-            );
+            showErrorToast(t('task.assignedError', 'Failed to assign task'));
         }
     };
 

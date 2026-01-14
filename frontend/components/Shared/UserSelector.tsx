@@ -111,8 +111,7 @@ const UserSelector: React.FC<UserSelectorProps> = ({
                     ) : (
                         <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs mr-2">
                             {(
-                                selectedUser.name?.[0] ||
-                                selectedUser.email[0]
+                                selectedUser.name?.[0] || selectedUser.email[0]
                             ).toUpperCase()}
                         </div>
                     )}

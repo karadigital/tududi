@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BellIcon, UserPlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { Task } from '../../entities/Task';
-import {
-    subscribeToTask,
-    unsubscribeFromTask,
-} from '../../utils/tasksService';
+import { subscribeToTask, unsubscribeFromTask } from '../../utils/tasksService';
 import { getApiPath } from '../../config/paths';
 import { getDefaultHeaders } from '../../utils/authUtils';
 
@@ -136,13 +133,18 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                             >
                                 {subscriber.avatar_image ? (
                                     <img
-                                        src={getApiPath(subscriber.avatar_image)}
-                                        alt={subscriber.name || subscriber.email}
+                                        src={getApiPath(
+                                            subscriber.avatar_image
+                                        )}
+                                        alt={
+                                            subscriber.name || subscriber.email
+                                        }
                                         className="h-6 w-6 rounded-full object-cover"
                                     />
                                 ) : (
                                     <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                                        {(subscriber.name || subscriber.email)[0].toUpperCase()}
+                                        {(subscriber.name ||
+                                            subscriber.email)[0].toUpperCase()}
                                     </div>
                                 )}
                                 <span className="text-sm text-gray-700 dark:text-gray-200">
@@ -180,7 +182,10 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                         {/* Modal header */}
                         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {t('task.manage_subscribers', 'Manage Subscribers')}
+                                {t(
+                                    'task.manage_subscribers',
+                                    'Manage Subscribers'
+                                )}
                             </h3>
                             <button
                                 onClick={() => setShowManageModal(false)}
@@ -197,7 +202,8 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                                     const isSubscribed = subscribers.some(
                                         (sub) => sub.id === user.id
                                     );
-                                    const isCurrentUser = user.id === currentUserId;
+                                    const isCurrentUser =
+                                        user.id === currentUserId;
 
                                     return (
                                         <div
@@ -207,21 +213,33 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                                             <div className="flex items-center space-x-3">
                                                 {user.avatar_image ? (
                                                     <img
-                                                        src={getApiPath(user.avatar_image)}
-                                                        alt={user.name || user.email}
+                                                        src={getApiPath(
+                                                            user.avatar_image
+                                                        )}
+                                                        alt={
+                                                            user.name ||
+                                                            user.email
+                                                        }
                                                         className="h-8 w-8 rounded-full object-cover"
                                                     />
                                                 ) : (
                                                     <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
-                                                        {(user.name || user.email)[0].toUpperCase()}
+                                                        {(user.name ||
+                                                            user.email)[0].toUpperCase()}
                                                     </div>
                                                 )}
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                                        {user.name || user.email}
+                                                        {user.name ||
+                                                            user.email}
                                                         {isCurrentUser && (
                                                             <span className="text-xs text-gray-500 ml-2">
-                                                                ({t('common.you', 'You')})
+                                                                (
+                                                                {t(
+                                                                    'common.you',
+                                                                    'You'
+                                                                )}
+                                                                )
                                                             </span>
                                                         )}
                                                     </p>
@@ -235,8 +253,12 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                                             <button
                                                 onClick={() =>
                                                     isSubscribed
-                                                        ? handleUnsubscribe(user.id)
-                                                        : handleSubscribe(user.id)
+                                                        ? handleUnsubscribe(
+                                                              user.id
+                                                          )
+                                                        : handleSubscribe(
+                                                              user.id
+                                                          )
                                                 }
                                                 disabled={loading}
                                                 className={`px-3 py-1 text-sm rounded ${
@@ -246,7 +268,10 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                                             >
                                                 {isSubscribed
-                                                    ? t('common.remove', 'Remove')
+                                                    ? t(
+                                                          'common.remove',
+                                                          'Remove'
+                                                      )
                                                     : t('common.add', 'Add')}
                                             </button>
                                         </div>

@@ -127,8 +127,11 @@ const TasksToday: React.FC = () => {
 
     // Assignee filter state
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>([]);
-    const [includeUnassignedFilter, setIncludeUnassignedFilter] = useState(false);
+    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
+        []
+    );
+    const [includeUnassignedFilter, setIncludeUnassignedFilter] =
+        useState(false);
 
     // Metrics from the API (counts) + task arrays stored locally
     const [metrics, setMetrics] = useState<
@@ -534,10 +537,14 @@ const TasksToday: React.FC = () => {
             }
 
             try {
-                const response = await fetch(getApiPath('users'), { credentials: 'include' });
+                const response = await fetch(getApiPath('users'), {
+                    credentials: 'include',
+                });
                 if (response.ok) {
                     const users = await response.json();
-                    const currentUserData = users.find((u: any) => u.uid === currentUser.uid);
+                    const currentUserData = users.find(
+                        (u: any) => u.uid === currentUser.uid
+                    );
                     setCurrentUserId(currentUserData?.id || null);
                 }
             } catch (error) {
@@ -1308,8 +1315,10 @@ const TasksToday: React.FC = () => {
     const totalDueTodayFiltered = dueTodayTasksFiltered.length;
     const totalSuggestedFiltered = suggestedTasksFiltered.length;
     const totalCompletedTodayFiltered = completedTasksFiltered.length;
-    const totalPlannedItemsFiltered = todayPlanTasksFiltered.length + plannedHabitsFiltered.length;
-    const totalCompletedItemsFiltered = completedTasksFiltered.length + completedHabitsFiltered.length;
+    const totalPlannedItemsFiltered =
+        todayPlanTasksFiltered.length + plannedHabitsFiltered.length;
+    const totalCompletedItemsFiltered =
+        completedTasksFiltered.length + completedHabitsFiltered.length;
 
     // Handle settings change
     const handleSettingsChange = (newSettings: typeof todaySettings) => {
@@ -1776,11 +1785,16 @@ const TasksToday: React.FC = () => {
                         </div>
                         {!isTodayPlanCollapsed && (
                             <>
-                                {renderHabitList(plannedHabitsFiltered, 'planned')}
+                                {renderHabitList(
+                                    plannedHabitsFiltered,
+                                    'planned'
+                                )}
                                 {todayPlanTasksFiltered.length > 0 && (
                                     <>
                                         <TodayPlan
-                                            todayPlanTasks={todayPlanTasksFiltered}
+                                            todayPlanTasks={
+                                                todayPlanTasksFiltered
+                                            }
                                             projects={localProjects}
                                             onTaskUpdate={handleTaskUpdate}
                                             onTaskDelete={handleTaskDelete}
@@ -2081,7 +2095,10 @@ const TasksToday: React.FC = () => {
                         </div>
                         {!isCompletedCollapsed && (
                             <>
-                                {renderHabitList(completedHabitsFiltered, 'completed')}
+                                {renderHabitList(
+                                    completedHabitsFiltered,
+                                    'completed'
+                                )}
                                 {completedTasksFiltered.length > 0 && (
                                     <>
                                         <TaskList

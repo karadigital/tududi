@@ -315,15 +315,20 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                     />
                                                 </div>
 
-                                                {area?.uid && !!currentUserId && (
-                                                    <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                                                        <AreaMembers
-                                                            area={formData}
-                                                            currentUserId={currentUserId}
-                                                            onUpdate={handleMembersUpdate}
-                                                        />
-                                                    </div>
-                                                )}
+                                                {area?.uid &&
+                                                    !!currentUserId && (
+                                                        <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                                            <AreaMembers
+                                                                area={formData}
+                                                                currentUserId={
+                                                                    currentUserId
+                                                                }
+                                                                onUpdate={
+                                                                    handleMembersUpdate
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
 
                                                 {/* Error Message */}
                                                 {error && (

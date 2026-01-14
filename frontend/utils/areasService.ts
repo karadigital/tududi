@@ -146,10 +146,7 @@ export const updateAreaMemberRole = async (
         }
     );
 
-    await handleAuthResponse(
-        response,
-        'Failed to update area member role.'
-    );
+    await handleAuthResponse(response, 'Failed to update area member role.');
     const data = await response.json();
     return data.members;
 };
