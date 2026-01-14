@@ -10,13 +10,15 @@ const areaMembershipService = require('../services/areaMembershipService');
 const { isAdmin } = require('../services/rolesService');
 
 // Middleware to validate UID format before access checks
-const validateUid = (paramName = 'uid') => (req, res, next) => {
-    const uid = req.params[paramName];
-    if (!isValidUid(uid)) {
-        return res.status(400).json({ error: 'Invalid UID' });
-    }
-    next();
-};
+const validateUid =
+    (paramName = 'uid') =>
+    (req, res, next) => {
+        const uid = req.params[paramName];
+        if (!isValidUid(uid)) {
+            return res.status(400).json({ error: 'Invalid UID' });
+        }
+        next();
+    };
 
 router.get('/areas', async (req, res) => {
     try {
@@ -84,7 +86,8 @@ router.get(
     validateUid('uid'),
     hasAccess('ro', 'area', (req) => req.params.uid, {
         forbiddenStatus: 404,
-        notFoundMessage: "Area not found or doesn't belong to the current user.",
+        notFoundMessage:
+            "Area not found or doesn't belong to the current user.",
     }),
     async (req, res) => {
         try {
