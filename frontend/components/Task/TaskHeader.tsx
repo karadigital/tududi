@@ -29,7 +29,7 @@ interface TaskHeaderProps {
     onToggleCompletion?: () => void;
     hideProjectName?: boolean;
     onToggleToday?: (taskId: number, task?: Task) => Promise<void>;
-    onTaskUpdate?: (task: Task) => Promise<void>;
+    onTaskUpdate?: (task: Partial<Task>) => Promise<void>;
     isOverdue?: boolean;
     // Props for subtasks functionality
     showSubtasks?: boolean;

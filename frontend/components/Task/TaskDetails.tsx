@@ -934,7 +934,7 @@ const TaskDetails: React.FC = () => {
         }
 
         try {
-            const nextStatusPayload: Task = {
+            const nextStatusPayload: Partial<Task> = {
                 id: task.id,
                 uid: task.uid,
                 status: isCurrentlyInProgress ? 0 : 1,
@@ -959,7 +959,7 @@ const TaskDetails: React.FC = () => {
             }
 
             if (!latestTaskData) {
-                latestTaskData = nextStatusPayload;
+                latestTaskData = task;
             }
 
             await refreshRecurringSetup(latestTaskData);

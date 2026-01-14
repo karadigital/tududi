@@ -18,7 +18,7 @@ interface NextTaskSuggestionProps {
         today_plan_tasks?: Task[];
     };
     projects: any[];
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onClose?: () => void;
 }
 

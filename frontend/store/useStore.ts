@@ -63,7 +63,7 @@ interface TasksStore {
     setError: (isError: boolean) => void;
     loadTasks: (query?: string) => Promise<void>;
     createTask: (taskData: Task) => Promise<Task>;
-    updateTask: (taskUid: string, taskData: Task) => Promise<Task>;
+    updateTask: (taskUid: string, taskData: Partial<Task>) => Promise<Task>;
     deleteTask: (taskUid: string) => Promise<void>;
     toggleTaskCompletion: (taskUid: string) => Promise<Task>;
     toggleTaskToday: (taskId: number) => Promise<Task>;

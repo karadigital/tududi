@@ -12,7 +12,7 @@ interface SubtasksDisplayProps {
     loadingSubtasks: boolean;
     subtasks: Task[];
     onTaskClick: (e: React.MouseEvent, task: Task) => void;
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     loadSubtasks: () => Promise<void>;
     onSubtaskUpdate: (updatedSubtask: Task) => void;
 }
@@ -136,7 +136,7 @@ import { getApiPath } from '../../config/paths';
 
 interface TaskItemProps {
     task: Task;
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
     onTaskDelete: (taskUid: string) => void;
     projects: Project[];

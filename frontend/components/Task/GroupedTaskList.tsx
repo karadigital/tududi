@@ -15,7 +15,7 @@ interface GroupedTaskListProps {
     groupedTasks?: GroupedTasks | null;
     groupBy?: 'none' | 'project' | 'assignee' | 'status';
     currentUserId?: number | null;
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
     onTaskCreate?: (task: Task) => void;
     onTaskDelete: (taskUid: string) => void;
