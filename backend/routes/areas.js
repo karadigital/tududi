@@ -9,6 +9,15 @@ const { hasAccess } = require('../middleware/authorize');
 const areaMembershipService = require('../services/areaMembershipService');
 const { isAdmin } = require('../services/rolesService');
 
+// Middleware to validate UID format before access checks
+const validateUid = (paramName = 'uid') => (req, res, next) => {
+    const uid = req.params[paramName];
+    if (!isValidUid(uid)) {
+        return res.status(400).json({ error: 'Invalid UID' });
+    }
+    next();
+};
+
 router.get('/areas', async (req, res) => {
     try {
         const userId = getAuthenticatedUserId(req);
@@ -72,12 +81,13 @@ router.get('/areas', async (req, res) => {
 
 router.get(
     '/areas/:uid',
-    hasAccess('ro', 'area', (req) => req.params.uid),
+    validateUid('uid'),
+    hasAccess('ro', 'area', (req) => req.params.uid, {
+        forbiddenStatus: 404,
+        notFoundMessage: "Area not found or doesn't belong to the current user.",
+    }),
     async (req, res) => {
         try {
-            if (!isValidUid(req.params.uid))
-                return res.status(400).json({ error: 'Invalid UID' });
-
             const area = await Area.findOne({
                 where: { uid: req.params.uid },
                 attributes: ['uid', 'name', 'description'],
@@ -143,12 +153,13 @@ router.post('/areas', async (req, res) => {
 
 router.patch(
     '/areas/:uid',
-    hasAccess('rw', 'area', (req) => req.params.uid),
+    validateUid('uid'),
+    hasAccess('rw', 'area', (req) => req.params.uid, {
+        forbiddenStatus: 404,
+        notFoundMessage: 'Area not found.',
+    }),
     async (req, res) => {
         try {
-            if (!isValidUid(req.params.uid))
-                return res.status(400).json({ error: 'Invalid UID' });
-
             const area = await Area.findOne({
                 where: { uid: req.params.uid },
             });
@@ -179,12 +190,13 @@ router.patch(
 
 router.delete(
     '/areas/:uid',
-    hasAccess('admin', 'area', (req) => req.params.uid),
+    validateUid('uid'),
+    hasAccess('admin', 'area', (req) => req.params.uid, {
+        forbiddenStatus: 404,
+        notFoundMessage: 'Area not found.',
+    }),
     async (req, res) => {
         try {
-            if (!isValidUid(req.params.uid))
-                return res.status(400).json({ error: 'Invalid UID' });
-
             const area = await Area.findOne({
                 where: { uid: req.params.uid },
             });

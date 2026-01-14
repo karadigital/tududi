@@ -37,6 +37,7 @@ const Notification = require('./notification')(sequelize);
 const RecurringCompletion = require('./recurringCompletion')(sequelize);
 const TaskAttachment = require('./task_attachment')(sequelize);
 const Backup = require('./backup')(sequelize);
+const AreasMember = require('./areas_member')(sequelize);
 
 User.hasMany(Area, { foreignKey: 'user_id' });
 Area.belongsTo(User, { foreignKey: 'user_id' });
@@ -48,13 +49,13 @@ Area.hasMany(Project, { foreignKey: 'area_id' });
 
 // Area-User members many-to-many relationship
 Area.belongsToMany(User, {
-    through: 'areas_members',
+    through: AreasMember,
     foreignKey: 'area_id',
     otherKey: 'user_id',
     as: 'Members',
 });
 User.belongsToMany(Area, {
-    through: 'areas_members',
+    through: AreasMember,
     foreignKey: 'user_id',
     otherKey: 'area_id',
     as: 'MemberAreas',
@@ -207,4 +208,5 @@ module.exports = {
     RecurringCompletion,
     TaskAttachment,
     Backup,
+    AreasMember,
 };
