@@ -18,7 +18,7 @@ interface NextTaskSuggestionProps {
         today_plan_tasks?: Task[];
     };
     projects: any[];
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onClose?: () => void;
 }
 
@@ -90,7 +90,8 @@ const NextTaskSuggestion: React.FC<NextTaskSuggestionProps> = ({
         try {
             // Universal rule: when setting status to in_progress, also add to today
             const updatedTask = {
-                ...suggestedTask,
+                id: suggestedTask.id,
+                uid: suggestedTask.uid,
                 status: 'in_progress' as const,
                 today: true,
             };

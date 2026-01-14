@@ -5,7 +5,7 @@ import { Task } from '../../entities/Task';
 
 interface TaskListProps {
     tasks: Task[];
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
     onTaskCreate?: (task: Task) => void;
     onTaskDelete: (taskUid: string) => void;
