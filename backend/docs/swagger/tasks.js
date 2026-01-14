@@ -498,7 +498,6 @@
  *         description: Task not found
  */
 
-
 /**
  * @swagger
  * /api/task/{id}/subtasks:
@@ -577,7 +576,6 @@
  *       500:
  *         description: Failed to get next iterations
  */
-
 
 /**
  * @swagger
