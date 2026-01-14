@@ -817,7 +817,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         ) {
                                                             const updatedTask =
                                                                 {
-                                                                    ...task,
+                                                                    id: task.id,
+                                                                    uid: task.uid,
                                                                     status: 'in_progress' as StatusType,
                                                                     today: true,
                                                                 };
@@ -888,7 +889,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         task.id
                                                     ) {
                                                         const updatedTask = {
-                                                            ...task,
+                                                            id: task.id,
+                                                            uid: task.uid,
                                                             status: 'not_started' as StatusType,
                                                         };
                                                         await onTaskUpdate(
@@ -925,7 +927,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         task.id
                                                     ) {
                                                         const updatedTask = {
-                                                            ...task,
+                                                            id: task.id,
+                                                            uid: task.uid,
                                                             status: 'in_progress' as StatusType,
                                                             today: true, // Add to today when setting in progress
                                                         };
@@ -1218,7 +1221,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         task.id
                                                     ) {
                                                         const updatedTask = {
-                                                            ...task,
+                                                            id: task.id,
+                                                            uid: task.uid,
                                                             status: 'in_progress' as StatusType,
                                                             today: true,
                                                         };
@@ -1286,7 +1290,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                 setCompletionMenuOpen(null);
                                                 if (onTaskUpdate && task.id) {
                                                     const updatedTask = {
-                                                        ...task,
+                                                        id: task.id,
+                                                        uid: task.uid,
                                                         status: 'not_started' as StatusType,
                                                     };
                                                     await onTaskUpdate(
@@ -1319,7 +1324,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                 setCompletionMenuOpen(null);
                                                 if (onTaskUpdate && task.id) {
                                                     const updatedTask = {
-                                                        ...task,
+                                                        id: task.id,
+                                                        uid: task.uid,
                                                         status: 'in_progress' as StatusType,
                                                         today: true, // Add to today when setting in progress
                                                     };
