@@ -532,7 +532,8 @@
     "low": "Bassa",
     "medium": "Media",
     "high": "Alta",
-    "none": "Nessuno"
+    "none": "Nessuno",
+    "critical": "Critico"
   },
   "status": {
     "notStarted": "Non Iniziata",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Impossibile salvare il progetto.",
     "projectImageTooLarge": "L'immagine è troppo grande. Si prega di scegliere un file di dimensioni inferiori a 10MB.",
     "projectImageUpload": "Caricamento dell'immagine non riuscito. Si prega di provare un file più piccolo o un formato diverso.",
-    "bannerSaveFailed": "Salvataggio del banner non riuscito"
+    "bannerSaveFailed": "Salvataggio del banner non riuscito",
+    "critical_requires_fields": "Le attività critiche devono avere una data di scadenza e un assegnatario"
   },
   "inbox": {
     "title": "Inbox",

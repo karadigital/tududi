@@ -532,7 +532,8 @@
     "low": "Laag",
     "medium": "Gemiddeld",
     "high": "Hoog",
-    "none": "Geen"
+    "none": "Geen",
+    "critical": "Kritiek"
   },
   "status": {
     "notStarted": "Niet Begonnen",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Het opslaan van het project is mislukt.",
     "projectImageTooLarge": "Afbeelding is te groot. Kies een bestand onder de 10MB.",
     "projectImageUpload": "Uploaden van afbeelding mislukt. Probeer een kleiner bestand of een ander formaat.",
-    "bannerSaveFailed": "Opslaan van banner mislukt"
+    "bannerSaveFailed": "Opslaan van banner mislukt",
+    "critical_requires_fields": "Kritieke taken moeten een vervaldatum en toegewezen persoon hebben"
   },
   "inbox": {
     "title": "Inbox",

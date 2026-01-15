@@ -532,7 +532,8 @@
     "low": "Düşük",
     "medium": "Orta",
     "high": "Yüksek",
-    "none": "Yok"
+    "none": "Yok",
+    "critical": "Kritik"
   },
   "status": {
     "notStarted": "Başlamadı",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Projeyi kaydetmekte başarısız olundu.",
     "projectImageTooLarge": "Görüntü çok büyük. Lütfen 10MB'den küçük bir dosya seçin.",
     "projectImageUpload": "Görüntü yüklenemedi. Lütfen daha küçük bir dosya veya farklı bir format deneyin.",
-    "bannerSaveFailed": "Afiş kaydedilemedi"
+    "bannerSaveFailed": "Afiş kaydedilemedi",
+    "critical_requires_fields": "Kritik görevlerin bir son tarihi ve atanan kişisi olmalıdır"
   },
   "inbox": {
     "title": "Gelen Kutusu",

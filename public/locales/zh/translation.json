@@ -532,7 +532,8 @@
     "low": "低",
     "medium": "中",
     "high": "高",
-    "none": "无"
+    "none": "无",
+    "critical": "紧急"
   },
   "status": {
     "notStarted": "未开始",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "保存项目失败。",
     "projectImageTooLarge": "图片太大。请选取一个小于10MB的文件。",
     "projectImageUpload": "上传图片失败。请尝试一个更小的文件或不同的格式。",
-    "bannerSaveFailed": "保存横幅失败"
+    "bannerSaveFailed": "保存横幅失败",
+    "critical_requires_fields": "紧急任务必须有截止日期和负责人"
   },
   "inbox": {
     "title": "收件箱",
