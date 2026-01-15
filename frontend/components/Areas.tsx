@@ -270,11 +270,20 @@ const Areas: React.FC = () => {
                                                 className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left rounded-t-md"
                                                 data-testid={`area-edit-${area.uid}`}
                                             >
-                                                {canEditArea(area, currentUserUid)
+                                                {canEditArea(
+                                                    area,
+                                                    currentUserUid
+                                                )
                                                     ? t('areas.edit', 'Edit')
-                                                    : t('areas.details', 'Details')}
+                                                    : t(
+                                                          'areas.details',
+                                                          'Details'
+                                                      )}
                                             </button>
-                                            {canEditArea(area, currentUserUid) && (
+                                            {canEditArea(
+                                                area,
+                                                currentUserUid
+                                            ) && (
                                                 <button
                                                     onClick={(e) => {
                                                         e.preventDefault();
@@ -285,7 +294,10 @@ const Areas: React.FC = () => {
                                                     className="block px-4 py-2 text-sm text-red-500 dark:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left rounded-b-md"
                                                     data-testid={`area-delete-${area.uid}`}
                                                 >
-                                                    {t('areas.delete', 'Delete')}
+                                                    {t(
+                                                        'areas.delete',
+                                                        'Delete'
+                                                    )}
                                                 </button>
                                             )}
                                         </div>
