@@ -58,7 +58,10 @@ const AreaModal: React.FC<AreaModalProps> = ({
                         if (data?.user?.uid) {
                             setCurrentUser(data.user); // Save to localStorage
                             setCurrentUserUid(data.user.uid);
-                            console.log('Set currentUserUid to:', data.user.uid);
+                            console.log(
+                                'Set currentUserUid to:',
+                                data.user.uid
+                            );
                             return;
                         }
                     }
