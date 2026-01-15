@@ -13,6 +13,7 @@ import {
     deleteArea,
 } from '../utils/areasService';
 import { Area } from '../entities/Area';
+import { getCurrentUser, canEditArea } from '../utils/userUtils';
 
 const Areas: React.FC = () => {
     const { t } = useTranslation();
@@ -31,9 +32,17 @@ const Areas: React.FC = () => {
         useState<boolean>(false);
     const [areaToDelete, setAreaToDelete] = useState<Area | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
+    const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const justOpenedRef = useRef<boolean>(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const user = getCurrentUser();
+        if (user?.uid) {
+            setCurrentUserUid(user.uid);
+        }
+    }, []);
 
     useEffect(() => {
         if (!hasLoaded && !loading) {
@@ -261,20 +270,24 @@ const Areas: React.FC = () => {
                                                 className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left rounded-t-md"
                                                 data-testid={`area-edit-${area.uid}`}
                                             >
-                                                {t('areas.edit', 'Edit')}
+                                                {canEditArea(area, currentUserUid)
+                                                    ? t('areas.edit', 'Edit')
+                                                    : t('areas.details', 'Details')}
                                             </button>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.preventDefault();
-                                                    e.stopPropagation();
-                                                    openConfirmDialog(area);
-                                                    setDropdownOpen(null);
-                                                }}
-                                                className="block px-4 py-2 text-sm text-red-500 dark:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left rounded-b-md"
-                                                data-testid={`area-delete-${area.uid}`}
-                                            >
-                                                {t('areas.delete', 'Delete')}
-                                            </button>
+                                            {canEditArea(area, currentUserUid) && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        openConfirmDialog(area);
+                                                        setDropdownOpen(null);
+                                                    }}
+                                                    className="block px-4 py-2 text-sm text-red-500 dark:text-red-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left rounded-b-md"
+                                                    data-testid={`area-delete-${area.uid}`}
+                                                >
+                                                    {t('areas.delete', 'Delete')}
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -307,6 +320,11 @@ const Areas: React.FC = () => {
                             }
                         }}
                         area={selectedArea}
+                        readOnly={
+                            selectedArea
+                                ? !canEditArea(selectedArea, currentUserUid)
+                                : false
+                        }
                     />
                 )}
 
