@@ -85,7 +85,7 @@ export type StatusType =
     | 'done'
     | 'archived'
     | 'waiting';
-export type PriorityType = 'low' | 'medium' | 'high' | null | undefined;
+export type PriorityType = 'low' | 'medium' | 'high' | 'critical' | null | undefined;
 export type RecurrenceType =
     | 'none'
     | 'daily'

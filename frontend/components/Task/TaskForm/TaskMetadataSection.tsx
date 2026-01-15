@@ -10,18 +10,22 @@ interface TaskMetadataSectionProps {
     priority: PriorityType;
     dueDate: string;
     taskId?: number;
+    assignedToUserId?: number | null;
     onStatusChange: (value: StatusType) => void;
     onPriorityChange: (value: PriorityType) => void;
     onDueDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onValidationError?: (message: string) => void;
 }
 
 const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
     priority,
     dueDate,
     taskId, // eslint-disable-line @typescript-eslint/no-unused-vars
+    assignedToUserId,
     onStatusChange, // eslint-disable-line @typescript-eslint/no-unused-vars
     onPriorityChange,
     onDueDateChange,
+    onValidationError,
 }) => {
     const { t } = useTranslation();
 
@@ -34,6 +38,9 @@ const TaskMetadataSection: React.FC<TaskMetadataSectionProps> = ({
                 <PriorityDropdown
                     value={priority}
                     onChange={onPriorityChange}
+                    dueDate={dueDate}
+                    assignedToUserId={assignedToUserId}
+                    onValidationError={onValidationError}
                 />
             </div>
             <div className="overflow-visible">

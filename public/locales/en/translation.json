@@ -544,7 +544,8 @@
     "none": "None",
     "low": "Low",
     "medium": "Medium",
-    "high": "High"
+    "high": "High",
+    "critical": "Critical"
   },
   "status": {
     "notStarted": "Not Started",
@@ -600,7 +601,8 @@
     "projectSaveFailed": "Failed to save project.",
     "projectImageTooLarge": "Image is too large. Please choose a file under 10MB.",
     "projectImageUpload": "Failed to upload image. Please try a smaller file or a different format.",
-    "bannerSaveFailed": "Failed to save banner"
+    "bannerSaveFailed": "Failed to save banner",
+    "critical_requires_fields": "Critical tasks must have a due date and assignee"
   },
   "inbox": {
     "title": "Inbox",

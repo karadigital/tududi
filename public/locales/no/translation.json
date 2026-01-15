@@ -532,7 +532,8 @@
     "low": "Lav",
     "medium": "Moderat",
     "high": "Høy",
-    "none": "Ingen"
+    "none": "Ingen",
+    "critical": "Kritisk"
   },
   "status": {
     "notStarted": "Ikke Startet",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Kunne ikke lagre prosjekt.",
     "projectImageTooLarge": "Bildet er for stort. Vennligst velg en fil under 10MB.",
     "projectImageUpload": "Kunne ikke laste opp bildet. Vennligst prøv en mindre fil eller et annet format.",
-    "bannerSaveFailed": "Kunne ikke lagre banner"
+    "bannerSaveFailed": "Kunne ikke lagre banner",
+    "critical_requires_fields": "Kritiske oppgaver må ha en forfallsdato og en ansvarlig"
   },
   "inbox": {
     "title": "Innboks",

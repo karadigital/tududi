@@ -532,7 +532,8 @@
     "low": "منخفض",
     "medium": "متوسط",
     "high": "مرتفع",
-    "none": "لا شيء"
+    "none": "لا شيء",
+    "critical": "حرج"
   },
   "status": {
     "notStarted": "لم يبدأ",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "فشل في حفظ المشروع.",
     "projectImageTooLarge": "الصورة كبيرة جدًا. يرجى اختيار ملف أقل من 10 ميجابايت.",
     "projectImageUpload": "فشل تحميل الصورة. يرجى تجربة ملف أصغر أو تنسيق مختلف.",
-    "bannerSaveFailed": "فشل حفظ اللافتة"
+    "bannerSaveFailed": "فشل حفظ اللافتة",
+    "critical_requires_fields": "يجب أن تحتوي المهام الحرجة على تاريخ استحقاق ومسؤول"
   },
   "inbox": {
     "title": "صندوق الوارد",

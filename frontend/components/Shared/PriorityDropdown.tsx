@@ -6,6 +6,7 @@ import {
     ArrowUpIcon,
     FireIcon,
     XMarkIcon,
+    ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import { PriorityType } from '../../entities/Task';
 import { useTranslation } from 'react-i18next';
@@ -13,11 +14,17 @@ import { useTranslation } from 'react-i18next';
 interface PriorityDropdownProps {
     value: PriorityType;
     onChange: (value: PriorityType) => void;
+    dueDate?: string | null;
+    assignedToUserId?: number | null;
+    onValidationError?: (message: string) => void;
 }
 
 const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
     value,
     onChange,
+    dueDate,
+    assignedToUserId,
+    onValidationError,
 }) => {
     const { t } = useTranslation();
 
@@ -48,6 +55,13 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
             label: t('priority.high', 'High'),
             icon: (
                 <FireIcon className="w-5 h-5 text-red-500 dark:text-red-400" />
+            ),
+        },
+        {
+            value: 'critical',
+            label: t('priority.critical', 'Critical'),
+            icon: (
+                <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-500" />
             ),
         },
     ];
@@ -93,6 +107,21 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
     };
 
     const handleSelect = (priority: PriorityType) => {
+        // Validate critical priority requirements
+        if (priority === 'critical') {
+            if (!dueDate || !assignedToUserId) {
+                const errorMessage = t(
+                    'errors.critical_requires_fields',
+                    'Critical tasks must have a due date and assignee'
+                );
+                if (onValidationError) {
+                    onValidationError(errorMessage);
+                }
+                setIsOpen(false);
+                return; // Block selection
+            }
+        }
+
         onChange(priority);
         setIsOpen(false);
     };
@@ -113,7 +142,7 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
     // Don't default to any value - allow null/undefined
     const normalizedValue =
         typeof value === 'number'
-            ? (['low', 'medium', 'high'][value] as PriorityType)
+            ? (['low', 'medium', 'high', 'critical'][value] as PriorityType)
             : value;
 
     const selectedPriority = priorities.find(

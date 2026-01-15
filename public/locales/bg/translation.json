@@ -532,7 +532,8 @@
     "low": "Нисък",
     "medium": "Среден",
     "high": "Висок",
-    "none": "Няма"
+    "none": "Няма",
+    "critical": "Critical"
   },
   "status": {
     "notStarted": "Не е започнато",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Неуспешно запазване на проекта.",
     "projectImageTooLarge": "Изображението е твърде голямо. Моля, изберете файл под 10MB.",
     "projectImageUpload": "Неуспешно качване на изображение. Моля, опитайте с по-малък файл или различен формат.",
-    "bannerSaveFailed": "Неуспешно запазване на банера"
+    "bannerSaveFailed": "Неуспешно запазване на банера",
+    "critical_requires_fields": "Critical tasks must have a due date and assignee"
   },
   "inbox": {
     "title": "Входяща поща",

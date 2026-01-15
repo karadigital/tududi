@@ -532,7 +532,8 @@
     "low": "Låg",
     "medium": "Medel",
     "high": "Hög",
-    "none": "Ingen"
+    "none": "Ingen",
+    "critical": "Kritisk"
   },
   "status": {
     "notStarted": "Ej påbörjad",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Kunde inte spara projekt.",
     "projectImageTooLarge": "Bilden är för stor. Vänligen välj en fil under 10MB.",
     "projectImageUpload": "Misslyckades med att ladda upp bilden. Vänligen försök med en mindre fil eller ett annat format.",
-    "bannerSaveFailed": "Misslyckades med att spara banner"
+    "bannerSaveFailed": "Misslyckades med att spara banner",
+    "critical_requires_fields": "Kritiska uppgifter måste ha ett förfallodatum och en tilldelad person"
   },
   "inbox": {
     "title": "Inkorg",
