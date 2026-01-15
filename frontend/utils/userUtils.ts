@@ -49,8 +49,7 @@ export const getAreaRole = (
 
     // Support both snake_case (areas_members) and PascalCase (AreasMember) from API
     const role =
-        membership.areas_members?.role ||
-        (membership as any).AreasMember?.role;
+        membership.areas_members?.role || (membership as any).AreasMember?.role;
 
     return role === 'admin' ? 'admin' : 'member';
 };
@@ -58,10 +57,7 @@ export const getAreaRole = (
 /**
  * Check if user can edit an area (is admin or department admin)
  */
-export const canEditArea = (
-    area: Area,
-    userUid: string | null
-): boolean => {
+export const canEditArea = (area: Area, userUid: string | null): boolean => {
     if (!userUid) return false;
 
     const role = getAreaRole(area, userUid);
