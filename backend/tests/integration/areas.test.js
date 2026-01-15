@@ -383,4 +383,108 @@ describe('Areas Routes', () => {
             expect(response.body.error).toBe('Authentication required');
         });
     });
+
+    describe('POST /api/areas/:uid/members (department admin)', () => {
+        let area, deptAdminUser, deptAdminAgent, newMemberUser;
+
+        beforeEach(async () => {
+            // Create an area owned by the test user
+            area = await Area.create({
+                name: 'Work',
+                description: 'Work projects',
+                user_id: user.id,
+            });
+
+            // Create a department admin user
+            deptAdminUser = await createTestUser({
+                email: 'deptadmin@example.com',
+            });
+
+            // Create a user to be added by the department admin
+            newMemberUser = await createTestUser({
+                email: 'newmember@example.com',
+            });
+
+            // Add deptAdminUser as a department admin (role: 'admin')
+            await agent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: deptAdminUser.id,
+                role: 'admin',
+            });
+
+            // Create authenticated agent for dept admin
+            deptAdminAgent = request.agent(app);
+            await deptAdminAgent.post('/api/login').send({
+                email: 'deptadmin@example.com',
+                password: 'password123',
+            });
+        });
+
+        it('should allow department admin to add new members', async () => {
+            const response = await deptAdminAgent
+                .post(`/api/areas/${area.uid}/members`)
+                .send({
+                    user_id: newMemberUser.id,
+                    role: 'member',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.members).toBeDefined();
+
+            // Verify the new member was added
+            const addedMember = response.body.members.find(
+                (m) => m.id === newMemberUser.id
+            );
+            expect(addedMember).toBeDefined();
+            expect(addedMember.AreasMember.role).toBe('member');
+        });
+
+        it('should allow department admin to add new admin members', async () => {
+            const response = await deptAdminAgent
+                .post(`/api/areas/${area.uid}/members`)
+                .send({
+                    user_id: newMemberUser.id,
+                    role: 'admin',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.members).toBeDefined();
+
+            // Verify the new member was added as admin
+            const addedMember = response.body.members.find(
+                (m) => m.id === newMemberUser.id
+            );
+            expect(addedMember).toBeDefined();
+            expect(addedMember.AreasMember.role).toBe('admin');
+        });
+
+        it('should not allow regular member to add new members', async () => {
+            // Create a regular member
+            const regularMemberUser = await createTestUser({
+                email: 'regularmember@example.com',
+            });
+
+            // Add as regular member (not admin)
+            await agent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: regularMemberUser.id,
+                role: 'member',
+            });
+
+            // Create authenticated agent for regular member
+            const regularMemberAgent = request.agent(app);
+            await regularMemberAgent.post('/api/login').send({
+                email: 'regularmember@example.com',
+                password: 'password123',
+            });
+
+            // Try to add a new member as regular member - should fail
+            const response = await regularMemberAgent
+                .post(`/api/areas/${area.uid}/members`)
+                .send({
+                    user_id: newMemberUser.id,
+                    role: 'member',
+                });
+
+            expect(response.status).toBe(403);
+        });
+    });
 });
