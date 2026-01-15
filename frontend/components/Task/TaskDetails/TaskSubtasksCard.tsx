@@ -39,9 +39,9 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     // Render the subtask list content (used in both header and non-header modes)
     const renderSubtasksList = () => (
         <div className="space-y-0.5">
-            {subtasks.map((subtask: Task) => (
+            {subtasks.map((subtask: Task, index) => (
                 <div
-                    key={subtask.id}
+                    key={subtask.id ?? index}
                     className={`rounded-lg shadow-sm bg-white dark:bg-gray-900 border transition-all duration-200 ${
                         subtask.status === 'in_progress' || subtask.status === 1
                             ? 'border-blue-500/60 dark:border-blue-600/60'
@@ -80,31 +80,34 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     );
 
     // Render editing mode content
-    const renderEditingContent = () => (
-        <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border-2 border-blue-500 dark:border-blue-400 p-6">
-            <TaskSubtasksSection
-                parentTaskId={task.id!}
-                subtasks={editedSubtasks}
-                onSubtasksChange={onSubtasksChange}
-            />
-            <div className="flex items-center justify-end mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex space-x-2">
-                    <button
-                        onClick={onSave}
-                        className="px-4 py-2 text-sm bg-green-600 dark:bg-green-500 text-white rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
-                    >
-                        {t('common.save', 'Save')}
-                    </button>
-                    <button
-                        onClick={onCancel}
-                        className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
-                    >
-                        {t('common.cancel', 'Cancel')}
-                    </button>
+    const renderEditingContent = () => {
+        if (!task.id) return null;
+        return (
+            <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border-2 border-blue-500 dark:border-blue-400 p-6">
+                <TaskSubtasksSection
+                    parentTaskId={task.id}
+                    subtasks={editedSubtasks}
+                    onSubtasksChange={onSubtasksChange}
+                />
+                <div className="flex items-center justify-end mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex space-x-2">
+                        <button
+                            onClick={onSave}
+                            className="px-4 py-2 text-sm bg-green-600 dark:bg-green-500 text-white rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                        >
+                            {t('common.save', 'Save')}
+                        </button>
+                        <button
+                            onClick={onCancel}
+                            className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            {t('common.cancel', 'Cancel')}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     // Render empty state for non-header mode
     const renderEmptyState = () => (
