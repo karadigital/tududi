@@ -40,6 +40,7 @@ const {
     validateParentTaskAccess,
     validateDeferUntilAndDueDate,
 } = require('./utils/validation');
+const { validateCriticalPriority } = require('./utils/critical-validation');
 const {
     buildTaskAttributes,
     buildUpdateAttributes,
@@ -357,6 +358,16 @@ router.post('/task', async (req, res) => {
         }
 
         try {
+            validateCriticalPriority({
+                priority: taskAttributes.priority,
+                due_date: taskAttributes.due_date,
+                assigned_to_user_id: req.body.assigned_to_user_id,
+            });
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        try {
             const validProjectId = await validateProjectAccess(
                 project_id,
                 req.currentUser.id
@@ -544,6 +555,19 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
                     : task.due_date;
 
             validateDeferUntilAndDueDate(finalDeferUntil, finalDueDate);
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        try {
+            validateCriticalPriority(
+                {
+                    priority: taskAttributes.priority,
+                    due_date: taskAttributes.due_date,
+                    assigned_to_user_id: req.body.assigned_to_user_id,
+                },
+                task // existing task for fallback values
+            );
         } catch (error) {
             return res.status(400).json({ error: error.message });
         }
