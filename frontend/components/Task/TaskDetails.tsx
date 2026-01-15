@@ -1330,17 +1330,25 @@ const TaskDetails: React.FC = () => {
                                 />
                                 <TaskSubtasksCard
                                     task={task}
-                                    subtasks={task.Subtasks || task.subtasks || []}
+                                    subtasks={
+                                        task.Subtasks || task.subtasks || []
+                                    }
                                     isEditing={false}
                                     editedSubtasks={[]}
                                     onSubtasksChange={() => {}}
-                                    onStartEdit={() => setActivePill('subtasks')}
+                                    onStartEdit={() =>
+                                        setActivePill('subtasks')
+                                    }
                                     onSave={() => {}}
                                     onCancel={() => {}}
-                                    onToggleSubtaskCompletion={handleToggleSubtaskCompletion}
+                                    onToggleSubtaskCompletion={
+                                        handleToggleSubtaskCompletion
+                                    }
                                     showHeader={true}
                                     showFooterLink={true}
-                                    onNavigateToTab={() => setActivePill('subtasks')}
+                                    onNavigateToTab={() =>
+                                        setActivePill('subtasks')
+                                    }
                                 />
                             </div>
 
