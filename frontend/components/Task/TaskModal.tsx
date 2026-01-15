@@ -169,9 +169,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
             setBaseSections({
                 tags: false,
                 project: false,
-                assignee: false,
+                assignee: true,
                 priority: false,
-                dueDate: false,
+                dueDate: true,
                 deferUntil: false,
                 recurrence: task.recurring_parent_uid ? true : false,
                 subtasks: false,
