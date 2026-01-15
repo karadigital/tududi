@@ -44,24 +44,17 @@ const AreaModal: React.FC<AreaModalProps> = ({
     useEffect(() => {
         const loadCurrentUser = async () => {
             const user = getCurrentUser();
-            console.log('AreaModal - Initial user from localStorage:', user);
 
             if (user && !user.uid) {
-                console.log('User missing uid, fetching from server...');
                 try {
                     const response = await fetch(getApiPath('current_user'), {
                         credentials: 'include',
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        console.log('Fetched user from server:', data.user);
                         if (data?.user?.uid) {
                             setCurrentUser(data.user); // Save to localStorage
                             setCurrentUserUid(data.user.uid);
-                            console.log(
-                                'Set currentUserUid to:',
-                                data.user.uid
-                            );
                             return;
                         }
                     }
@@ -72,9 +65,6 @@ const AreaModal: React.FC<AreaModalProps> = ({
 
             if (user?.uid) {
                 setCurrentUserUid(user.uid);
-                console.log('Set currentUserUid from localStorage:', user.uid);
-            } else {
-                console.log('No user UID available');
             }
         };
 
