@@ -70,7 +70,7 @@ const TaskDetails: React.FC = () => {
     const [isEditingSubtasks, setIsEditingSubtasks] = useState(false);
     const [editedSubtasks, setEditedSubtasks] = useState<Task[]>([]);
     const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const actionsMenuRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -517,29 +517,18 @@ const TaskDetails: React.FC = () => {
         loadAttachmentCount();
     }, [task?.uid]);
 
-    // Load current user ID
+    // Load current user UID
     useEffect(() => {
-        const loadCurrentUserId = async () => {
-            try {
-                const currentUser = getCurrentUser();
-                if (currentUser) {
-                    const response = await fetch(getApiPath('users'), {
-                        credentials: 'include',
-                    });
-                    if (response.ok) {
-                        const users = await response.json();
-                        const currentUserData = users.find(
-                            (u: any) => u.uid === currentUser.uid
-                        );
-                        setCurrentUserId(currentUserData?.id || null);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading current user:', error);
+        const loadCurrentUserUid = () => {
+            const currentUser = getCurrentUser();
+            if (currentUser?.uid) {
+                setCurrentUserUid(currentUser.uid);
+            } else {
+                setCurrentUserUid(null);
             }
         };
 
-        loadCurrentUserId();
+        loadCurrentUserUid();
     }, []);
 
     useEffect(() => {
@@ -1393,10 +1382,10 @@ const TaskDetails: React.FC = () => {
                                     onCancel={handleCancelDeferUntilEdit}
                                 />
 
-                                {currentUserId && (
+                                {currentUserUid && (
                                     <TaskSubscribers
                                         task={task}
-                                        currentUserId={currentUserId}
+                                        currentUserUid={currentUserUid}
                                         onUpdate={handleSubscriberUpdate}
                                     />
                                 )}

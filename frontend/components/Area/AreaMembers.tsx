@@ -16,13 +16,13 @@ import { getDefaultHeaders } from '../../utils/authUtils';
 
 interface AreaMembersProps {
     area: Area;
-    currentUserId: number;
+    currentUserUid: string;
     onUpdate?: (members: AreaMember[]) => void;
 }
 
 const AreaMembers: React.FC<AreaMembersProps> = ({
     area,
-    currentUserId,
+    currentUserUid,
     onUpdate,
 }) => {
     const { t } = useTranslation();
@@ -142,7 +142,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
 
     const renderMemberBadge = (member: AreaMember) => (
         <div
-            key={member.id}
+            key={member.uid}
             className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
         >
             {member.avatar_image ? (
@@ -245,18 +245,18 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                             <div className="space-y-2">
                                 {allUsers.map((user) => {
                                     const member = members.find(
-                                        (m) => m.id === user.id
+                                        (m) => m.uid === user.uid
                                     );
                                     const isMember = !!member;
                                     const role = member
                                         ? getRole(member) || 'member'
                                         : 'member';
                                     const isCurrentUser =
-                                        user.id === currentUserId;
+                                        user.uid === currentUserUid;
 
                                     return (
                                         <div
-                                            key={user.id}
+                                            key={user.uid}
                                             className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
                                         >
                                             <div className="flex items-center space-x-3">
