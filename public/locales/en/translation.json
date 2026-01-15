@@ -922,7 +922,6 @@
     "loading": "Loading department details...",
     "error": "Error loading department details.",
     "notFound": "Department not found.",
-    "details": "Department Details",
     "viewProjects": "View Projects in {{name}}"
   },
   "notes": {

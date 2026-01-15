@@ -1,4 +1,5 @@
 import { User } from '../entities/User';
+import { Area } from '../entities/Area';
 
 const CURRENT_USER_KEY = 'currentUser';
 
@@ -31,4 +32,38 @@ export const clearCurrentUser = (): void => {
     } catch (error) {
         console.error('Error clearing current user from localStorage:', error);
     }
+};
+
+/**
+ * Get the current user's role in an area
+ * @returns 'admin' | 'member' | null (null if not a member)
+ */
+export const getAreaRole = (
+    area: Area,
+    userUid: string | null
+): 'admin' | 'member' | null => {
+    if (!userUid || !area.Members) return null;
+
+    const membership = area.Members.find((m) => m.uid === userUid);
+    if (!membership) return null;
+
+    // Support both snake_case (areas_members) and PascalCase (AreasMember) from API
+    const role =
+        membership.areas_members?.role ||
+        (membership as any).AreasMember?.role;
+
+    return role === 'admin' ? 'admin' : 'member';
+};
+
+/**
+ * Check if user can edit an area (is admin or department admin)
+ */
+export const canEditArea = (
+    area: Area,
+    userUid: string | null
+): boolean => {
+    if (!userUid) return false;
+
+    const role = getAreaRole(area, userUid);
+    return role === 'admin';
 };
