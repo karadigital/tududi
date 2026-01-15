@@ -28,6 +28,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { getApiPath } from '../config/paths';
 import { getCurrentUser } from '../utils/userUtils';
+import FilterDropdown from './Shared/FilterDropdown';
+import { filterTasksByRecurrence, RecurrenceFilterValue } from '../utils/taskFilters';
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -70,6 +72,7 @@ const Tasks: React.FC = () => {
     const [includeUnassignedFilter, setIncludeUnassignedFilter] =
         useState(false);
     const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+    const [selectedRecurrence, setSelectedRecurrence] = useState<RecurrenceFilterValue>('all');
 
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -153,6 +156,9 @@ const Tasks: React.FC = () => {
             });
         }
 
+        // Add recurrence filtering
+        filteredTasks = filterTasksByRecurrence(filteredTasks, selectedRecurrence);
+
         if (taskSearchQuery.trim() && !isUpcomingView) {
             const queryLower = taskSearchQuery.toLowerCase();
             filteredTasks = filteredTasks.filter(
@@ -172,6 +178,7 @@ const Tasks: React.FC = () => {
         isUpcomingView,
         selectedAssigneeIds,
         includeUnassignedFilter,
+        selectedRecurrence,
     ]);
 
     if (location.pathname === '/upcoming' && !query.get('type')) {
@@ -236,6 +243,15 @@ const Tasks: React.FC = () => {
         } else {
             setSelectedAssigneeIds([]);
             setIncludeUnassignedFilter(false);
+        }
+    }, [location.search]);
+
+    useEffect(() => {
+        const recurrenceParam = query.get('recurrence') as RecurrenceFilterValue | null;
+        if (recurrenceParam && ['all', 'none', 'daily', 'weekly', 'monthly'].includes(recurrenceParam)) {
+            setSelectedRecurrence(recurrenceParam);
+        } else {
+            setSelectedRecurrence('all');
         }
     }, [location.search]);
 
@@ -650,6 +666,24 @@ const Tasks: React.FC = () => {
         );
     };
 
+    const handleRecurrenceFilterChange = (value: string) => {
+        const params = new URLSearchParams(location.search);
+
+        if (value === 'all') {
+            params.delete('recurrence');
+        } else {
+            params.set('recurrence', value);
+        }
+
+        navigate(
+            {
+                pathname: location.pathname,
+                search: `?${params.toString()}`,
+            },
+            { replace: true }
+        );
+    };
+
     const sortOptions: SortOption[] = [
         { value: 'due_date:asc', label: t('sort.due_date', 'Due Date') },
         { value: 'name:asc', label: t('sort.name', 'Name') },
@@ -657,6 +691,14 @@ const Tasks: React.FC = () => {
         { value: 'status:desc', label: t('sort.status', 'Status') },
         { value: 'created_at:desc', label: t('sort.created_at', 'Created At') },
         { value: 'assigned:asc', label: t('sort.assigned', 'Assignee') },
+    ];
+
+    const recurrenceFilterOptions = [
+        { value: 'all', label: t('tasks.recurrenceFilter.all', 'All tasks') },
+        { value: 'none', label: t('tasks.recurrenceFilter.nonRecurring', 'Non-recurring') },
+        { value: 'daily', label: t('recurrence.daily', 'Daily') },
+        { value: 'weekly', label: t('recurrence.weekly', 'Weekly') },
+        { value: 'monthly', label: t('recurrence.monthly', 'Monthly') },
     ];
 
     const description = getDescription(query, projects, t, location.pathname);
@@ -1066,14 +1108,21 @@ const Tasks: React.FC = () => {
                             </div>
                         )}
 
-                        {/* Assignee Filter */}
-                        <div className="mb-4">
+                        {/* Filters */}
+                        <div className="mb-4 flex flex-wrap gap-2">
                             <MultiSelectUserDropdown
                                 selectedUserIds={selectedAssigneeIds}
                                 includeUnassigned={includeUnassignedFilter}
                                 onChange={handleAssigneeFilterChange}
                                 currentUserUid={currentUserUid}
                                 className="max-w-xs"
+                            />
+                            <FilterDropdown
+                                options={recurrenceFilterOptions}
+                                value={selectedRecurrence}
+                                onChange={handleRecurrenceFilterChange}
+                                placeholder={t('tasks.recurrenceFilter.all', 'All tasks')}
+                                autoWidth
                             />
                         </div>
 
