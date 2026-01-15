@@ -167,7 +167,7 @@ const TaskContentCard: React.FC<TaskContentCardProps> = ({
                     <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
                         <PencilSquareIcon className="h-12 w-12 mb-3 opacity-50" />
                         <span className="text-sm text-center">
-                            {t('task.noNotes', 'Add some content')}
+                            {t('task.noNotes', 'Add some task description')}
                         </span>
                     </div>
                 </div>
