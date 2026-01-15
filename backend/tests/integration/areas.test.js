@@ -487,4 +487,107 @@ describe('Areas Routes', () => {
             expect(response.status).toBe(403);
         });
     });
+
+    describe('PATCH /api/v1/areas/:uid - permission tests', () => {
+        it('should reject PATCH from regular member', async () => {
+            // Create area owner
+            const owner = await createTestUser({
+                email: 'patch-owner@test.com',
+                name: 'Patch Owner',
+            });
+
+            // Create authenticated agent for owner
+            const ownerAgent = request.agent(app);
+            await ownerAgent.post('/api/login').send({
+                email: 'patch-owner@test.com',
+                password: 'password123',
+            });
+
+            // Create regular member
+            const member = await createTestUser({
+                email: 'patch-member@test.com',
+                name: 'Patch Member',
+            });
+
+            // Create authenticated agent for member
+            const memberAgent = request.agent(app);
+            await memberAgent.post('/api/login').send({
+                email: 'patch-member@test.com',
+                password: 'password123',
+            });
+
+            // Create area
+            const area = await Area.create({
+                name: 'Test Area for PATCH',
+                description: 'Original description',
+                user_id: owner.id,
+            });
+
+            // Add member with 'member' role
+            await ownerAgent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: member.id,
+                role: 'member',
+            });
+
+            // Attempt to PATCH as member - should be rejected
+            const response = await memberAgent
+                .patch(`/api/areas/${area.uid}`)
+                .send({ name: 'Hacked Name' });
+
+            expect(response.status).toBe(404); // hasAccess returns 404 for forbidden
+
+            // Verify area was not modified
+            const unchangedArea = await Area.findByPk(area.id);
+            expect(unchangedArea.name).toBe('Test Area for PATCH');
+        });
+
+        it('should allow PATCH from department admin', async () => {
+            // Create area owner
+            const owner = await createTestUser({
+                email: 'patch-owner2@test.com',
+                name: 'Patch Owner 2',
+            });
+
+            // Create authenticated agent for owner
+            const ownerAgent = request.agent(app);
+            await ownerAgent.post('/api/login').send({
+                email: 'patch-owner2@test.com',
+                password: 'password123',
+            });
+
+            // Create department admin
+            const deptAdmin = await createTestUser({
+                email: 'patch-admin@test.com',
+                name: 'Patch Admin',
+            });
+
+            // Create authenticated agent for department admin
+            const deptAdminAgent = request.agent(app);
+            await deptAdminAgent.post('/api/login').send({
+                email: 'patch-admin@test.com',
+                password: 'password123',
+            });
+
+            // Create area
+            const area = await Area.create({
+                name: 'Test Area for Admin PATCH',
+                description: 'Original description',
+                user_id: owner.id,
+            });
+
+            // Add department admin with 'admin' role
+            await ownerAgent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: deptAdmin.id,
+                role: 'admin',
+            });
+
+            // Attempt to PATCH as department admin - should succeed
+            const response = await deptAdminAgent
+                .patch(`/api/areas/${area.uid}`)
+                .send({ name: 'Updated by Admin' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.name).toBe('Updated by Admin');
+        });
+    });
 });
