@@ -10,22 +10,25 @@ function validateCriticalPriority(taskData, existingTask = null) {
     const priority = taskData.priority;
 
     // Check if priority is critical (value 3 or string 'critical')
-    const isCritical = priority === 3 ||
-                       priority === Task.PRIORITY.CRITICAL ||
-                       priority === 'critical';
+    const isCritical =
+        priority === 3 ||
+        priority === Task.PRIORITY.CRITICAL ||
+        priority === 'critical';
 
     if (!isCritical) {
         return; // Not critical, no validation needed
     }
 
     // For updates, merge with existing task data
-    const dueDate = taskData.due_date !== undefined
-        ? taskData.due_date
-        : (existingTask?.due_date || null);
+    const dueDate =
+        taskData.due_date !== undefined
+            ? taskData.due_date
+            : existingTask?.due_date || null;
 
-    const assignedTo = taskData.assigned_to_user_id !== undefined
-        ? taskData.assigned_to_user_id
-        : (existingTask?.assigned_to_user_id || null);
+    const assignedTo =
+        taskData.assigned_to_user_id !== undefined
+            ? taskData.assigned_to_user_id
+            : existingTask?.assigned_to_user_id || null;
 
     if (!dueDate || !assignedTo) {
         throw new Error('Critical tasks must have a due date and assignee');

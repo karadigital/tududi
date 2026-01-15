@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
                 defaultValue: 0,
                 validate: {
                     min: 0,
-                    max: 3,  // Changed from 2 to allow critical (3)
+                    max: 3, // Changed from 2 to allow critical (3)
                 },
             },
             status: {
