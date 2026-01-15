@@ -1328,6 +1328,20 @@ const TaskDetails: React.FC = () => {
                                     content={task.note || ''}
                                     onUpdate={handleContentUpdate}
                                 />
+                                <TaskSubtasksCard
+                                    task={task}
+                                    subtasks={task.Subtasks || task.subtasks || []}
+                                    isEditing={false}
+                                    editedSubtasks={[]}
+                                    onSubtasksChange={() => {}}
+                                    onStartEdit={() => setActivePill('subtasks')}
+                                    onSave={() => {}}
+                                    onCancel={() => {}}
+                                    onToggleSubtaskCompletion={handleToggleSubtaskCompletion}
+                                    showHeader={true}
+                                    showFooterLink={true}
+                                    onNavigateToTab={() => setActivePill('subtasks')}
+                                />
                             </div>
 
                             {/* Right Column - Project and Tags */}
