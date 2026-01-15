@@ -8,13 +8,13 @@ import { getDefaultHeaders } from '../../utils/authUtils';
 
 interface TaskSubscribersProps {
     task: Task;
-    currentUserId: number;
+    currentUserUid: string;
     onUpdate?: (updatedTask: Task) => void;
 }
 
 const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
     task,
-    currentUserId,
+    currentUserUid,
     onUpdate,
 }) => {
     const { t } = useTranslation();
@@ -25,7 +25,7 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
 
     const subscribers = task.Subscribers || [];
     const isCurrentUserSubscribed = subscribers.some(
-        (sub) => sub.id === currentUserId
+        (sub) => sub.uid === currentUserUid
     );
 
     useEffect(() => {
@@ -89,6 +89,21 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
     };
 
     const handleToggleSubscription = () => {
+        // Find current user's id from subscribers or allUsers list
+        const currentUserFromSubscribers = subscribers.find(
+            (sub) => sub.uid === currentUserUid
+        );
+        const currentUserFromAllUsers = allUsers.find(
+            (user) => user.uid === currentUserUid
+        );
+        const currentUserId =
+            currentUserFromSubscribers?.id || currentUserFromAllUsers?.id;
+
+        if (!currentUserId) {
+            console.error('Could not find current user id');
+            return;
+        }
+
         if (isCurrentUserSubscribed) {
             handleUnsubscribe(currentUserId);
         } else {
@@ -128,7 +143,7 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                     <div className="flex flex-wrap gap-2">
                         {subscribers.map((subscriber) => (
                             <div
-                                key={subscriber.id}
+                                key={subscriber.uid}
                                 className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
                             >
                                 {subscriber.avatar_image ? (
@@ -200,14 +215,14 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                             <div className="space-y-2">
                                 {allUsers.map((user) => {
                                     const isSubscribed = subscribers.some(
-                                        (sub) => sub.id === user.id
+                                        (sub) => sub.uid === user.uid
                                     );
                                     const isCurrentUser =
-                                        user.id === currentUserId;
+                                        user.uid === currentUserUid;
 
                                     return (
                                         <div
-                                            key={user.id}
+                                            key={user.uid}
                                             className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
                                         >
                                             <div className="flex items-center space-x-3">

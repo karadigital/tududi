@@ -90,7 +90,7 @@ const ProjectDetails: React.FC = () => {
     const [groupBy, setGroupBy] = useState<'none' | 'status' | 'assignee'>(
         'none'
     );
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
         []
     );
@@ -250,31 +250,16 @@ const ProjectDetails: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const fetchCurrentUserId = async () => {
+        const fetchCurrentUserUid = () => {
             const currentUser = getCurrentUser();
-            if (!currentUser) {
-                setCurrentUserId(null);
-                return;
-            }
-
-            try {
-                const response = await fetch(getApiPath('users'), {
-                    credentials: 'include',
-                });
-                if (response.ok) {
-                    const users = await response.json();
-                    const currentUserData = users.find(
-                        (u: any) => u.uid === currentUser.uid
-                    );
-                    setCurrentUserId(currentUserData?.id || null);
-                }
-            } catch (error) {
-                console.error('Error fetching current user ID:', error);
-                setCurrentUserId(null);
+            if (currentUser?.uid) {
+                setCurrentUserUid(currentUser.uid);
+            } else {
+                setCurrentUserUid(null);
             }
         };
 
-        fetchCurrentUserId();
+        fetchCurrentUserUid();
     }, []);
 
     useEffect(() => {
@@ -1237,7 +1222,7 @@ const ProjectDetails: React.FC = () => {
                                     selectedUserIds={selectedAssigneeIds}
                                     includeUnassigned={includeUnassignedFilter}
                                     onChange={handleAssigneeFilterChange}
-                                    currentUserId={currentUserId}
+                                    currentUserUid={currentUserUid}
                                     className="max-w-xs"
                                 />
                             </div>
@@ -1325,8 +1310,8 @@ const ProjectDetails: React.FC = () => {
                                                     tasks={displayTasks}
                                                     groupedTasks={null}
                                                     groupBy={groupBy}
-                                                    currentUserId={
-                                                        currentUserId
+                                                    currentUserUid={
+                                                        currentUserUid
                                                     }
                                                     onTaskUpdate={
                                                         handleTaskUpdate

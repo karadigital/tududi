@@ -37,7 +37,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
     const [isClosing, setIsClosing] = useState(false);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
 
     const { showSuccessToast, showErrorToast } = useToast();
 
@@ -46,8 +46,8 @@ const AreaModal: React.FC<AreaModalProps> = ({
             const user = getCurrentUser();
             console.log('AreaModal - Initial user from localStorage:', user);
 
-            if (user && !user.id) {
-                console.log('User missing id, fetching from server...');
+            if (user && !user.uid) {
+                console.log('User missing uid, fetching from server...');
                 try {
                     const response = await fetch(getApiPath('current_user'), {
                         credentials: 'include',
@@ -55,10 +55,10 @@ const AreaModal: React.FC<AreaModalProps> = ({
                     if (response.ok) {
                         const data = await response.json();
                         console.log('Fetched user from server:', data.user);
-                        if (data?.user?.id) {
+                        if (data?.user?.uid) {
                             setCurrentUser(data.user); // Save to localStorage
-                            setCurrentUserId(data.user.id);
-                            console.log('Set currentUserId to:', data.user.id);
+                            setCurrentUserUid(data.user.uid);
+                            console.log('Set currentUserUid to:', data.user.uid);
                             return;
                         }
                     }
@@ -67,11 +67,11 @@ const AreaModal: React.FC<AreaModalProps> = ({
                 }
             }
 
-            if (user?.id) {
-                setCurrentUserId(user.id);
-                console.log('Set currentUserId from localStorage:', user.id);
+            if (user?.uid) {
+                setCurrentUserUid(user.uid);
+                console.log('Set currentUserUid from localStorage:', user.uid);
             } else {
-                console.log('No user ID available');
+                console.log('No user UID available');
             }
         };
 
@@ -316,12 +316,12 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                 </div>
 
                                                 {area?.uid &&
-                                                    !!currentUserId && (
+                                                    !!currentUserUid && (
                                                         <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
                                                             <AreaMembers
                                                                 area={formData}
-                                                                currentUserId={
-                                                                    currentUserId
+                                                                currentUserUid={
+                                                                    currentUserUid
                                                                 }
                                                                 onUpdate={
                                                                     handleMembersUpdate
