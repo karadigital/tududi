@@ -303,4 +303,84 @@ describe('Areas Routes', () => {
             expect(response.body.error).toBe('Authentication required');
         });
     });
+
+    describe('PATCH /api/areas/:uid/members/:userId/role', () => {
+        let area, memberUser;
+
+        beforeEach(async () => {
+            // Create an area owned by the test user
+            area = await Area.create({
+                name: 'Work',
+                description: 'Work projects',
+                user_id: user.id,
+            });
+
+            // Create another user to be added as a member
+            memberUser = await createTestUser({
+                email: 'member@example.com',
+            });
+
+            // Add memberUser as a member to the area
+            await agent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: memberUser.id,
+                role: 'member',
+            });
+        });
+
+        it('should update member role from member to admin', async () => {
+            const response = await agent
+                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .send({ role: 'admin' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.members).toBeDefined();
+
+            // Verify the member now has admin role
+            const updatedMember = response.body.members.find(
+                (m) => m.id === memberUser.id
+            );
+            expect(updatedMember.AreasMember.role).toBe('admin');
+        });
+
+        it('should update member role from admin to member', async () => {
+            // First set to admin
+            await agent
+                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .send({ role: 'admin' });
+
+            // Then change back to member
+            const response = await agent
+                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .send({ role: 'member' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.members).toBeDefined();
+
+            // Verify the member now has member role
+            const updatedMember = response.body.members.find(
+                (m) => m.id === memberUser.id
+            );
+            expect(updatedMember.AreasMember.role).toBe('member');
+        });
+
+        it('should reject invalid role values', async () => {
+            const response = await agent
+                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .send({ role: 'invalid' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe(
+                'Invalid role. Must be "member" or "admin"'
+            );
+        });
+
+        it('should require authentication', async () => {
+            const response = await request(app)
+                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .send({ role: 'admin' });
+
+            expect(response.status).toBe(401);
+            expect(response.body.error).toBe('Authentication required');
+        });
+    });
 });

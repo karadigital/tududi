@@ -93,7 +93,7 @@ router.get(
         try {
             const area = await Area.findOne({
                 where: { uid: req.params.uid },
-                attributes: ['uid', 'name', 'description'],
+                attributes: ['id', 'uid', 'name', 'description'],
                 include: [
                     {
                         model: User,
@@ -329,9 +329,9 @@ router.patch(
             const { userId } = req.params;
             const { role } = req.body;
 
-            if (!role || !['member', 'head'].includes(role)) {
+            if (!role || !['member', 'admin'].includes(role)) {
                 return res.status(400).json({
-                    error: 'Invalid role. Must be "member" or "head"',
+                    error: 'Invalid role. Must be "member" or "admin"',
                 });
             }
 
