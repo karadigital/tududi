@@ -18,7 +18,6 @@ import {
 import { createProject } from '../../utils/projectsService';
 import { fetchAttachments } from '../../utils/attachmentsService';
 import { useStore } from '../../store/useStore';
-import { getApiPath } from '../../config/paths';
 import { useToast } from '../Shared/ToastContext';
 import LoadingScreen from '../Shared/LoadingScreen';
 import TaskTimeline from './TaskTimeline';
