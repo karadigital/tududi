@@ -93,7 +93,7 @@ router.get(
         try {
             const area = await Area.findOne({
                 where: { uid: req.params.uid },
-                attributes: ['uid', 'name', 'description'],
+                attributes: ['id', 'uid', 'name', 'description'],
                 include: [
                     {
                         model: User,

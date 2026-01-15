@@ -32,11 +32,14 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Support both snake_case (areas_members) and PascalCase (AreasMember) from API
+    const getRole = (m: AreaMember) => m.areas_members?.role || (m as any).AreasMember?.role;
+
     const departmentAdmins = members.filter(
-        (m) => m.areas_members?.role === 'admin'
+        (m) => getRole(m) === 'admin'
     );
     const regularMembers = members.filter(
-        (m) => m.areas_members?.role === 'member'
+        (m) => getRole(m) === 'member'
     );
 
     useEffect(() => {
@@ -248,8 +251,9 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                         (m) => m.id === user.id
                                     );
                                     const isMember = !!member;
-                                    const role =
-                                        member?.areas_members?.role || 'member';
+                                    const role = member
+                                        ? getRole(member) || 'member'
+                                        : 'member';
                                     const isCurrentUser =
                                         user.id === currentUserId;
 
