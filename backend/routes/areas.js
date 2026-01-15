@@ -1,5 +1,6 @@
 const express = require('express');
-const { Area, User } = require('../models');
+const { Area, User, sequelize } = require('../models');
+const { QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
 const _ = require('lodash');
@@ -8,6 +9,7 @@ const { getAuthenticatedUserId } = require('../utils/request-utils');
 const { hasAccess } = require('../middleware/authorize');
 const areaMembershipService = require('../services/areaMembershipService');
 const { isAdmin } = require('../services/rolesService');
+const { execAction } = require('../services/execAction');
 
 // Middleware to validate UID format before access checks
 const validateUid =
@@ -126,24 +128,55 @@ router.get(
 );
 
 router.post('/areas', async (req, res) => {
+    const transaction = await sequelize.transaction();
     try {
         const userId = getAuthenticatedUserId(req);
-        if (!userId)
+        if (!userId) {
+            await transaction.rollback();
             return res.status(401).json({ error: 'Authentication required' });
+        }
         const { name, description } = req.body;
 
         if (!name || _.isEmpty(name.trim())) {
+            await transaction.rollback();
             return res.status(400).json({ error: 'Area name is required.' });
         }
 
-        const area = await Area.create({
-            name: name.trim(),
-            description: description || '',
-            user_id: userId,
+        const area = await Area.create(
+            {
+                name: name.trim(),
+                description: description || '',
+                user_id: userId,
+            },
+            { transaction }
+        );
+
+        // Add creator as department admin (direct insert within transaction)
+        await sequelize.query(
+            `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
+             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
+            {
+                replacements: { areaId: area.id, userId },
+                type: QueryTypes.INSERT,
+                transaction,
+            }
+        );
+
+        await transaction.commit();
+
+        // Create permission cascade via execAction (after commit so area is visible)
+        await execAction({
+            verb: 'area_member_add',
+            actorUserId: userId,
+            targetUserId: userId,
+            resourceType: 'area',
+            resourceUid: area.uid,
+            accessLevel: 'admin',
         });
 
         res.status(201).json(_.pick(area, ['uid', 'name', 'description']));
     } catch (error) {
+        await transaction.rollback();
         logError('Error creating area:', error);
         res.status(400).json({
             error: 'There was a problem creating the area.',
