@@ -87,10 +87,15 @@ const ProjectDetails: React.FC = () => {
     const [orderBy, setOrderBy] = useState<string>('status:inProgressFirst');
     const [taskSearchQuery, setTaskSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
-    const [groupBy, setGroupBy] = useState<'none' | 'status' | 'assignee'>('none');
+    const [groupBy, setGroupBy] = useState<'none' | 'status' | 'assignee'>(
+        'none'
+    );
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>([]);
-    const [includeUnassignedFilter, setIncludeUnassignedFilter] = useState(false);
+    const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
+        []
+    );
+    const [includeUnassignedFilter, setIncludeUnassignedFilter] =
+        useState(false);
     const {
         isOpen: isModalOpen,
         openModal,
@@ -236,7 +241,11 @@ const ProjectDetails: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        const savedGroupBy = (localStorage.getItem('project_group_by') as 'none' | 'status' | 'assignee') || 'none';
+        const savedGroupBy =
+            (localStorage.getItem('project_group_by') as
+                | 'none'
+                | 'status'
+                | 'assignee') || 'none';
         setGroupBy(savedGroupBy);
     }, []);
 
@@ -249,10 +258,14 @@ const ProjectDetails: React.FC = () => {
             }
 
             try {
-                const response = await fetch(getApiPath('users'), { credentials: 'include' });
+                const response = await fetch(getApiPath('users'), {
+                    credentials: 'include',
+                });
                 if (response.ok) {
                     const users = await response.json();
-                    const currentUserData = users.find((u: any) => u.uid === currentUser.uid);
+                    const currentUserData = users.find(
+                        (u: any) => u.uid === currentUser.uid
+                    );
                     setCurrentUserId(currentUserData?.id || null);
                 }
             } catch (error) {
@@ -796,74 +809,86 @@ const ProjectDetails: React.FC = () => {
         // Sorting (only when not grouping)
         if (groupBy === 'none') {
             const getStatusRank = (status: Task['status']) => {
-            if (status === 'in_progress' || status === 1) return 0;
-            if (status === 'not_started' || status === 0) return 1;
-            if (status === 'waiting' || status === 4) return 2;
-            if (status === 'done' || status === 2) return 3;
-            if (status === 'archived' || status === 3) return 4;
-            return 5;
-        };
-        return [...filteredTasks].sort((a, b) => {
-            if (orderBy === 'status:inProgressFirst') {
-                const rankA = getStatusRank(a.status);
-                const rankB = getStatusRank(b.status);
-                if (rankA !== rankB) return rankA - rankB;
-                const dueA = a.due_date
-                    ? new Date(a.due_date).getTime()
-                    : Number.MAX_SAFE_INTEGER;
-                const dueB = b.due_date
-                    ? new Date(b.due_date).getTime()
-                    : Number.MAX_SAFE_INTEGER;
-                if (dueA !== dueB) return dueA - dueB;
-                return (a.id || 0) - (b.id || 0);
-            }
-            const [field, direction] = orderBy.split(':');
-            const isAsc = direction === 'asc';
-            const compare = (valueA: any, valueB: any) => {
-                if (valueA < valueB) return isAsc ? -1 : 1;
-                if (valueA > valueB) return isAsc ? 1 : -1;
-                return 0;
+                if (status === 'in_progress' || status === 1) return 0;
+                if (status === 'not_started' || status === 0) return 1;
+                if (status === 'waiting' || status === 4) return 2;
+                if (status === 'done' || status === 2) return 3;
+                if (status === 'archived' || status === 3) return 4;
+                return 5;
             };
-            switch (field) {
-                case 'name':
-                    return compare(
-                        a.name?.toLowerCase() || '',
-                        b.name?.toLowerCase() || ''
-                    );
-                case 'due_date':
-                    return compare(
-                        a.due_date ? new Date(a.due_date).getTime() : 0,
-                        b.due_date ? new Date(b.due_date).getTime() : 0
-                    );
-                case 'priority': {
-                    const priorityMap = { high: 2, medium: 1, low: 0 };
-                    const valueA =
-                        typeof a.priority === 'string'
-                            ? priorityMap[a.priority] || 0
-                            : a.priority || 0;
-                    const valueB =
-                        typeof b.priority === 'string'
-                            ? priorityMap[b.priority] || 0
-                            : b.priority || 0;
-                    return compare(valueA, valueB);
+            return [...filteredTasks].sort((a, b) => {
+                if (orderBy === 'status:inProgressFirst') {
+                    const rankA = getStatusRank(a.status);
+                    const rankB = getStatusRank(b.status);
+                    if (rankA !== rankB) return rankA - rankB;
+                    const dueA = a.due_date
+                        ? new Date(a.due_date).getTime()
+                        : Number.MAX_SAFE_INTEGER;
+                    const dueB = b.due_date
+                        ? new Date(b.due_date).getTime()
+                        : Number.MAX_SAFE_INTEGER;
+                    if (dueA !== dueB) return dueA - dueB;
+                    return (a.id || 0) - (b.id || 0);
                 }
-                case 'status':
-                    return compare(
-                        typeof a.status === 'string' ? a.status : a.status || 0,
-                        typeof b.status === 'string' ? b.status : b.status || 0
-                    );
-                case 'created_at':
-                default:
-                    return compare(
-                        a.created_at ? new Date(a.created_at).getTime() : 0,
-                        b.created_at ? new Date(b.created_at).getTime() : 0
-                    );
-            }
+                const [field, direction] = orderBy.split(':');
+                const isAsc = direction === 'asc';
+                const compare = (valueA: any, valueB: any) => {
+                    if (valueA < valueB) return isAsc ? -1 : 1;
+                    if (valueA > valueB) return isAsc ? 1 : -1;
+                    return 0;
+                };
+                switch (field) {
+                    case 'name':
+                        return compare(
+                            a.name?.toLowerCase() || '',
+                            b.name?.toLowerCase() || ''
+                        );
+                    case 'due_date':
+                        return compare(
+                            a.due_date ? new Date(a.due_date).getTime() : 0,
+                            b.due_date ? new Date(b.due_date).getTime() : 0
+                        );
+                    case 'priority': {
+                        const priorityMap = { high: 2, medium: 1, low: 0 };
+                        const valueA =
+                            typeof a.priority === 'string'
+                                ? priorityMap[a.priority] || 0
+                                : a.priority || 0;
+                        const valueB =
+                            typeof b.priority === 'string'
+                                ? priorityMap[b.priority] || 0
+                                : b.priority || 0;
+                        return compare(valueA, valueB);
+                    }
+                    case 'status':
+                        return compare(
+                            typeof a.status === 'string'
+                                ? a.status
+                                : a.status || 0,
+                            typeof b.status === 'string'
+                                ? b.status
+                                : b.status || 0
+                        );
+                    case 'created_at':
+                    default:
+                        return compare(
+                            a.created_at ? new Date(a.created_at).getTime() : 0,
+                            b.created_at ? new Date(b.created_at).getTime() : 0
+                        );
+                }
             });
         }
 
         return filteredTasks;
-    }, [tasks, taskStatusFilter, orderBy, taskSearchQuery, groupBy, selectedAssigneeIds, includeUnassignedFilter]);
+    }, [
+        tasks,
+        taskStatusFilter,
+        orderBy,
+        taskSearchQuery,
+        groupBy,
+        selectedAssigneeIds,
+        includeUnassignedFilter,
+    ]);
 
     const {
         taskStats,
@@ -939,7 +964,9 @@ const ProjectDetails: React.FC = () => {
                         <button
                             key={val}
                             onClick={() => {
-                                setGroupBy(val as 'none' | 'status' | 'assignee');
+                                setGroupBy(
+                                    val as 'none' | 'status' | 'assignee'
+                                );
                                 localStorage.setItem('project_group_by', val);
                             }}
                             className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${
@@ -955,7 +982,9 @@ const ProjectDetails: React.FC = () => {
                                       ? t('tasks.groupByAssignee', 'Assignee')
                                       : t('tasks.grouping.none', 'None')}
                             </span>
-                            {groupBy === val && <CheckIcon className="h-4 w-4" />}
+                            {groupBy === val && (
+                                <CheckIcon className="h-4 w-4" />
+                            )}
                         </button>
                     ))}
                 </div>
@@ -1230,63 +1259,96 @@ const ProjectDetails: React.FC = () => {
                                     >
                                         {groupBy === 'none' ? (
                                             <ProjectTasksSection
-                                            project={project}
-                                            displayTasks={displayTasks}
-                                            showAutoSuggestForm={
-                                                showAutoSuggestForm
-                                            }
-                                            onAddNextAction={
-                                                handleCreateNextAction
-                                            }
-                                            onDismissNextAction={
-                                                handleSkipNextAction
-                                            }
-                                            onTaskCreate={handleTaskCreate}
-                                            onTaskUpdate={handleTaskUpdate}
-                                            onTaskCompletionToggle={
-                                                handleTaskCompletionToggle
-                                            }
-                                            onTaskDelete={handleTaskDelete}
-                                            onToggleToday={handleToggleToday}
-                                            allProjects={allProjects}
-                                            showCompleted={
-                                                taskStatusFilter !== 'active'
-                                            }
-                                            taskSearchQuery={taskSearchQuery}
-                                            t={t}
-                                        />
+                                                project={project}
+                                                displayTasks={displayTasks}
+                                                showAutoSuggestForm={
+                                                    showAutoSuggestForm
+                                                }
+                                                onAddNextAction={
+                                                    handleCreateNextAction
+                                                }
+                                                onDismissNextAction={
+                                                    handleSkipNextAction
+                                                }
+                                                onTaskCreate={handleTaskCreate}
+                                                onTaskUpdate={handleTaskUpdate}
+                                                onTaskCompletionToggle={
+                                                    handleTaskCompletionToggle
+                                                }
+                                                onTaskDelete={handleTaskDelete}
+                                                onToggleToday={
+                                                    handleToggleToday
+                                                }
+                                                allProjects={allProjects}
+                                                showCompleted={
+                                                    taskStatusFilter !==
+                                                    'active'
+                                                }
+                                                taskSearchQuery={
+                                                    taskSearchQuery
+                                                }
+                                                t={t}
+                                            />
                                         ) : (
                                             <div className="space-y-2">
                                                 {showAutoSuggestForm && (
                                                     <div className="transition-all duration-300 ease-in-out opacity-100 transform translate-y-0">
                                                         <AutoSuggestNextActionBox
-                                                            onAddAction={(actionDescription) => {
-                                                                if (project?.id) {
-                                                                    handleCreateNextAction(project.id, actionDescription);
+                                                            onAddAction={(
+                                                                actionDescription
+                                                            ) => {
+                                                                if (
+                                                                    project?.id
+                                                                ) {
+                                                                    handleCreateNextAction(
+                                                                        project.id,
+                                                                        actionDescription
+                                                                    );
                                                                 }
                                                             }}
-                                                            onDismiss={handleSkipNextAction}
+                                                            onDismiss={
+                                                                handleSkipNextAction
+                                                            }
                                                         />
                                                     </div>
                                                 )}
 
                                                 <div className="transition-all duration-300 ease-in-out overflow-visible opacity-100 transform translate-y-0">
-                                                    <NewTask onTaskCreate={handleTaskCreate} />
+                                                    <NewTask
+                                                        onTaskCreate={
+                                                            handleTaskCreate
+                                                        }
+                                                    />
                                                 </div>
 
                                                 <GroupedTaskList
                                                     tasks={displayTasks}
                                                     groupedTasks={null}
                                                     groupBy={groupBy}
-                                                    currentUserId={currentUserId}
-                                                    onTaskUpdate={handleTaskUpdate}
-                                                    onTaskCompletionToggle={handleTaskCompletionToggle}
-                                                    onTaskDelete={handleTaskDelete}
+                                                    currentUserId={
+                                                        currentUserId
+                                                    }
+                                                    onTaskUpdate={
+                                                        handleTaskUpdate
+                                                    }
+                                                    onTaskCompletionToggle={
+                                                        handleTaskCompletionToggle
+                                                    }
+                                                    onTaskDelete={
+                                                        handleTaskDelete
+                                                    }
                                                     projects={allProjects}
                                                     hideProjectName={true}
-                                                    onToggleToday={handleToggleToday}
-                                                    showCompletedTasks={taskStatusFilter !== 'active'}
-                                                    searchQuery={taskSearchQuery}
+                                                    onToggleToday={
+                                                        handleToggleToday
+                                                    }
+                                                    showCompletedTasks={
+                                                        taskStatusFilter !==
+                                                        'active'
+                                                    }
+                                                    searchQuery={
+                                                        taskSearchQuery
+                                                    }
                                                 />
                                             </div>
                                         )}

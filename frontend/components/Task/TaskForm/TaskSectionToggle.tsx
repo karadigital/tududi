@@ -8,6 +8,7 @@ import {
     CalendarIcon,
     ClockIcon,
     PaperClipIcon,
+    UserIcon,
 } from '@heroicons/react/24/outline';
 import { Task } from '../../../entities/Task';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +17,7 @@ interface TaskSectionToggleProps {
     expandedSections: {
         tags: boolean;
         project: boolean;
+        assignee: boolean;
         priority: boolean;
         dueDate: boolean;
         deferUntil: boolean;
@@ -51,6 +53,12 @@ const TaskSectionToggle: React.FC<TaskSectionToggleProps> = ({
             icon: FolderIcon,
             title: t('forms.task.labels.project', 'Project'),
             hasValue: !!formData.project_id,
+        },
+        {
+            key: 'assignee' as const,
+            icon: UserIcon,
+            title: t('forms.task.labels.assignee', 'Assignee'),
+            hasValue: !!formData.assigned_to_user_id,
         },
         {
             key: 'priority' as const,

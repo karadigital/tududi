@@ -9,7 +9,7 @@ import { sortTasksByPriorityDueDateProject } from '../../utils/taskSortUtils';
 interface TodayPlanProps {
     todayPlanTasks: Task[] | undefined;
     projects: Project[];
-    onTaskUpdate: (task: Task) => Promise<void>;
+    onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskDelete: (taskUid: string) => Promise<void>;
     onToggleToday?: (taskId: number, task?: Task) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void; // New prop

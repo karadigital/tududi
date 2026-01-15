@@ -29,7 +29,7 @@ interface TaskHeaderProps {
     onToggleCompletion?: () => void;
     hideProjectName?: boolean;
     onToggleToday?: (taskId: number, task?: Task) => Promise<void>;
-    onTaskUpdate?: (task: Task) => Promise<void>;
+    onTaskUpdate?: (task: Partial<Task>) => Promise<void>;
     isOverdue?: boolean;
     // Props for subtasks functionality
     showSubtasks?: boolean;
@@ -558,13 +558,18 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     <div className="flex items-center">
                                         {task.AssignedTo.avatar_image ? (
                                             <img
-                                                src={getApiPath(task.AssignedTo.avatar_image)}
+                                                src={getApiPath(
+                                                    task.AssignedTo.avatar_image
+                                                )}
                                                 alt={getAssigneeDisplayName()}
                                                 className="h-4 w-4 rounded-full mr-1"
                                             />
                                         ) : (
                                             <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
-                                                {(task.AssignedTo.name?.[0] || task.AssignedTo.email[0]).toUpperCase()}
+                                                {(
+                                                    task.AssignedTo.name?.[0] ||
+                                                    task.AssignedTo.email[0]
+                                                ).toUpperCase()}
                                             </div>
                                         )}
                                         <span>{getAssigneeDisplayName()}</span>
@@ -817,7 +822,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         ) {
                                                             const updatedTask =
                                                                 {
-                                                                    ...task,
+                                                                    id: task.id,
+                                                                    uid: task.uid,
                                                                     status: 'in_progress' as StatusType,
                                                                     today: true,
                                                                 };
@@ -888,7 +894,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         task.id
                                                     ) {
                                                         const updatedTask = {
-                                                            ...task,
+                                                            id: task.id,
+                                                            uid: task.uid,
                                                             status: 'not_started' as StatusType,
                                                         };
                                                         await onTaskUpdate(
@@ -925,7 +932,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         task.id
                                                     ) {
                                                         const updatedTask = {
-                                                            ...task,
+                                                            id: task.id,
+                                                            uid: task.uid,
                                                             status: 'in_progress' as StatusType,
                                                             today: true, // Add to today when setting in progress
                                                         };
@@ -1151,13 +1159,18 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                 <div className="flex items-center">
                                     {task.AssignedTo.avatar_image ? (
                                         <img
-                                            src={getApiPath(task.AssignedTo.avatar_image)}
+                                            src={getApiPath(
+                                                task.AssignedTo.avatar_image
+                                            )}
                                             alt={getAssigneeDisplayName()}
                                             className="h-4 w-4 rounded-full mr-1"
                                         />
                                     ) : (
                                         <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
-                                            {(task.AssignedTo.name?.[0] || task.AssignedTo.email[0]).toUpperCase()}
+                                            {(
+                                                task.AssignedTo.name?.[0] ||
+                                                task.AssignedTo.email[0]
+                                            ).toUpperCase()}
                                         </div>
                                     )}
                                     <UserCircleIcon className="h-3 w-3 mr-1" />
@@ -1218,7 +1231,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                         task.id
                                                     ) {
                                                         const updatedTask = {
-                                                            ...task,
+                                                            id: task.id,
+                                                            uid: task.uid,
                                                             status: 'in_progress' as StatusType,
                                                             today: true,
                                                         };
@@ -1286,7 +1300,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                 setCompletionMenuOpen(null);
                                                 if (onTaskUpdate && task.id) {
                                                     const updatedTask = {
-                                                        ...task,
+                                                        id: task.id,
+                                                        uid: task.uid,
                                                         status: 'not_started' as StatusType,
                                                     };
                                                     await onTaskUpdate(
@@ -1319,7 +1334,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                 setCompletionMenuOpen(null);
                                                 if (onTaskUpdate && task.id) {
                                                     const updatedTask = {
-                                                        ...task,
+                                                        id: task.id,
+                                                        uid: task.uid,
                                                         status: 'in_progress' as StatusType,
                                                         today: true, // Add to today when setting in progress
                                                     };

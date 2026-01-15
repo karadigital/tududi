@@ -772,9 +772,7 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error assigning task:', error);
-            showErrorToast(
-                t('task.assignedError', 'Failed to assign task')
-            );
+            showErrorToast(t('task.assignedError', 'Failed to assign task'));
         }
     };
 
@@ -936,8 +934,9 @@ const TaskDetails: React.FC = () => {
         }
 
         try {
-            const nextStatusPayload: Task = {
-                ...task,
+            const nextStatusPayload: Partial<Task> = {
+                id: task.id,
+                uid: task.uid,
                 status: isCurrentlyInProgress ? 0 : 1,
                 today: isCurrentlyInProgress ? task.today : true,
             };
@@ -960,7 +959,7 @@ const TaskDetails: React.FC = () => {
             }
 
             if (!latestTaskData) {
-                latestTaskData = nextStatusPayload;
+                latestTaskData = task;
             }
 
             await refreshRecurringSetup(latestTaskData);
@@ -983,7 +982,8 @@ const TaskDetails: React.FC = () => {
 
         try {
             await updateTask(task.uid, {
-                ...task,
+                id: task.id,
+                uid: task.uid,
                 status: newStatus,
             });
 
