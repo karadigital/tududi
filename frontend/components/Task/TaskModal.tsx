@@ -819,6 +819,11 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                                                         value,
                                                                 })
                                                             }
+                                                            dueDate={formData.due_date}
+                                                            assignedToUserId={formData.assigned_to_user_id}
+                                                            onValidationError={(message) => {
+                                                                showErrorToast(message);
+                                                            }}
                                                         />
                                                     </div>
                                                 )}
