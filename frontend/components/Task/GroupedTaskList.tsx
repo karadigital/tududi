@@ -14,7 +14,7 @@ interface GroupedTaskListProps {
     tasks: Task[];
     groupedTasks?: GroupedTasks | null;
     groupBy?: 'none' | 'project' | 'assignee' | 'status';
-    currentUserId?: number | null;
+    currentUserUid?: string | null;
     onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
     onTaskCreate?: (task: Task) => void;
@@ -57,7 +57,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     tasks,
     groupedTasks,
     groupBy = 'none',
-    currentUserId,
+    currentUserUid,
     onTaskUpdate,
     onTaskCompletionToggle,
     onTaskDelete,
@@ -311,8 +311,8 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             if (!task.assigned_to_user_id) {
                 unassignedTasks.push(task);
             } else if (
-                currentUserId !== null &&
-                task.assigned_to_user_id === currentUserId
+                currentUserUid !== null &&
+                task.AssignedTo?.uid === currentUserUid
             ) {
                 assignedToMeTasks.push(task);
             } else {
@@ -351,7 +351,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
         }
 
         return groups;
-    }, [groupBy, tasks, showCompletedTasks, searchQuery, currentUserId, t]);
+    }, [groupBy, tasks, showCompletedTasks, searchQuery, currentUserUid, t]);
 
     // Group tasks by status when requested
     const groupedByStatus = useMemo(() => {

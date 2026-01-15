@@ -20,7 +20,7 @@ interface MultiSelectUserDropdownProps {
     selectedUserIds: number[];
     includeUnassigned: boolean;
     onChange: (userIds: number[], includeUnassigned: boolean) => void;
-    currentUserId: number | null;
+    currentUserUid: string | null;
     className?: string;
 }
 
@@ -28,7 +28,7 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
     selectedUserIds,
     includeUnassigned,
     onChange,
-    currentUserId,
+    currentUserUid,
     className = '',
 }) => {
     const { t } = useTranslation();
@@ -82,9 +82,9 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
     const sortedUsers = useMemo(() => {
         return [...users].sort((a, b) => {
             // Current user always first
-            if (currentUserId) {
-                if (a.id === currentUserId) return -1;
-                if (b.id === currentUserId) return 1;
+            if (currentUserUid) {
+                if (a.uid === currentUserUid) return -1;
+                if (b.uid === currentUserUid) return 1;
             }
 
             // Then sort alphabetically by display name
@@ -92,7 +92,7 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
             const nameB = getUserDisplayName(b).toLowerCase();
             return nameA.localeCompare(nameB);
         });
-    }, [users, currentUserId]);
+    }, [users, currentUserUid]);
 
     // Filter users based on search query
     const filteredUsers = useMemo(() => {
@@ -278,11 +278,11 @@ const MultiSelectUserDropdown: React.FC<MultiSelectUserDropdownProps> = ({
                                         const isSelected =
                                             selectedUserIds.includes(user.id);
                                         const isCurrentUser =
-                                            user.id === currentUserId;
+                                            user.uid === currentUserUid;
 
                                         return (
                                             <label
-                                                key={user.id}
+                                                key={user.uid}
                                                 className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                                             >
                                                 <input

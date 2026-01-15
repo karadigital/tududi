@@ -126,7 +126,7 @@ const TasksToday: React.FC = () => {
     const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
     // Assignee filter state
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+    const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
         []
     );
@@ -527,33 +527,18 @@ const TasksToday: React.FC = () => {
         loadHabitsStore();
     }, [loadHabitsStore]);
 
-    // Fetch current user ID for the assignee filter
+    // Fetch current user UID for the assignee filter
     useEffect(() => {
-        const fetchCurrentUserId = async () => {
+        const fetchCurrentUserUid = () => {
             const currentUser = getCurrentUser();
-            if (!currentUser) {
-                setCurrentUserId(null);
-                return;
-            }
-
-            try {
-                const response = await fetch(getApiPath('users'), {
-                    credentials: 'include',
-                });
-                if (response.ok) {
-                    const users = await response.json();
-                    const currentUserData = users.find(
-                        (u: any) => u.uid === currentUser.uid
-                    );
-                    setCurrentUserId(currentUserData?.id || null);
-                }
-            } catch (error) {
-                console.error('Error fetching current user ID:', error);
-                setCurrentUserId(null);
+            if (currentUser?.uid) {
+                setCurrentUserUid(currentUser.uid);
+            } else {
+                setCurrentUserUid(null);
             }
         };
 
-        fetchCurrentUserId();
+        fetchCurrentUserUid();
     }, []);
 
     // Parse assignee filter from URL parameters
@@ -1432,7 +1417,7 @@ const TasksToday: React.FC = () => {
                         selectedUserIds={selectedAssigneeIds}
                         includeUnassigned={includeUnassignedFilter}
                         onChange={handleAssigneeFilterChange}
-                        currentUserId={currentUserId}
+                        currentUserUid={currentUserUid}
                         className="max-w-xs"
                     />
                 </div>
