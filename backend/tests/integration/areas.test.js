@@ -58,6 +58,62 @@ describe('Areas Routes', () => {
             expect(response.status).toBe(400);
             expect(response.body.error).toBe('Area name is required.');
         });
+
+        it('should add creator as admin member', async () => {
+            const areaData = {
+                name: 'Engineering',
+                description: 'Engineering department',
+            };
+
+            const createResponse = await agent
+                .post('/api/areas')
+                .send(areaData);
+            expect(createResponse.status).toBe(201);
+
+            // Fetch the area with members
+            const getResponse = await agent.get(
+                `/api/areas/${createResponse.body.uid}`
+            );
+            expect(getResponse.status).toBe(200);
+
+            // Creator should be in members list with admin role
+            expect(getResponse.body.Members).toBeDefined();
+            expect(getResponse.body.Members.length).toBe(1);
+            expect(getResponse.body.Members[0].id).toBe(user.id);
+            expect(getResponse.body.Members[0].AreasMember.role).toBe('admin');
+        });
+
+        it('should not create area if member insert fails', async () => {
+            // Get count of areas before
+            const { sequelize } = require('../../models');
+            const beforeCount = await require('../../models').Area.count();
+
+            // Mock sequelize.query to fail for areas_members INSERT
+            const originalQuery = sequelize.query.bind(sequelize);
+            sequelize.query = jest.fn().mockImplementation((sql, options) => {
+                if (typeof sql === 'string' && sql.includes('areas_members')) {
+                    return Promise.reject(
+                        new Error('Mock member insert failure')
+                    );
+                }
+                return originalQuery(sql, options);
+            });
+
+            const areaData = {
+                name: 'FailTest',
+                description: 'Should not be created',
+            };
+
+            const response = await agent.post('/api/areas').send(areaData);
+            expect(response.status).toBe(400);
+
+            // Restore original function
+            sequelize.query = originalQuery;
+
+            // Area count should be unchanged (rollback worked)
+            const afterCount = await require('../../models').Area.count();
+            expect(afterCount).toBe(beforeCount);
+        });
     });
 
     describe('GET /api/areas', () => {
