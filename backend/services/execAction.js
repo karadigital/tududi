@@ -9,7 +9,12 @@ const {
     calculateTagPerms,
 } = require('./permissionsCalculators');
 
-async function assertActorCanShare(actorUserId, resourceType, resourceOwnerId, resourceUid = null) {
+async function assertActorCanShare(
+    actorUserId,
+    resourceType,
+    resourceOwnerId,
+    resourceUid = null
+) {
     // Convert numeric userId to string UID for admin check
     let userUid = actorUserId;
     if (typeof actorUserId === 'number' || !isNaN(parseInt(actorUserId))) {
@@ -39,7 +44,11 @@ async function assertActorCanShare(actorUserId, resourceType, resourceOwnerId, r
             }
         );
 
-        if (membership && membership.length > 0 && membership[0].role === 'admin') {
+        if (
+            membership &&
+            membership.length > 0 &&
+            membership[0].role === 'admin'
+        ) {
             return; // Department admin can share within their area
         }
     }
