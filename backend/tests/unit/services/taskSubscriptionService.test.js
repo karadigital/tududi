@@ -425,7 +425,10 @@ describe('taskSubscriptionService', () => {
         });
 
         it('should skip notification to actor (own changes)', async () => {
-            const subscriberWhoIsActor = { ...mockSubscriber, id: actorUser.id };
+            const subscriberWhoIsActor = {
+                ...mockSubscriber,
+                id: actorUser.id,
+            };
             const mockTask = createMockTask({
                 Subscribers: [subscriberWhoIsActor],
                 Owner: mockOwner,
@@ -439,7 +442,10 @@ describe('taskSubscriptionService', () => {
         });
 
         it('should skip notification to owner (separate notification channel)', async () => {
-            const subscriberWhoIsOwner = { ...mockSubscriber, id: mockOwner.id };
+            const subscriberWhoIsOwner = {
+                ...mockSubscriber,
+                id: mockOwner.id,
+            };
             const mockTask = createMockTask({
                 Subscribers: [subscriberWhoIsOwner],
                 Owner: mockOwner,

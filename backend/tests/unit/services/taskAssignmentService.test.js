@@ -277,7 +277,8 @@ describe('taskAssignmentService', () => {
 
             expect(Notification.createNotification).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    message: 'owner@example.com assigned you the task "Test Task"',
+                    message:
+                        'owner@example.com assigned you the task "Test Task"',
                 })
             );
         });
@@ -414,7 +415,9 @@ describe('taskAssignmentService', () => {
         it('should throw error when task is not found', async () => {
             Task.findByPk.mockResolvedValue(null);
 
-            await expect(unassignTask(999, 1)).rejects.toThrow('Task not found');
+            await expect(unassignTask(999, 1)).rejects.toThrow(
+                'Task not found'
+            );
 
             expect(logError).toHaveBeenCalledWith(
                 'Error unassigning task:',
@@ -826,7 +829,11 @@ describe('taskAssignmentService', () => {
             shouldSendInAppNotification.mockReturnValue(true);
             Notification.createNotification.mockResolvedValue({});
 
-            await notifyTaskCompletion(mockTask, assigneeWithoutName, mockOwner);
+            await notifyTaskCompletion(
+                mockTask,
+                assigneeWithoutName,
+                mockOwner
+            );
 
             expect(Notification.createNotification).toHaveBeenCalledWith(
                 expect.objectContaining({
