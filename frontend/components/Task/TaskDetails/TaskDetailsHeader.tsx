@@ -13,13 +13,18 @@ import {
     CalendarDaysIcon,
     CalendarIcon,
     PlayIcon,
-    FireIcon,
-    ArrowUpIcon,
-    ArrowDownIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { Task, PriorityType } from '../../../entities/Task';
 import { formatDateTime } from '../../../utils/dateUtils';
+import {
+    PRIORITIES,
+    normalizePriority,
+    getPriorityIcon as getSharedPriorityIcon,
+    getPriorityIconClass as getSharedPriorityIconClass,
+    getPriorityLabel as getSharedPriorityLabel,
+    canSetCriticalPriority,
+} from '../../../config/priorityConfig';
 
 interface TaskDetailsHeaderProps {
     task: Task;
@@ -222,39 +227,15 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             typeof priorityOverride !== 'undefined'
                 ? priorityOverride
                 : task.priority;
-
-        if (priority === 'low' || priority === 0) {
-            return t('priority.low', 'Low');
-        } else if (priority === 'medium' || priority === 1) {
-            return t('priority.medium', 'Medium');
-        } else if (priority === 'high' || priority === 2) {
-            return t('priority.high', 'High');
-        } else if (priority === 'critical' || priority === 3) {
-            return t('priority.critical', 'Critical');
-        }
-        return t('priority.none', 'None');
+        return getSharedPriorityLabel(priority, t);
     };
 
     const getPriorityButtonClass = () => {
-        const priority = task.priority;
-
-        if (priority === null || priority === undefined) {
-            return 'px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 sm:gap-2 sm:ml-1 border border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60';
-        }
-
+        const config = normalizePriority(task.priority);
         const baseClass =
             'px-2 sm:px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 sm:gap-2 sm:ml-1 border';
 
-        if (priority === 'low' || priority === 0) {
-            return `${baseClass} border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30`;
-        } else if (priority === 'medium' || priority === 1) {
-            return `${baseClass} border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/30`;
-        } else if (priority === 'high' || priority === 2) {
-            return `${baseClass} border-red-500 text-red-600 dark:border-red-400 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30`;
-        } else if (priority === 'critical' || priority === 3) {
-            return `${baseClass} border-red-600 text-red-700 dark:border-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30`;
-        }
-        return `${baseClass} border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60`;
+        return `${baseClass} ${config.borderClass} ${config.textClass} hover:bg-gray-50 dark:hover:bg-gray-800/60`;
     };
 
     const handlePriorityChange = async (newPriority: PriorityType) => {
@@ -269,17 +250,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             typeof priorityOverride !== 'undefined'
                 ? priorityOverride
                 : task.priority;
-
-        if (priority === 'low' || priority === 0) {
-            return ArrowDownIcon;
-        } else if (priority === 'medium' || priority === 1) {
-            return ArrowUpIcon;
-        } else if (priority === 'high' || priority === 2) {
-            return FireIcon;
-        } else if (priority === 'critical' || priority === 3) {
-            return ExclamationTriangleIcon;
-        }
-        return XMarkIcon;
+        return getSharedPriorityIcon(priority);
     };
 
     const getPriorityIconClass = (priorityOverride?: PriorityType) => {
@@ -287,18 +258,14 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             typeof priorityOverride !== 'undefined'
                 ? priorityOverride
                 : task.priority;
-
-        if (priority === 'low' || priority === 0) {
-            return 'text-blue-500 dark:text-blue-400';
-        } else if (priority === 'medium' || priority === 1) {
-            return 'text-yellow-500 dark:text-yellow-400';
-        } else if (priority === 'high' || priority === 2) {
-            return 'text-red-500 dark:text-red-400';
-        } else if (priority === 'critical' || priority === 3) {
-            return 'text-red-600 dark:text-red-500';
-        }
-        return 'text-gray-500 dark:text-gray-400';
+        return getSharedPriorityIconClass(priority);
     };
+
+    const currentPriorityConfig = normalizePriority(task.priority);
+    const canSelectCritical = canSetCriticalPriority(
+        task.due_date,
+        task.assigned_to_user_id
+    );
 
     const formattedUpdatedAt = task.updated_at
         ? formatDateTime(new Date(task.updated_at))
@@ -517,192 +484,82 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                             </button>
                                             {priorityDropdownOpen && (
                                                 <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-48 rounded-lg shadow-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 z-20">
-                                                    <button
-                                                        className={`w-full text-left px-3 py-2 text-sm rounded-t-lg flex items-center gap-2 ${
-                                                            task.priority ===
-                                                                null ||
-                                                            task.priority ===
-                                                                undefined
-                                                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
-                                                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        }`}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handlePriorityChange(
-                                                                null
+                                                    {PRIORITIES.map(
+                                                        (priority, index) => {
+                                                            const isCritical =
+                                                                priority.value ===
+                                                                'critical';
+                                                            const isDisabled =
+                                                                isCritical &&
+                                                                !canSelectCritical;
+                                                            const isSelected =
+                                                                currentPriorityConfig.key ===
+                                                                priority.key;
+                                                            const isFirst =
+                                                                index === 0;
+                                                            const isLast =
+                                                                index ===
+                                                                PRIORITIES.length -
+                                                                    1;
+
+                                                            return (
+                                                                <button
+                                                                    key={
+                                                                        priority.key
+                                                                    }
+                                                                    className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
+                                                                        isFirst
+                                                                            ? 'rounded-t-lg'
+                                                                            : ''
+                                                                    } ${isLast ? 'rounded-b-lg' : ''} ${
+                                                                        isDisabled
+                                                                            ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                                                            : isSelected
+                                                                              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
+                                                                              : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                                    }`}
+                                                                    onClick={(
+                                                                        e
+                                                                    ) => {
+                                                                        e.preventDefault();
+                                                                        e.stopPropagation();
+                                                                        if (
+                                                                            !isDisabled
+                                                                        ) {
+                                                                            handlePriorityChange(
+                                                                                priority.value
+                                                                            );
+                                                                        }
+                                                                    }}
+                                                                    title={
+                                                                        isDisabled
+                                                                            ? t(
+                                                                                  'errors.critical_requires_fields',
+                                                                                  'Critical tasks must have a due date and assignee'
+                                                                              )
+                                                                            : undefined
+                                                                    }
+                                                                >
+                                                                    <priority.icon
+                                                                        className={`h-4 w-4 ${
+                                                                            isDisabled
+                                                                                ? 'text-gray-400 dark:text-gray-500'
+                                                                                : `${priority.iconClass} ${priority.iconClassDark}`
+                                                                        }`}
+                                                                    />
+                                                                    <span className="capitalize flex-1">
+                                                                        {t(
+                                                                            priority.labelKey,
+                                                                            priority.defaultLabel
+                                                                        )}
+                                                                    </span>
+                                                                    {isSelected && (
+                                                                        <CheckIcon className="h-4 w-4" />
+                                                                    )}
+                                                                </button>
                                                             );
-                                                        }}
-                                                    >
-                                                        <XMarkIcon
-                                                            className={`h-4 w-4 ${getPriorityIconClass(null)}`}
-                                                        />
-                                                        <span className="capitalize flex-1">
-                                                            {t(
-                                                                'priority.none',
-                                                                'None'
-                                                            )}
-                                                        </span>
-                                                        {(task.priority ===
-                                                            null ||
-                                                            task.priority ===
-                                                                undefined) && (
-                                                            <CheckIcon className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
-                                                            task.priority ===
-                                                                'low' ||
-                                                            task.priority === 0
-                                                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
-                                                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        }`}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handlePriorityChange(
-                                                                'low'
-                                                            );
-                                                        }}
-                                                    >
-                                                        <ArrowDownIcon
-                                                            className={`h-4 w-4 ${getPriorityIconClass('low')}`}
-                                                        />
-                                                        <span className="capitalize flex-1">
-                                                            {t(
-                                                                'priority.low',
-                                                                'Low'
-                                                            )}
-                                                        </span>
-                                                        {(task.priority ===
-                                                            'low' ||
-                                                            task.priority ===
-                                                                0) && (
-                                                            <CheckIcon className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
-                                                            task.priority ===
-                                                                'medium' ||
-                                                            task.priority === 1
-                                                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
-                                                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        }`}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handlePriorityChange(
-                                                                'medium'
-                                                            );
-                                                        }}
-                                                    >
-                                                        <ArrowUpIcon
-                                                            className={`h-4 w-4 ${getPriorityIconClass('medium')}`}
-                                                        />
-                                                        <span className="capitalize flex-1">
-                                                            {t(
-                                                                'priority.medium',
-                                                                'Medium'
-                                                            )}
-                                                        </span>
-                                                        {(task.priority ===
-                                                            'medium' ||
-                                                            task.priority ===
-                                                                1) && (
-                                                            <CheckIcon className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
-                                                            task.priority ===
-                                                                'high' ||
-                                                            task.priority === 2
-                                                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
-                                                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        }`}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            handlePriorityChange(
-                                                                'high'
-                                                            );
-                                                        }}
-                                                    >
-                                                        <FireIcon
-                                                            className={`h-4 w-4 ${getPriorityIconClass('high')}`}
-                                                        />
-                                                        <span className="capitalize flex-1">
-                                                            {t(
-                                                                'priority.high',
-                                                                'High'
-                                                            )}
-                                                        </span>
-                                                        {(task.priority ===
-                                                            'high' ||
-                                                            task.priority ===
-                                                                2) && (
-                                                            <CheckIcon className="h-4 w-4" />
-                                                        )}
-                                                    </button>
-                                                    <button
-                                                        className={`w-full text-left px-3 py-2 text-sm rounded-b-lg flex items-center gap-2 ${
-                                                            !task.due_date ||
-                                                            !task.assigned_to_user_id
-                                                                ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                                                                : task.priority ===
-                                                                        'critical' ||
-                                                                    task.priority ===
-                                                                        3
-                                                                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
-                                                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                                                        }`}
-                                                        onClick={(e) => {
-                                                            e.preventDefault();
-                                                            e.stopPropagation();
-                                                            if (
-                                                                task.due_date &&
-                                                                task.assigned_to_user_id
-                                                            ) {
-                                                                handlePriorityChange(
-                                                                    'critical'
-                                                                );
-                                                            }
-                                                        }}
-                                                        title={
-                                                            !task.due_date ||
-                                                            !task.assigned_to_user_id
-                                                                ? t(
-                                                                      'errors.critical_requires_fields',
-                                                                      'Critical tasks must have a due date and assignee'
-                                                                  )
-                                                                : undefined
                                                         }
-                                                    >
-                                                        <ExclamationTriangleIcon
-                                                            className={`h-4 w-4 ${
-                                                                !task.due_date ||
-                                                                !task.assigned_to_user_id
-                                                                    ? 'text-gray-400 dark:text-gray-500'
-                                                                    : getPriorityIconClass(
-                                                                          'critical'
-                                                                      )
-                                                            }`}
-                                                        />
-                                                        <span className="capitalize flex-1">
-                                                            {t(
-                                                                'priority.critical',
-                                                                'Critical'
-                                                            )}
-                                                        </span>
-                                                        {(task.priority ===
-                                                            'critical' ||
-                                                            task.priority ===
-                                                                3) && (
-                                                            <CheckIcon className="h-4 w-4" />
-                                                        )}
-                                                    </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>

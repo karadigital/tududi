@@ -202,14 +202,6 @@ export const getStatusLabel = (status: number): string => {
 
 /**
  * Get human-readable priority value
+ * @deprecated Use getPriorityLabelByNumeric from config/priorityConfig.ts instead
  */
-export const getPriorityLabel = (priority: number): string => {
-    const priorityLabels: Record<number, string> = {
-        0: 'Low',
-        1: 'Medium',
-        2: 'High',
-        3: 'Critical',
-    };
-
-    return priorityLabels[priority] || `Priority ${priority}`;
-};
+export { getPriorityLabelByNumeric as getPriorityLabel } from '../config/priorityConfig';

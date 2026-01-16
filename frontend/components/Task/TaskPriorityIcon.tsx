@@ -1,5 +1,10 @@
 import React from 'react';
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import {
+    normalizePriority,
+    getPriorityLabel,
+} from '../../config/priorityConfig';
+import { PriorityType } from '../../entities/Task';
 
 interface TaskPriorityIconProps {
     priority: string | number | undefined;
@@ -15,33 +20,11 @@ const TaskPriorityIcon: React.FC<TaskPriorityIconProps> = ({
     testIdSuffix = '',
 }) => {
     const getPriorityText = () => {
-        // Handle both string and numeric priority values
-        let priorityStr = priority;
-        if (typeof priority === 'number') {
-            const priorityNames = ['low', 'medium', 'high', 'critical'];
-            priorityStr = priorityNames[priority];
+        const config = normalizePriority(priority as PriorityType | number);
+        if (config.value === null) {
+            return ''; // No priority set
         }
-
-        switch (priorityStr) {
-            case 'critical':
-            case 3:
-                return 'Critical priority';
-            case 'high':
-            case 2:
-                return 'High priority';
-            case 'medium':
-            case 1:
-                return 'Medium priority';
-            case 'low':
-            case 0:
-                return 'Low priority';
-            case null:
-            case undefined:
-            case '':
-                return ''; // No priority set
-            default:
-                return ''; // Default to no priority text
-        }
+        return `${getPriorityLabel(priority as PriorityType | number)} priority`;
     };
 
     const getIconColor = () => {
@@ -53,32 +36,11 @@ const TaskPriorityIcon: React.FC<TaskPriorityIconProps> = ({
         )
             return 'text-green-500';
 
-        // Handle both string and numeric priority values
-        let priorityStr = priority;
-        if (typeof priority === 'number') {
-            const priorityNames = ['low', 'medium', 'high', 'critical'];
-            priorityStr = priorityNames[priority];
+        const config = normalizePriority(priority as PriorityType | number);
+        if (config.value === null) {
+            return 'text-gray-300'; // No priority - use gray
         }
-
-        switch (priorityStr) {
-            case 'critical':
-            case 3:
-                return 'text-red-600';
-            case 'high':
-            case 2:
-                return 'text-red-500';
-            case 'medium':
-            case 1:
-                return 'text-yellow-500';
-            case 'low':
-            case 0:
-                return 'text-blue-500';
-            case null:
-            case undefined:
-            case '':
-            default:
-                return 'text-gray-300'; // No priority - use gray
-        }
+        return config.iconClass;
     };
 
     const colorClass = getIconColor();

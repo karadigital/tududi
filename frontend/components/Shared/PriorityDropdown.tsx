@@ -1,15 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import {
-    ChevronDownIcon,
-    ArrowDownIcon,
-    ArrowUpIcon,
-    FireIcon,
-    XMarkIcon,
-    ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PriorityType } from '../../entities/Task';
 import { useTranslation } from 'react-i18next';
+import {
+    PRIORITIES,
+    normalizePriority,
+    canSetCriticalPriority,
+} from '../../config/priorityConfig';
 
 interface PriorityDropdownProps {
     value: PriorityType;
@@ -28,43 +26,6 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
 }) => {
     const { t } = useTranslation();
 
-    const priorities = [
-        {
-            value: null,
-            label: t('priority.none', 'None'),
-            icon: (
-                <XMarkIcon className="w-5 h-5 text-gray-400 dark:text-gray-500" />
-            ),
-        },
-        {
-            value: 'low',
-            label: t('priority.low', 'Low'),
-            icon: (
-                <ArrowDownIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-            ),
-        },
-        {
-            value: 'medium',
-            label: t('priority.medium', 'Medium'),
-            icon: (
-                <ArrowUpIcon className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-            ),
-        },
-        {
-            value: 'high',
-            label: t('priority.high', 'High'),
-            icon: (
-                <FireIcon className="w-5 h-5 text-red-500 dark:text-red-400" />
-            ),
-        },
-        {
-            value: 'critical',
-            label: t('priority.critical', 'Critical'),
-            icon: (
-                <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-500" />
-            ),
-        },
-    ];
     const [isOpen, setIsOpen] = useState(false);
     const [position, setPosition] = useState({
         top: 0,
@@ -109,7 +70,7 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
     const handleSelect = (priority: PriorityType) => {
         // Validate critical priority requirements
         if (priority === 'critical') {
-            if (!dueDate || !assignedToUserId) {
+            if (!canSetCriticalPriority(dueDate, assignedToUserId)) {
                 const errorMessage = t(
                     'errors.critical_requires_fields',
                     'Critical tasks must have a due date and assignee'
@@ -138,16 +99,7 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
         };
     }, [isOpen]);
 
-    // Convert numeric priority to string if needed
-    // Don't default to any value - allow null/undefined
-    const normalizedValue =
-        typeof value === 'number'
-            ? (['low', 'medium', 'high', 'critical'][value] as PriorityType)
-            : value;
-
-    const selectedPriority = priorities.find(
-        (p) => p.value === (normalizedValue || null)
-    );
+    const selectedConfig = normalizePriority(value);
 
     return (
         <div
@@ -162,11 +114,14 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
                 onClick={handleToggle}
             >
                 <span className="flex items-center space-x-2">
-                    {selectedPriority ? selectedPriority.icon : ''}
+                    <selectedConfig.icon
+                        className={`w-5 h-5 ${selectedConfig.iconClass} ${selectedConfig.iconClassDark}`}
+                    />
                     <span>
-                        {selectedPriority
-                            ? selectedPriority.label
-                            : t('forms.priority', 'Select Priority')}
+                        {t(
+                            selectedConfig.labelKey,
+                            selectedConfig.defaultLabel
+                        )}
                     </span>
                 </span>
                 <ChevronDownIcon className="w-5 h-5 text-gray-500 dark:text-gray-300" />
@@ -183,18 +138,28 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
                             width: `${position.width}px`,
                         }}
                     >
-                        {priorities.map((priority) => (
+                        {PRIORITIES.map((priority) => (
                             <button
-                                key={priority.value}
+                                key={priority.key}
                                 onClick={() =>
                                     handleSelect(priority.value as PriorityType)
                                 }
                                 className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600 w-full first:rounded-t-md last:rounded-b-md"
-                                data-testid={`priority-option-${priority.value || 'none'}`}
-                                title={priority.label}
+                                data-testid={`priority-option-${priority.key}`}
+                                title={t(
+                                    priority.labelKey,
+                                    priority.defaultLabel
+                                )}
                             >
-                                {priority.icon}
-                                <span>{priority.label}</span>
+                                <priority.icon
+                                    className={`w-5 h-5 ${priority.iconClass} ${priority.iconClassDark}`}
+                                />
+                                <span>
+                                    {t(
+                                        priority.labelKey,
+                                        priority.defaultLabel
+                                    )}
+                                </span>
                             </button>
                         ))}
                     </div>,
