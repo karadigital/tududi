@@ -652,11 +652,11 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                             !task.assigned_to_user_id
                                                                 ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                                                                 : task.priority ===
-                                                                      'critical' ||
-                                                                  task.priority ===
-                                                                      3
-                                                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
-                                                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                                        'critical' ||
+                                                                    task.priority ===
+                                                                        3
+                                                                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
+                                                                  : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                                                         }`}
                                                         onClick={(e) => {
                                                             e.preventDefault();
