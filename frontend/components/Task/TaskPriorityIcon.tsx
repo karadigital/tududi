@@ -18,11 +18,14 @@ const TaskPriorityIcon: React.FC<TaskPriorityIconProps> = ({
         // Handle both string and numeric priority values
         let priorityStr = priority;
         if (typeof priority === 'number') {
-            const priorityNames = ['low', 'medium', 'high'];
+            const priorityNames = ['low', 'medium', 'high', 'critical'];
             priorityStr = priorityNames[priority];
         }
 
         switch (priorityStr) {
+            case 'critical':
+            case 3:
+                return 'Critical priority';
             case 'high':
             case 2:
                 return 'High priority';
@@ -53,11 +56,14 @@ const TaskPriorityIcon: React.FC<TaskPriorityIconProps> = ({
         // Handle both string and numeric priority values
         let priorityStr = priority;
         if (typeof priority === 'number') {
-            const priorityNames = ['low', 'medium', 'high'];
+            const priorityNames = ['low', 'medium', 'high', 'critical'];
             priorityStr = priorityNames[priority];
         }
 
         switch (priorityStr) {
+            case 'critical':
+            case 3:
+                return 'text-red-600';
             case 'high':
             case 2:
                 return 'text-red-500';
