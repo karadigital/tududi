@@ -610,9 +610,15 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                                                                 priority: value,
                                                             })
                                                         }
-                                                        dueDate={formData.due_date_at}
-                                                        onValidationError={(message) => {
-                                                            showErrorToast(message);
+                                                        dueDate={
+                                                            formData.due_date_at
+                                                        }
+                                                        onValidationError={(
+                                                            message
+                                                        ) => {
+                                                            showErrorToast(
+                                                                message
+                                                            );
                                                         }}
                                                     />
                                                 </div>

@@ -208,6 +208,7 @@ export const getPriorityLabel = (priority: number): string => {
         0: 'Low',
         1: 'Medium',
         2: 'High',
+        3: 'Critical',
     };
 
     return priorityLabels[priority] || `Priority ${priority}`;
