@@ -1340,6 +1340,7 @@ const TaskDetails: React.FC = () => {
                     onQuickStatusToggle={handleQuickStatusToggle}
                     attachmentCount={attachmentCount}
                     subtasksCount={subtasks.length}
+                    onValidationError={showErrorToast}
                 />
 
                 {/* Content - Full width layout */}

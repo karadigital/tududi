@@ -41,6 +41,7 @@ interface TaskDetailsHeaderProps {
     onQuickStatusToggle?: () => void;
     attachmentCount?: number;
     subtasksCount?: number;
+    onValidationError?: (message: string) => void;
 }
 
 const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
@@ -63,6 +64,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
     onQuickStatusToggle,
     attachmentCount = 0,
     subtasksCount = 0,
+    onValidationError,
 }) => {
     const { t } = useTranslation();
     const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -657,6 +659,21 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                         onClick={(e) => {
                                                             e.preventDefault();
                                                             e.stopPropagation();
+                                                            if (
+                                                                !task.due_date ||
+                                                                !task.assigned_to_user_id
+                                                            ) {
+                                                                onValidationError?.(
+                                                                    t(
+                                                                        'errors.critical_requires_fields',
+                                                                        'Critical tasks must have a due date and assignee'
+                                                                    )
+                                                                );
+                                                                setPriorityDropdownOpen(
+                                                                    false
+                                                                );
+                                                                return;
+                                                            }
                                                             handlePriorityChange(
                                                                 'critical'
                                                             );
