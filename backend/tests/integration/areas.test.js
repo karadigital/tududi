@@ -84,35 +84,29 @@ describe('Areas Routes', () => {
         });
 
         it('should not create area if member insert fails', async () => {
-            // Get count of areas before
-            const { sequelize } = require('../../models');
+            const { AreasMember } = require('../../models');
             const beforeCount = await require('../../models').Area.count();
 
-            // Mock sequelize.query to fail for areas_members INSERT
-            const originalQuery = sequelize.query.bind(sequelize);
-            sequelize.query = jest.fn().mockImplementation((sql, options) => {
-                if (typeof sql === 'string' && sql.includes('areas_members')) {
-                    return Promise.reject(
-                        new Error('Mock member insert failure')
-                    );
-                }
-                return originalQuery(sql, options);
-            });
+            // Mock AreasMember.bulkCreate to fail (used by addMember association method internally)
+            const bulkCreateSpy = jest
+                .spyOn(AreasMember, 'bulkCreate')
+                .mockRejectedValue(new Error('Mock member insert failure'));
 
-            const areaData = {
-                name: 'FailTest',
-                description: 'Should not be created',
-            };
+            try {
+                const areaData = {
+                    name: 'FailTest',
+                    description: 'Should not be created',
+                };
 
-            const response = await agent.post('/api/areas').send(areaData);
-            expect(response.status).toBe(400);
+                const response = await agent.post('/api/areas').send(areaData);
+                expect(response.status).toBe(400);
 
-            // Restore original function
-            sequelize.query = originalQuery;
-
-            // Area count should be unchanged (rollback worked)
-            const afterCount = await require('../../models').Area.count();
-            expect(afterCount).toBe(beforeCount);
+                // Area count should be unchanged (rollback worked)
+                const afterCount = await require('../../models').Area.count();
+                expect(afterCount).toBe(beforeCount);
+            } finally {
+                bulkCreateSpy.mockRestore();
+            }
         });
     });
 

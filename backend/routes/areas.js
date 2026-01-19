@@ -128,19 +128,20 @@ router.get(
 );
 
 router.post('/areas', async (req, res) => {
-    const transaction = await sequelize.transaction();
+    let transaction;
     try {
         const userId = getAuthenticatedUserId(req);
         if (!userId) {
-            await transaction.rollback();
             return res.status(401).json({ error: 'Authentication required' });
         }
         const { name, description } = req.body;
 
         if (!name || _.isEmpty(name.trim())) {
-            await transaction.rollback();
             return res.status(400).json({ error: 'Area name is required.' });
         }
+
+        // Start transaction AFTER validation
+        transaction = await sequelize.transaction();
 
         const area = await Area.create(
             {
@@ -151,32 +152,33 @@ router.post('/areas', async (req, res) => {
             { transaction }
         );
 
-        // Add creator as department admin (direct insert within transaction)
-        await sequelize.query(
-            `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
-            {
-                replacements: { areaId: area.id, userId },
-                type: QueryTypes.INSERT,
-                transaction,
-            }
-        );
+        // Add creator as department admin using Sequelize association
+        await area.addMember(userId, {
+            through: { role: 'admin' },
+            transaction,
+        });
 
         await transaction.commit();
+        transaction = null; // Mark as committed
 
         // Create permission cascade via execAction (after commit so area is visible)
-        await execAction({
-            verb: 'area_member_add',
-            actorUserId: userId,
-            targetUserId: userId,
-            resourceType: 'area',
-            resourceUid: area.uid,
-            accessLevel: 'admin',
-        });
+        // This is non-critical - log errors but don't fail the request
+        try {
+            await execAction({
+                verb: 'area_member_add',
+                actorUserId: userId,
+                targetUserId: userId,
+                resourceType: 'area',
+                resourceUid: area.uid,
+                accessLevel: 'admin',
+            });
+        } catch (execError) {
+            logError('execAction failed after area creation:', execError);
+        }
 
         res.status(201).json(_.pick(area, ['uid', 'name', 'description']));
     } catch (error) {
-        await transaction.rollback();
+        if (transaction) await transaction.rollback();
         logError('Error creating area:', error);
         res.status(400).json({
             error: 'There was a problem creating the area.',
