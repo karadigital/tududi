@@ -533,7 +533,7 @@
     "medium": "Srednja",
     "high": "Visoka",
     "none": "Noben",
-    "critical": "Critical"
+    "critical": "Kritično"
   },
   "status": {
     "notStarted": "Ni začeto",
@@ -590,7 +590,7 @@
     "projectImageTooLarge": "Slika je prevelika. Izberite datoteko, ki je manjša od 10 MB.",
     "projectImageUpload": "Nalaganje slike ni uspelo. Poskusite z manjšo datoteko ali drugačnim formatom.",
     "bannerSaveFailed": "Shranjevanje bannerja ni uspelo",
-    "critical_requires_fields": "Critical tasks must have a due date and assignee"
+    "critical_requires_fields": "Kritične naloge morajo imeti rok in odgovorno osebo"
   },
   "inbox": {
     "title": "Prejeto",

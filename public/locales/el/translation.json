@@ -304,7 +304,7 @@
     "projectImageTooLarge": "Η εικόνα είναι πολύ μεγάλη. Παρακαλώ επιλέξτε ένα αρχείο κάτω από 10MB.",
     "projectImageUpload": "Αποτυχία ανέβασμα εικόνας. Παρακαλώ δοκιμάστε ένα μικρότερο αρχείο ή διαφορετική μορφή.",
     "bannerSaveFailed": "Αποτυχία αποθήκευσης πανό",
-    "critical_requires_fields": "Critical tasks must have a due date and assignee"
+    "critical_requires_fields": "Οι κρίσιμες εργασίες πρέπει να έχουν ημερομηνία λήξης και υπεύθυνο"
   },
   "dropdown": {
     "createNew": "Δημιουργία Νέου",
@@ -648,7 +648,7 @@
     "medium": "Μεσαία",
     "high": "Υψηλή",
     "none": "Καμία",
-    "critical": "Critical"
+    "critical": "Κρίσιμη"
   },
   "status": {
     "notStarted": "Δεν Ξεκίνησε",

@@ -82,5 +82,18 @@ describe('Critical Priority Validation', () => {
                 validateCriticalPriority({ priority: 3 }, existingTask)
             ).toThrow('Critical tasks must have a due date and assignee');
         });
+
+        it('should throw when PATCH clears due_date on existing critical task without sending priority', () => {
+            const existingTask = {
+                priority: 'critical',
+                due_date: '2026-01-15',
+                assigned_to_user_id: 1,
+            };
+
+            // PATCH only sends due_date: null, priority is omitted but existing task is critical
+            expect(() =>
+                validateCriticalPriority({ due_date: null }, existingTask)
+            ).toThrow('Critical tasks must have a due date and assignee');
+        });
     });
 });
