@@ -448,15 +448,14 @@ const TaskItem: React.FC<TaskItemProps> = ({
     const getPriorityBorderClass = () => {
         let priority = task.priority;
         if (typeof priority === 'number') {
-            const priorityNames: Array<'low' | 'medium' | 'high'> = [
-                'low',
-                'medium',
-                'high',
-            ];
+            const priorityNames: Array<'low' | 'medium' | 'high' | 'critical'> =
+                ['low', 'medium', 'high', 'critical'];
             priority = priorityNames[priority] || undefined;
         }
 
         switch (priority) {
+            case 'critical':
+                return 'border-2 border-red-600';
             case 'high':
                 return 'border-l-4 border-l-red-500';
             case 'medium':
