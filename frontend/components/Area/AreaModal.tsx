@@ -84,10 +84,12 @@ const AreaModal: React.FC<AreaModalProps> = ({
             });
             setError(null);
 
-            // Auto-focus on the name input when modal opens
-            setTimeout(() => {
-                nameInputRef.current?.focus();
-            }, 100);
+            // Auto-focus on the name input when modal opens (skip in read-only mode)
+            if (!readOnly) {
+                setTimeout(() => {
+                    nameInputRef.current?.focus();
+                }, 100);
+            }
         }
     }, [isOpen, area]);
 

@@ -3,7 +3,7 @@ const app = require('../../app');
 const { Area, User } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 
-describe('Areas Routes', () => {
+describe('/api/areas', () => {
     let user, agent;
 
     beforeEach(async () => {

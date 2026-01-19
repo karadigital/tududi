@@ -913,6 +913,7 @@
     "title": "Departments",
     "edit": "Edit",
     "details": "Details",
+    "delete": "Delete",
     "noAreasFound": "No departments found",
     "editAreaAriaLabel": "Edit department {{name}}",
     "editAreaTitle": "Edit department {{name}}",
