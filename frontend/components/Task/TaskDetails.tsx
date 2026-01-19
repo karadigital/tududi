@@ -1252,6 +1252,19 @@ const TaskDetails: React.FC = () => {
     const handlePriorityUpdate = async (priority: any) => {
         if (!task?.uid) return;
 
+        // Validate critical priority requirements
+        if (priority === 'critical') {
+            if (!task.due_date || !task.assigned_to_user_id) {
+                showErrorToast(
+                    t(
+                        'errors.critical_requires_fields',
+                        'Critical tasks must have a due date and assignee'
+                    )
+                );
+                return;
+            }
+        }
+
         try {
             await updateTask(task.uid, {
                 ...task,

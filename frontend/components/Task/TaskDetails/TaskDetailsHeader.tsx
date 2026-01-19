@@ -229,6 +229,8 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             return t('priority.medium', 'Medium');
         } else if (priority === 'high' || priority === 2) {
             return t('priority.high', 'High');
+        } else if (priority === 'critical' || priority === 3) {
+            return t('priority.critical', 'Critical');
         }
         return t('priority.none', 'None');
     };
@@ -249,6 +251,8 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             return `${baseClass} border-yellow-500 text-yellow-600 dark:border-yellow-400 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/30`;
         } else if (priority === 'high' || priority === 2) {
             return `${baseClass} border-red-500 text-red-600 dark:border-red-400 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30`;
+        } else if (priority === 'critical' || priority === 3) {
+            return `${baseClass} border-red-600 text-red-700 dark:border-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30`;
         }
         return `${baseClass} border-gray-300 text-gray-700 dark:border-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/60`;
     };
@@ -272,6 +276,8 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             return ArrowUpIcon;
         } else if (priority === 'high' || priority === 2) {
             return FireIcon;
+        } else if (priority === 'critical' || priority === 3) {
+            return ExclamationTriangleIcon;
         }
         return XMarkIcon;
     };
@@ -288,6 +294,8 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
             return 'text-yellow-500 dark:text-yellow-400';
         } else if (priority === 'high' || priority === 2) {
             return 'text-red-500 dark:text-red-400';
+        } else if (priority === 'critical' || priority === 3) {
+            return 'text-red-600 dark:text-red-500';
         }
         return 'text-gray-500 dark:text-gray-400';
     };
@@ -607,7 +615,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                         )}
                                                     </button>
                                                     <button
-                                                        className={`w-full text-left px-3 py-2 text-sm rounded-b-lg flex items-center gap-2 ${
+                                                        className={`w-full text-left px-3 py-2 text-sm flex items-center gap-2 ${
                                                             task.priority ===
                                                                 'high' ||
                                                             task.priority === 2
@@ -635,6 +643,38 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                             'high' ||
                                                             task.priority ===
                                                                 2) && (
+                                                            <CheckIcon className="h-4 w-4" />
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        className={`w-full text-left px-3 py-2 text-sm rounded-b-lg flex items-center gap-2 ${
+                                                            task.priority ===
+                                                                'critical' ||
+                                                            task.priority === 3
+                                                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-medium'
+                                                                : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                        }`}
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            handlePriorityChange(
+                                                                'critical'
+                                                            );
+                                                        }}
+                                                    >
+                                                        <ExclamationTriangleIcon
+                                                            className={`h-4 w-4 ${getPriorityIconClass('critical')}`}
+                                                        />
+                                                        <span className="capitalize flex-1">
+                                                            {t(
+                                                                'priority.critical',
+                                                                'Critical'
+                                                            )}
+                                                        </span>
+                                                        {(task.priority ===
+                                                            'critical' ||
+                                                            task.priority ===
+                                                                3) && (
                                                             <CheckIcon className="h-4 w-4" />
                                                         )}
                                                     </button>
