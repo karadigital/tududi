@@ -28,8 +28,11 @@ import {
 } from '@heroicons/react/24/outline';
 import { getApiPath } from '../config/paths';
 import { getCurrentUser } from '../utils/userUtils';
-import FilterDropdown from './Shared/FilterDropdown';
-import { filterTasksByRecurrence, RecurrenceFilterValue } from '../utils/taskFilters';
+import MultiSelectFilterDropdown from './Shared/MultiSelectFilterDropdown';
+import {
+    filterTasksByRecurrence,
+    RecurrenceFilterValue,
+} from '../utils/taskFilters';
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -72,7 +75,9 @@ const Tasks: React.FC = () => {
     const [includeUnassignedFilter, setIncludeUnassignedFilter] =
         useState(false);
     const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
-    const [selectedRecurrence, setSelectedRecurrence] = useState<RecurrenceFilterValue>('all');
+    const [selectedRecurrenceFilters, setSelectedRecurrenceFilters] = useState<
+        RecurrenceFilterValue[]
+    >([]);
 
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -157,7 +162,10 @@ const Tasks: React.FC = () => {
         }
 
         // Add recurrence filtering
-        filteredTasks = filterTasksByRecurrence(filteredTasks, selectedRecurrence);
+        filteredTasks = filterTasksByRecurrence(
+            filteredTasks,
+            selectedRecurrenceFilters
+        );
 
         if (taskSearchQuery.trim() && !isUpcomingView) {
             const queryLower = taskSearchQuery.toLowerCase();
@@ -178,7 +186,7 @@ const Tasks: React.FC = () => {
         isUpcomingView,
         selectedAssigneeIds,
         includeUnassignedFilter,
-        selectedRecurrence,
+        selectedRecurrenceFilters,
     ]);
 
     if (location.pathname === '/upcoming' && !query.get('type')) {
@@ -247,11 +255,16 @@ const Tasks: React.FC = () => {
     }, [location.search]);
 
     useEffect(() => {
-        const recurrenceParam = query.get('recurrence') as RecurrenceFilterValue | null;
-        if (recurrenceParam && ['all', 'none', 'daily', 'weekly', 'monthly'].includes(recurrenceParam)) {
-            setSelectedRecurrence(recurrenceParam);
+        const recurrenceParam = query.get('recurrence');
+        if (recurrenceParam) {
+            const values = recurrenceParam
+                .split(',')
+                .filter((v): v is RecurrenceFilterValue =>
+                    ['none', 'daily', 'weekly', 'monthly'].includes(v)
+                );
+            setSelectedRecurrenceFilters(values);
         } else {
-            setSelectedRecurrence('all');
+            setSelectedRecurrenceFilters([]);
         }
     }, [location.search]);
 
@@ -666,13 +679,13 @@ const Tasks: React.FC = () => {
         );
     };
 
-    const handleRecurrenceFilterChange = (value: string) => {
+    const handleRecurrenceFilterChange = (values: string[]) => {
         const params = new URLSearchParams(location.search);
 
-        if (value === 'all') {
+        if (values.length === 0) {
             params.delete('recurrence');
         } else {
-            params.set('recurrence', value);
+            params.set('recurrence', values.join(','));
         }
 
         navigate(
@@ -694,8 +707,10 @@ const Tasks: React.FC = () => {
     ];
 
     const recurrenceFilterOptions = [
-        { value: 'all', label: t('tasks.recurrenceFilter.all', 'All tasks') },
-        { value: 'none', label: t('tasks.recurrenceFilter.nonRecurring', 'Non-recurring') },
+        {
+            value: 'none',
+            label: t('tasks.recurrenceFilter.nonRecurring', 'Non-recurring'),
+        },
         { value: 'daily', label: t('recurrence.daily', 'Daily') },
         { value: 'weekly', label: t('recurrence.weekly', 'Weekly') },
         { value: 'monthly', label: t('recurrence.monthly', 'Monthly') },
@@ -1117,12 +1132,18 @@ const Tasks: React.FC = () => {
                                 currentUserUid={currentUserUid}
                                 className="max-w-xs"
                             />
-                            <FilterDropdown
+                            <MultiSelectFilterDropdown
                                 options={recurrenceFilterOptions}
-                                value={selectedRecurrence}
+                                selectedValues={selectedRecurrenceFilters}
                                 onChange={handleRecurrenceFilterChange}
-                                placeholder={t('tasks.recurrenceFilter.all', 'All tasks')}
-                                autoWidth
+                                emptyLabel={t(
+                                    'tasks.recurrenceFilter.all',
+                                    'All recurrence types'
+                                )}
+                                selectedLabel={t(
+                                    'tasks.recurrenceFilter.selected',
+                                    '{{count}} types selected'
+                                )}
                             />
                         </div>
 

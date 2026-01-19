@@ -38,6 +38,11 @@ import NextTaskSuggestion from './NextTaskSuggestion';
 import WeeklyCompletionChart from './WeeklyCompletionChart';
 import TodaySettingsDropdown from './TodaySettingsDropdown';
 import MultiSelectUserDropdown from '../Shared/MultiSelectUserDropdown';
+import MultiSelectFilterDropdown from '../Shared/MultiSelectFilterDropdown';
+import {
+    filterTasksByRecurrence,
+    RecurrenceFilterValue,
+} from '../../utils/taskFilters';
 
 const filterNonHabitTasks = (tasks: Task[] = []) =>
     tasks.filter((task) => !task.habit_mode);
@@ -132,6 +137,11 @@ const TasksToday: React.FC = () => {
     );
     const [includeUnassignedFilter, setIncludeUnassignedFilter] =
         useState(false);
+
+    // Recurrence filter state
+    const [selectedRecurrenceFilters, setSelectedRecurrenceFilters] = useState<
+        RecurrenceFilterValue[]
+    >([]);
 
     // Metrics from the API (counts) + task arrays stored locally
     const [metrics, setMetrics] = useState<
@@ -300,6 +310,36 @@ const TasksToday: React.FC = () => {
             { replace: true }
         );
     };
+
+    // Handle recurrence filter changes
+    const handleRecurrenceFilterChange = (values: string[]) => {
+        const params = new URLSearchParams(location.search);
+
+        if (values.length === 0) {
+            params.delete('recurrence');
+        } else {
+            params.set('recurrence', values.join(','));
+        }
+
+        navigate(
+            {
+                pathname: location.pathname,
+                search: `?${params.toString()}`,
+            },
+            { replace: true }
+        );
+    };
+
+    // Recurrence filter options
+    const recurrenceFilterOptions = [
+        {
+            value: 'none',
+            label: t('tasks.recurrenceFilter.nonRecurring', 'Non-recurring'),
+        },
+        { value: 'daily', label: t('recurrence.daily', 'Daily') },
+        { value: 'weekly', label: t('recurrence.weekly', 'Weekly') },
+        { value: 'monthly', label: t('recurrence.monthly', 'Monthly') },
+    ];
 
     // Filter tasks by assignee
     const filterTasksByAssignee = (tasks: Task[]): Task[] => {
@@ -564,6 +604,22 @@ const TasksToday: React.FC = () => {
         } else {
             setSelectedAssigneeIds([]);
             setIncludeUnassignedFilter(false);
+        }
+    }, [location.search]);
+
+    // Parse recurrence filter from URL parameters
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const recurrenceParam = params.get('recurrence');
+        if (recurrenceParam) {
+            const values = recurrenceParam
+                .split(',')
+                .filter((v): v is RecurrenceFilterValue =>
+                    ['none', 'daily', 'weekly', 'monthly'].includes(v)
+                );
+            setSelectedRecurrenceFilters(values);
+        } else {
+            setSelectedRecurrenceFilters([]);
         }
     }, [location.search]);
 
@@ -1286,14 +1342,35 @@ const TasksToday: React.FC = () => {
 
     const todayProgress = getTodayProgress();
 
-    // Apply assignee filter to all task sections
-    const overdueTasksFiltered = filterTasksByAssignee(sortedOverdueTasks);
-    const dueTodayTasksFiltered = filterTasksByAssignee(sortedDueTodayTasks);
-    const todayPlanTasksFiltered = filterTasksByAssignee(plannedTasks);
-    const suggestedTasksFiltered = filterTasksByAssignee(sortedSuggestedTasks);
-    const completedTasksFiltered = filterTasksByAssignee(completedTasksList);
-    const plannedHabitsFiltered = filterTasksByAssignee(plannedHabits);
-    const completedHabitsFiltered = filterTasksByAssignee(completedHabits);
+    // Apply assignee and recurrence filters to all task sections
+    const overdueTasksFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(sortedOverdueTasks),
+        selectedRecurrenceFilters
+    );
+    const dueTodayTasksFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(sortedDueTodayTasks),
+        selectedRecurrenceFilters
+    );
+    const todayPlanTasksFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(plannedTasks),
+        selectedRecurrenceFilters
+    );
+    const suggestedTasksFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(sortedSuggestedTasks),
+        selectedRecurrenceFilters
+    );
+    const completedTasksFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(completedTasksList),
+        selectedRecurrenceFilters
+    );
+    const plannedHabitsFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(plannedHabits),
+        selectedRecurrenceFilters
+    );
+    const completedHabitsFiltered = filterTasksByRecurrence(
+        filterTasksByAssignee(completedHabits),
+        selectedRecurrenceFilters
+    );
 
     // Calculate filtered counts
     const totalOverdueFiltered = overdueTasksFiltered.length;
@@ -1411,14 +1488,27 @@ const TasksToday: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Assignee Filter */}
-                <div className="mb-6">
+                {/* Filters */}
+                <div className="mb-6 flex flex-wrap gap-2">
                     <MultiSelectUserDropdown
                         selectedUserIds={selectedAssigneeIds}
                         includeUnassigned={includeUnassignedFilter}
                         onChange={handleAssigneeFilterChange}
                         currentUserUid={currentUserUid}
                         className="max-w-xs"
+                    />
+                    <MultiSelectFilterDropdown
+                        options={recurrenceFilterOptions}
+                        selectedValues={selectedRecurrenceFilters}
+                        onChange={handleRecurrenceFilterChange}
+                        emptyLabel={t(
+                            'tasks.recurrenceFilter.all',
+                            'All recurrence types'
+                        )}
+                        selectedLabel={t(
+                            'tasks.recurrenceFilter.selected',
+                            '{{count}} types selected'
+                        )}
                     />
                 </div>
 

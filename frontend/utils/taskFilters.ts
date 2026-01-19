@@ -1,10 +1,10 @@
 import { Task } from '../entities/Task';
 
-export type RecurrenceFilterValue = 'all' | 'none' | 'daily' | 'weekly' | 'monthly';
+export type RecurrenceFilterValue = 'none' | 'daily' | 'weekly' | 'monthly';
 
 /**
  * Filters tasks by recurrence type.
- * - 'all': no filtering
+ * - Empty array: no filtering (show all tasks)
  * - 'none': tasks with recurrence_type === 'none'
  * - 'daily': tasks with recurrence_type === 'daily'
  * - 'weekly': tasks with recurrence_type === 'weekly'
@@ -12,17 +12,20 @@ export type RecurrenceFilterValue = 'all' | 'none' | 'daily' | 'weekly' | 'month
  */
 export function filterTasksByRecurrence(
     tasks: Task[],
-    recurrenceFilter: RecurrenceFilterValue
+    recurrenceFilters: RecurrenceFilterValue[]
 ): Task[] {
-    if (recurrenceFilter === 'all') {
-        return tasks;
+    if (recurrenceFilters.length === 0) {
+        return tasks; // Empty = show all
     }
 
-    if (recurrenceFilter === 'monthly') {
-        return tasks.filter((task) =>
-            task.recurrence_type?.startsWith('monthly')
-        );
-    }
-
-    return tasks.filter((task) => task.recurrence_type === recurrenceFilter);
+    return tasks.filter((task) => {
+        for (const filter of recurrenceFilters) {
+            if (filter === 'monthly') {
+                if (task.recurrence_type?.startsWith('monthly')) return true;
+            } else if (task.recurrence_type === filter) {
+                return true;
+            }
+        }
+        return false;
+    });
 }
