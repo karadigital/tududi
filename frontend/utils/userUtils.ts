@@ -55,10 +55,17 @@ export const getAreaRole = (
 };
 
 /**
- * Check if user can edit an area (is admin or department admin)
+ * Check if user can edit an area (is system admin, area owner, or department admin)
  */
-export const canEditArea = (area: Area, userUid: string | null): boolean => {
+export const canEditArea = (
+    area: Area,
+    userUid: string | null,
+    isSystemAdmin?: boolean
+): boolean => {
     if (!userUid) return false;
+
+    // System admins can edit any area
+    if (isSystemAdmin) return true;
 
     const role = getAreaRole(area, userUid);
     return role === 'admin';

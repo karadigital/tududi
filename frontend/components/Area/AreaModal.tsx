@@ -321,8 +321,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                 </div>
 
                                                 {area?.uid &&
-                                                    !!currentUserUid &&
-                                                    !readOnly && (
+                                                    !!currentUserUid && (
                                                         <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700 pt-4">
                                                             <AreaMembers
                                                                 area={formData}
@@ -331,6 +330,9 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                                 }
                                                                 onUpdate={
                                                                     handleMembersUpdate
+                                                                }
+                                                                readOnly={
+                                                                    readOnly
                                                                 }
                                                             />
                                                         </div>

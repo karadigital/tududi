@@ -13,6 +13,7 @@ import {
     deleteArea,
 } from '../utils/areasService';
 import { Area } from '../entities/Area';
+import { User } from '../entities/User';
 import { getCurrentUser, canEditArea } from '../utils/userUtils';
 
 const Areas: React.FC = () => {
@@ -32,15 +33,15 @@ const Areas: React.FC = () => {
         useState<boolean>(false);
     const [areaToDelete, setAreaToDelete] = useState<Area | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
-    const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const justOpenedRef = useRef<boolean>(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const user = getCurrentUser();
-        if (user?.uid) {
-            setCurrentUserUid(user.uid);
+        if (user) {
+            setCurrentUser(user);
         }
     }, []);
 
@@ -272,7 +273,8 @@ const Areas: React.FC = () => {
                                             >
                                                 {canEditArea(
                                                     area,
-                                                    currentUserUid
+                                                    currentUser?.uid ?? null,
+                                                    currentUser?.is_admin
                                                 )
                                                     ? t('areas.edit', 'Edit')
                                                     : t(
@@ -282,7 +284,8 @@ const Areas: React.FC = () => {
                                             </button>
                                             {canEditArea(
                                                 area,
-                                                currentUserUid
+                                                currentUser?.uid ?? null,
+                                                currentUser?.is_admin
                                             ) && (
                                                 <button
                                                     onClick={(e) => {
@@ -334,7 +337,11 @@ const Areas: React.FC = () => {
                         area={selectedArea}
                         readOnly={
                             selectedArea
-                                ? !canEditArea(selectedArea, currentUserUid)
+                                ? !canEditArea(
+                                      selectedArea,
+                                      currentUser?.uid ?? null,
+                                      currentUser?.is_admin
+                                  )
                                 : false
                         }
                     />
