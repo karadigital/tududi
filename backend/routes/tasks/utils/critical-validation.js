@@ -7,9 +7,10 @@ const { Task } = require('../../../models');
  * @throws {Error} If critical priority requirements not met
  */
 function validateCriticalPriority(taskData, existingTask = null) {
-    const priority = taskData.priority !== undefined
-        ? taskData.priority
-        : existingTask?.priority;
+    const priority =
+        taskData.priority !== undefined
+            ? taskData.priority
+            : existingTask?.priority;
 
     // Check if priority is critical (value 3 or string 'critical')
     const isCritical =
