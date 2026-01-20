@@ -30,11 +30,11 @@ const SidebarAreas: React.FC<SidebarAreasProps> = ({
                 {/* "AREAS" Title with Add Button */}
                 <li
                     className={`flex justify-between items-center px-4 py-2 rounded-md uppercase text-xs tracking-wider cursor-pointer hover:text-black dark:hover:text-white ${isActiveArea(
-                        '/areas'
+                        '/departments'
                     )}`}
                     onClick={() =>
                         handleNavClick(
-                            '/areas',
+                            '/departments',
                             'Areas',
                             <Squares2X2Icon className="h-5 w-5 mr-2" />
                         )

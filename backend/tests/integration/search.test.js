@@ -206,7 +206,7 @@ describe('Universal Search Routes', () => {
                 expect(types.has('Task')).toBe(true);
                 expect(types.has('Project')).toBe(true);
                 expect(types.has('Note')).toBe(false);
-                expect(types.has('Area')).toBe(false);
+                expect(types.has('Department')).toBe(false);
             });
 
             it('should filter by Note only', async () => {

@@ -22,6 +22,7 @@ interface SearchResultsProps {
 }
 
 interface SearchResult {
+    // Note: API returns 'Area' but we display as 'Department' for user consistency
     type: 'Task' | 'Project' | 'Area' | 'Note' | 'Tag';
     id: number;
     uid?: string;
@@ -31,6 +32,11 @@ interface SearchResult {
     priority?: string;
     status?: string;
 }
+
+// Map API types to display names for user-facing consistency
+const typeDisplayNames: Record<string, string> = {
+    Area: 'Department',
+};
 
 const SearchResults: React.FC<SearchResultsProps> = ({
     searchQuery,
@@ -114,6 +120,9 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         }
     };
 
+    // Get display name for type (maps API types to user-facing names)
+    const getDisplayType = (type: string) => typeDisplayNames[type] || type;
+
     const createSlug = (name: string): string => {
         return name
             .toLowerCase()
@@ -146,7 +155,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                 break;
             }
             case 'Area': {
-                // Areas navigate to projects page with area filter
+                // Areas/Departments navigate to projects page with area filter
                 if (result.uid) {
                     const slug = createSlug(result.name);
                     navigate(`/projects?area=${result.uid}-${slug}`);
@@ -233,7 +242,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     data-testid={`search-results-${type.toLowerCase()}`}
                 >
                     <div className="px-4 py-2 bg-gray-50 dark:bg-gray-900 text-xs font-semibold text-gray-600 dark:text-gray-400">
-                        {type}s
+                        {getDisplayType(type)}s
                     </div>
                     <div>
                         {typeResults.map((result) => (

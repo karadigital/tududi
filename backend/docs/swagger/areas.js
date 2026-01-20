@@ -1,6 +1,6 @@
 /**
  * @swagger
- * /api/areas:
+ * /api/departments:
  *   get:
  *     summary: Get all areas
  *     tags: [Areas]
@@ -28,7 +28,7 @@
 
 /**
  * @swagger
- * /api/areas/{uid}:
+ * /api/departments/{uid}:
  *   get:
  *     summary: Get an area by UID
  *     tags: [Areas]
@@ -65,7 +65,7 @@
 
 /**
  * @swagger
- * /api/areas:
+ * /api/departments:
  *   post:
  *     summary: Create a new area
  *     tags: [Areas]
@@ -110,7 +110,7 @@
 
 /**
  * @swagger
- * /api/areas/{uid}:
+ * /api/departments/{uid}:
  *   patch:
  *     summary: Update an area
  *     tags: [Areas]
@@ -160,7 +160,7 @@
 
 /**
  * @swagger
- * /api/areas/{uid}:
+ * /api/departments/{uid}:
  *   delete:
  *     summary: Delete an area
  *     tags: [Areas]

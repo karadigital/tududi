@@ -3,7 +3,7 @@ const app = require('../../app');
 const { Area, User } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 
-describe('/api/areas', () => {
+describe('/api/departments', () => {
     let user, agent;
 
     beforeEach(async () => {
@@ -19,14 +19,16 @@ describe('/api/areas', () => {
         });
     });
 
-    describe('POST /api/areas', () => {
+    describe('POST /api/departments', () => {
         it('should create a new area', async () => {
             const areaData = {
                 name: 'Work',
                 description: 'Work related projects',
             };
 
-            const response = await agent.post('/api/areas').send(areaData);
+            const response = await agent
+                .post('/api/departments')
+                .send(areaData);
 
             expect(response.status).toBe(201);
             expect(response.body.name).toBe(areaData.name);
@@ -41,7 +43,7 @@ describe('/api/areas', () => {
             };
 
             const response = await request(app)
-                .post('/api/areas')
+                .post('/api/departments')
                 .send(areaData);
 
             expect(response.status).toBe(401);
@@ -53,7 +55,9 @@ describe('/api/areas', () => {
                 description: 'Area without name',
             };
 
-            const response = await agent.post('/api/areas').send(areaData);
+            const response = await agent
+                .post('/api/departments')
+                .send(areaData);
 
             expect(response.status).toBe(400);
             expect(response.body.error).toBe('Area name is required.');
@@ -66,13 +70,13 @@ describe('/api/areas', () => {
             };
 
             const createResponse = await agent
-                .post('/api/areas')
+                .post('/api/departments')
                 .send(areaData);
             expect(createResponse.status).toBe(201);
 
             // Fetch the area with members
             const getResponse = await agent.get(
-                `/api/areas/${createResponse.body.uid}`
+                `/api/departments/${createResponse.body.uid}`
             );
             expect(getResponse.status).toBe(200);
 
@@ -98,7 +102,9 @@ describe('/api/areas', () => {
                     description: 'Should not be created',
                 };
 
-                const response = await agent.post('/api/areas').send(areaData);
+                const response = await agent
+                    .post('/api/departments')
+                    .send(areaData);
                 expect(response.status).toBe(400);
 
                 // Area count should be unchanged (rollback worked)
@@ -110,7 +116,7 @@ describe('/api/areas', () => {
         });
     });
 
-    describe('GET /api/areas', () => {
+    describe('GET /api/departments', () => {
         let area1, area2;
 
         beforeEach(async () => {
@@ -128,7 +134,7 @@ describe('/api/areas', () => {
         });
 
         it('should get all user areas', async () => {
-            const response = await agent.get('/api/areas');
+            const response = await agent.get('/api/departments');
 
             expect(response.status).toBe(200);
             expect(response.body).toHaveLength(2);
@@ -137,7 +143,7 @@ describe('/api/areas', () => {
         });
 
         it('should order areas by name', async () => {
-            const response = await agent.get('/api/areas');
+            const response = await agent.get('/api/departments');
 
             expect(response.status).toBe(200);
             expect(response.body[0].name).toBe('Personal'); // P comes before W
@@ -145,14 +151,14 @@ describe('/api/areas', () => {
         });
 
         it('should require authentication', async () => {
-            const response = await request(app).get('/api/areas');
+            const response = await request(app).get('/api/departments');
 
             expect(response.status).toBe(401);
             expect(response.body.error).toBe('Authentication required');
         });
     });
 
-    describe('GET /api/areas/:uid', () => {
+    describe('GET /api/departments/:uid', () => {
         let area;
 
         beforeEach(async () => {
@@ -164,7 +170,7 @@ describe('/api/areas', () => {
         });
 
         it('should get area by uid', async () => {
-            const response = await agent.get(`/api/areas/${area.uid}`);
+            const response = await agent.get(`/api/departments/${area.uid}`);
 
             expect(response.status).toBe(200);
             expect(response.body.uid).toBe(area.uid);
@@ -173,14 +179,16 @@ describe('/api/areas', () => {
         });
 
         it('should return 400 for invalid uid format', async () => {
-            const response = await agent.get('/api/areas/invalid-uid');
+            const response = await agent.get('/api/departments/invalid-uid');
 
             expect(response.status).toBe(400);
             expect(response.body.error).toBe('Invalid UID');
         });
 
         it('should return 404 for non-existent area', async () => {
-            const response = await agent.get('/api/areas/abcd1234efghijk');
+            const response = await agent.get(
+                '/api/departments/abcd1234efghijk'
+            );
 
             expect(response.status).toBe(404);
             expect(response.body.error).toBe(
@@ -200,7 +208,9 @@ describe('/api/areas', () => {
                 user_id: otherUser.id,
             });
 
-            const response = await agent.get(`/api/areas/${otherArea.uid}`);
+            const response = await agent.get(
+                `/api/departments/${otherArea.uid}`
+            );
 
             expect(response.status).toBe(404);
             expect(response.body.error).toBe(
@@ -209,14 +219,16 @@ describe('/api/areas', () => {
         });
 
         it('should require authentication', async () => {
-            const response = await request(app).get(`/api/areas/${area.uid}`);
+            const response = await request(app).get(
+                `/api/departments/${area.uid}`
+            );
 
             expect(response.status).toBe(401);
             expect(response.body.error).toBe('Authentication required');
         });
     });
 
-    describe('PATCH /api/areas/:uid', () => {
+    describe('PATCH /api/departments/:uid', () => {
         let area;
 
         beforeEach(async () => {
@@ -234,7 +246,7 @@ describe('/api/areas', () => {
             };
 
             const response = await agent
-                .patch(`/api/areas/${area.uid}`)
+                .patch(`/api/departments/${area.uid}`)
                 .send(updateData);
 
             expect(response.status).toBe(200);
@@ -244,7 +256,7 @@ describe('/api/areas', () => {
 
         it('should return 400 for invalid uid format', async () => {
             const response = await agent
-                .patch('/api/areas/invalid-uid')
+                .patch('/api/departments/invalid-uid')
                 .send({ name: 'Updated' });
 
             expect(response.status).toBe(400);
@@ -253,7 +265,7 @@ describe('/api/areas', () => {
 
         it('should return 404 for non-existent area', async () => {
             const response = await agent
-                .patch('/api/areas/abcd1234efghijk')
+                .patch('/api/departments/abcd1234efghijk')
                 .send({ name: 'Updated' });
 
             expect(response.status).toBe(404);
@@ -273,7 +285,7 @@ describe('/api/areas', () => {
             });
 
             const response = await agent
-                .patch(`/api/areas/${otherArea.uid}`)
+                .patch(`/api/departments/${otherArea.uid}`)
                 .send({ name: 'Updated' });
 
             expect(response.status).toBe(404);
@@ -282,7 +294,7 @@ describe('/api/areas', () => {
 
         it('should require authentication', async () => {
             const response = await request(app)
-                .patch(`/api/areas/${area.uid}`)
+                .patch(`/api/departments/${area.uid}`)
                 .send({ name: 'Updated' });
 
             expect(response.status).toBe(401);
@@ -290,7 +302,7 @@ describe('/api/areas', () => {
         });
     });
 
-    describe('DELETE /api/areas/:uid', () => {
+    describe('DELETE /api/departments/:uid', () => {
         let area;
 
         beforeEach(async () => {
@@ -301,7 +313,7 @@ describe('/api/areas', () => {
         });
 
         it('should delete area', async () => {
-            const response = await agent.delete(`/api/areas/${area.uid}`);
+            const response = await agent.delete(`/api/departments/${area.uid}`);
 
             expect(response.status).toBe(204);
 
@@ -313,14 +325,16 @@ describe('/api/areas', () => {
         });
 
         it('should return 400 for invalid uid format', async () => {
-            const response = await agent.delete('/api/areas/invalid-uid');
+            const response = await agent.delete('/api/departments/invalid-uid');
 
             expect(response.status).toBe(400);
             expect(response.body.error).toBe('Invalid UID');
         });
 
         it('should return 404 for non-existent area', async () => {
-            const response = await agent.delete('/api/areas/abcd1234efghijk');
+            const response = await agent.delete(
+                '/api/departments/abcd1234efghijk'
+            );
 
             expect(response.status).toBe(404);
             expect(response.body.error).toBe('Area not found.');
@@ -338,7 +352,9 @@ describe('/api/areas', () => {
                 user_id: otherUser.id,
             });
 
-            const response = await agent.delete(`/api/areas/${otherArea.uid}`);
+            const response = await agent.delete(
+                `/api/departments/${otherArea.uid}`
+            );
 
             expect(response.status).toBe(404);
             expect(response.body.error).toBe('Area not found.');
@@ -346,7 +362,7 @@ describe('/api/areas', () => {
 
         it('should require authentication', async () => {
             const response = await request(app).delete(
-                `/api/areas/${area.uid}`
+                `/api/departments/${area.uid}`
             );
 
             expect(response.status).toBe(401);
@@ -354,7 +370,7 @@ describe('/api/areas', () => {
         });
     });
 
-    describe('PATCH /api/areas/:uid/members/:userId/role', () => {
+    describe('PATCH /api/departments/:uid/members/:userId/role', () => {
         let area, memberUser;
 
         beforeEach(async () => {
@@ -371,7 +387,7 @@ describe('/api/areas', () => {
             });
 
             // Add memberUser as a member to the area
-            await agent.post(`/api/areas/${area.uid}/members`).send({
+            await agent.post(`/api/departments/${area.uid}/members`).send({
                 user_id: memberUser.id,
                 role: 'member',
             });
@@ -379,7 +395,9 @@ describe('/api/areas', () => {
 
         it('should update member role from member to admin', async () => {
             const response = await agent
-                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .patch(
+                    `/api/departments/${area.uid}/members/${memberUser.id}/role`
+                )
                 .send({ role: 'admin' });
 
             expect(response.status).toBe(200);
@@ -395,12 +413,16 @@ describe('/api/areas', () => {
         it('should update member role from admin to member', async () => {
             // First set to admin
             await agent
-                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .patch(
+                    `/api/departments/${area.uid}/members/${memberUser.id}/role`
+                )
                 .send({ role: 'admin' });
 
             // Then change back to member
             const response = await agent
-                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .patch(
+                    `/api/departments/${area.uid}/members/${memberUser.id}/role`
+                )
                 .send({ role: 'member' });
 
             expect(response.status).toBe(200);
@@ -415,7 +437,9 @@ describe('/api/areas', () => {
 
         it('should reject invalid role values', async () => {
             const response = await agent
-                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .patch(
+                    `/api/departments/${area.uid}/members/${memberUser.id}/role`
+                )
                 .send({ role: 'invalid' });
 
             expect(response.status).toBe(400);
@@ -426,7 +450,9 @@ describe('/api/areas', () => {
 
         it('should require authentication', async () => {
             const response = await request(app)
-                .patch(`/api/areas/${area.uid}/members/${memberUser.id}/role`)
+                .patch(
+                    `/api/departments/${area.uid}/members/${memberUser.id}/role`
+                )
                 .send({ role: 'admin' });
 
             expect(response.status).toBe(401);
@@ -434,7 +460,7 @@ describe('/api/areas', () => {
         });
     });
 
-    describe('POST /api/areas/:uid/members (department admin)', () => {
+    describe('POST /api/departments/:uid/members (department admin)', () => {
         let area, deptAdminUser, deptAdminAgent, newMemberUser;
 
         beforeEach(async () => {
@@ -456,7 +482,7 @@ describe('/api/areas', () => {
             });
 
             // Add deptAdminUser as a department admin (role: 'admin')
-            await agent.post(`/api/areas/${area.uid}/members`).send({
+            await agent.post(`/api/departments/${area.uid}/members`).send({
                 user_id: deptAdminUser.id,
                 role: 'admin',
             });
@@ -471,7 +497,7 @@ describe('/api/areas', () => {
 
         it('should allow department admin to add new members', async () => {
             const response = await deptAdminAgent
-                .post(`/api/areas/${area.uid}/members`)
+                .post(`/api/departments/${area.uid}/members`)
                 .send({
                     user_id: newMemberUser.id,
                     role: 'member',
@@ -490,7 +516,7 @@ describe('/api/areas', () => {
 
         it('should allow department admin to add new admin members', async () => {
             const response = await deptAdminAgent
-                .post(`/api/areas/${area.uid}/members`)
+                .post(`/api/departments/${area.uid}/members`)
                 .send({
                     user_id: newMemberUser.id,
                     role: 'admin',
@@ -514,7 +540,7 @@ describe('/api/areas', () => {
             });
 
             // Add as regular member (not admin)
-            await agent.post(`/api/areas/${area.uid}/members`).send({
+            await agent.post(`/api/departments/${area.uid}/members`).send({
                 user_id: regularMemberUser.id,
                 role: 'member',
             });
@@ -528,7 +554,7 @@ describe('/api/areas', () => {
 
             // Try to add a new member as regular member - should fail
             const response = await regularMemberAgent
-                .post(`/api/areas/${area.uid}/members`)
+                .post(`/api/departments/${area.uid}/members`)
                 .send({
                     user_id: newMemberUser.id,
                     role: 'member',
@@ -538,7 +564,7 @@ describe('/api/areas', () => {
         });
     });
 
-    describe('PATCH /api/v1/areas/:uid - permission tests', () => {
+    describe('PATCH /api/v1/departments/:uid - permission tests', () => {
         it('should reject PATCH from regular member', async () => {
             // Create area owner
             const owner = await createTestUser({
@@ -574,14 +600,14 @@ describe('/api/areas', () => {
             });
 
             // Add member with 'member' role
-            await ownerAgent.post(`/api/areas/${area.uid}/members`).send({
+            await ownerAgent.post(`/api/departments/${area.uid}/members`).send({
                 user_id: member.id,
                 role: 'member',
             });
 
             // Attempt to PATCH as member - should be rejected
             const response = await memberAgent
-                .patch(`/api/areas/${area.uid}`)
+                .patch(`/api/departments/${area.uid}`)
                 .send({ name: 'Hacked Name' });
 
             expect(response.status).toBe(404); // hasAccess returns 404 for forbidden
@@ -626,14 +652,14 @@ describe('/api/areas', () => {
             });
 
             // Add department admin with 'admin' role
-            await ownerAgent.post(`/api/areas/${area.uid}/members`).send({
+            await ownerAgent.post(`/api/departments/${area.uid}/members`).send({
                 user_id: deptAdmin.id,
                 role: 'admin',
             });
 
             // Attempt to PATCH as department admin - should succeed
             const response = await deptAdminAgent
-                .patch(`/api/areas/${area.uid}`)
+                .patch(`/api/departments/${area.uid}`)
                 .send({ name: 'Updated by Admin' });
 
             expect(response.status).toBe(200);

@@ -1,9 +1,10 @@
+// Note: Uses /departments URL paths (renamed from /areas for user-facing consistency)
 import { Area, AreaMember } from '../entities/Area';
 import { handleAuthResponse } from './authUtils';
 import { getApiPath } from '../config/paths';
 
 export const fetchAreas = async (): Promise<Area[]> => {
-    const response = await fetch(getApiPath('areas'), {
+    const response = await fetch(getApiPath('departments'), {
         credentials: 'include',
         headers: {
             Accept: 'application/json',
@@ -14,7 +15,7 @@ export const fetchAreas = async (): Promise<Area[]> => {
 };
 
 export const fetchArea = async (areaUid: string): Promise<Area> => {
-    const response = await fetch(getApiPath(`areas/${areaUid}`), {
+    const response = await fetch(getApiPath(`departments/${areaUid}`), {
         credentials: 'include',
         headers: {
             Accept: 'application/json',
@@ -25,7 +26,7 @@ export const fetchArea = async (areaUid: string): Promise<Area> => {
 };
 
 export const createArea = async (areaData: Partial<Area>): Promise<Area> => {
-    const response = await fetch(getApiPath('areas'), {
+    const response = await fetch(getApiPath('departments'), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -43,7 +44,7 @@ export const updateArea = async (
     areaUid: string,
     areaData: Partial<Area>
 ): Promise<Area> => {
-    const response = await fetch(getApiPath(`areas/${areaUid}`), {
+    const response = await fetch(getApiPath(`departments/${areaUid}`), {
         method: 'PATCH',
         credentials: 'include',
         headers: {
@@ -58,7 +59,7 @@ export const updateArea = async (
 };
 
 export const deleteArea = async (areaUid: string): Promise<void> => {
-    const response = await fetch(getApiPath(`areas/${areaUid}`), {
+    const response = await fetch(getApiPath(`departments/${areaUid}`), {
         method: 'DELETE',
         credentials: 'include',
         headers: {
@@ -72,7 +73,7 @@ export const deleteArea = async (areaUid: string): Promise<void> => {
 export const getAreaMembers = async (
     areaUid: string
 ): Promise<AreaMember[]> => {
-    const response = await fetch(getApiPath(`areas/${areaUid}/members`), {
+    const response = await fetch(getApiPath(`departments/${areaUid}/members`), {
         credentials: 'include',
         headers: {
             Accept: 'application/json',
@@ -89,7 +90,7 @@ export const addAreaMember = async (
     userId: number,
     role: 'member' | 'admin' = 'member'
 ): Promise<AreaMember[]> => {
-    const response = await fetch(getApiPath(`areas/${areaUid}/members`), {
+    const response = await fetch(getApiPath(`departments/${areaUid}/members`), {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -113,7 +114,7 @@ export const removeAreaMember = async (
     userId: number
 ): Promise<AreaMember[]> => {
     const response = await fetch(
-        getApiPath(`areas/${areaUid}/members/${userId}`),
+        getApiPath(`departments/${areaUid}/members/${userId}`),
         {
             method: 'DELETE',
             credentials: 'include',
@@ -134,7 +135,7 @@ export const updateAreaMemberRole = async (
     role: 'member' | 'admin'
 ): Promise<AreaMember[]> => {
     const response = await fetch(
-        getApiPath(`areas/${areaUid}/members/${userId}/role`),
+        getApiPath(`departments/${areaUid}/members/${userId}/role`),
         {
             method: 'PATCH',
             credentials: 'include',
