@@ -1,5 +1,6 @@
 const express = require('express');
-const { Area, User } = require('../models');
+const { Area, User, sequelize } = require('../models');
+const { QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
 const _ = require('lodash');
@@ -8,6 +9,7 @@ const { getAuthenticatedUserId } = require('../utils/request-utils');
 const { hasAccess } = require('../middleware/authorize');
 const areaMembershipService = require('../services/areaMembershipService');
 const { isAdmin } = require('../services/rolesService');
+const { execAction } = require('../services/execAction');
 
 // Middleware to validate UID format before access checks
 const validateUid =
@@ -156,24 +158,57 @@ router.get(
 );
 
 router.post('/areas', async (req, res) => {
+    let transaction;
     try {
         const userId = getAuthenticatedUserId(req);
-        if (!userId)
+        if (!userId) {
             return res.status(401).json({ error: 'Authentication required' });
+        }
         const { name, description } = req.body;
 
         if (!name || _.isEmpty(name.trim())) {
             return res.status(400).json({ error: 'Area name is required.' });
         }
 
-        const area = await Area.create({
-            name: name.trim(),
-            description: description || '',
-            user_id: userId,
+        // Start transaction AFTER validation
+        transaction = await sequelize.transaction();
+
+        const area = await Area.create(
+            {
+                name: name.trim(),
+                description: description || '',
+                user_id: userId,
+            },
+            { transaction }
+        );
+
+        // Add creator as department admin using Sequelize association
+        await area.addMember(userId, {
+            through: { role: 'admin' },
+            transaction,
         });
+
+        await transaction.commit();
+        transaction = null; // Mark as committed
+
+        // Create permission cascade via execAction (after commit so area is visible)
+        // This is non-critical - log errors but don't fail the request
+        try {
+            await execAction({
+                verb: 'area_member_add',
+                actorUserId: userId,
+                targetUserId: userId,
+                resourceType: 'area',
+                resourceUid: area.uid,
+                accessLevel: 'admin',
+            });
+        } catch (execError) {
+            logError('execAction failed after area creation:', execError);
+        }
 
         res.status(201).json(_.pick(area, ['uid', 'name', 'description']));
     } catch (error) {
+        if (transaction) await transaction.rollback();
         logError('Error creating area:', error);
         res.status(400).json({
             error: 'There was a problem creating the area.',
