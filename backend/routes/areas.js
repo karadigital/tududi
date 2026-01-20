@@ -42,6 +42,21 @@ router.get('/areas', async (req, res) => {
         if (userIsAdmin) {
             const areas = await Area.findAll({
                 attributes: ['id', 'uid', 'name', 'description'],
+                include: [
+                    {
+                        model: User,
+                        as: 'Members',
+                        attributes: [
+                            'id',
+                            'uid',
+                            'email',
+                            'name',
+                            'surname',
+                            'avatar_image',
+                        ],
+                        through: { attributes: ['role'] },
+                    },
+                ],
                 order: [['name', 'ASC']],
             });
             return res.json(areas);
@@ -71,6 +86,21 @@ router.get('/areas', async (req, res) => {
                 ],
             },
             attributes: ['id', 'uid', 'name', 'description'],
+            include: [
+                {
+                    model: User,
+                    as: 'Members',
+                    attributes: [
+                        'id',
+                        'uid',
+                        'email',
+                        'name',
+                        'surname',
+                        'avatar_image',
+                    ],
+                    through: { attributes: ['role'] },
+                },
+            ],
             order: [['name', 'ASC']],
         });
 
@@ -157,7 +187,7 @@ router.post('/areas', async (req, res) => {
 router.patch(
     '/areas/:uid',
     validateUid('uid'),
-    hasAccess('rw', 'area', (req) => req.params.uid, {
+    hasAccess('admin', 'area', (req) => req.params.uid, {
         forbiddenStatus: 404,
         notFoundMessage: 'Area not found.',
     }),

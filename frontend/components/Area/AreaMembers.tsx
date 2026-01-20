@@ -18,12 +18,14 @@ interface AreaMembersProps {
     area: Area;
     currentUserUid: string;
     onUpdate?: (members: AreaMember[]) => void;
+    readOnly?: boolean;
 }
 
 const AreaMembers: React.FC<AreaMembersProps> = ({
     area,
     currentUserUid,
     onUpdate,
+    readOnly = false,
 }) => {
     const { t } = useTranslation();
     const [showManageModal, setShowManageModal] = useState(false);
@@ -172,14 +174,16 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                         {t('area.members', 'Members')}
                     </label>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => setShowManageModal(true)}
-                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center space-x-1"
-                >
-                    <UserPlusIcon className="h-4 w-4" />
-                    <span>{t('area.manage_members', 'Manage')}</span>
-                </button>
+                {!readOnly && (
+                    <button
+                        type="button"
+                        onClick={() => setShowManageModal(true)}
+                        className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center space-x-1"
+                    >
+                        <UserPlusIcon className="h-4 w-4" />
+                        <span>{t('area.manage_members', 'Manage')}</span>
+                    </button>
+                )}
             </div>
 
             {/* Error message */}

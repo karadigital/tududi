@@ -9,7 +9,12 @@ const {
     calculateTagPerms,
 } = require('./permissionsCalculators');
 
-async function assertActorCanShare(actorUserId, resourceType, resourceOwnerId) {
+async function assertActorCanShare(
+    actorUserId,
+    resourceType,
+    resourceOwnerId,
+    resourceUid = null
+) {
     // Convert numeric userId to string UID for admin check
     let userUid = actorUserId;
     if (typeof actorUserId === 'number' || !isNaN(parseInt(actorUserId))) {
@@ -23,11 +28,34 @@ async function assertActorCanShare(actorUserId, resourceType, resourceOwnerId) {
     }
 
     if (await isAdmin(userUid)) return;
-    if (resourceOwnerId !== actorUserId) {
-        const err = new Error('Forbidden');
-        err.status = 403;
-        throw err;
+    if (resourceOwnerId === actorUserId) return;
+
+    // For area resources, check if actor is a department admin
+    if (resourceType === 'area' && resourceUid) {
+        const { QueryTypes } = require('sequelize');
+        const membership = await sequelize.query(
+            `SELECT role FROM areas_members
+             WHERE area_id = (SELECT id FROM areas WHERE uid = ?)
+             AND user_id = ?`,
+            {
+                replacements: [resourceUid, actorUserId],
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+
+        if (
+            membership &&
+            membership.length > 0 &&
+            membership[0].role === 'admin'
+        ) {
+            return; // Department admin can share within their area
+        }
     }
+
+    const err = new Error('Forbidden');
+    err.status = 403;
+    throw err;
 }
 
 async function execAction(action) {
@@ -68,7 +96,8 @@ async function execAction(action) {
         await assertActorCanShare(
             action.actorUserId,
             action.resourceType,
-            ownerUserId
+            ownerUserId,
+            action.resourceUid
         );
 
         const actionRow = await Action.create(

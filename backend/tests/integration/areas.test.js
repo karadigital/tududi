@@ -3,7 +3,7 @@ const app = require('../../app');
 const { Area, User } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 
-describe('Areas Routes', () => {
+describe('/api/areas', () => {
     let user, agent;
 
     beforeEach(async () => {
@@ -381,6 +381,213 @@ describe('Areas Routes', () => {
 
             expect(response.status).toBe(401);
             expect(response.body.error).toBe('Authentication required');
+        });
+    });
+
+    describe('POST /api/areas/:uid/members (department admin)', () => {
+        let area, deptAdminUser, deptAdminAgent, newMemberUser;
+
+        beforeEach(async () => {
+            // Create an area owned by the test user
+            area = await Area.create({
+                name: 'Work',
+                description: 'Work projects',
+                user_id: user.id,
+            });
+
+            // Create a department admin user
+            deptAdminUser = await createTestUser({
+                email: 'deptadmin@example.com',
+            });
+
+            // Create a user to be added by the department admin
+            newMemberUser = await createTestUser({
+                email: 'newmember@example.com',
+            });
+
+            // Add deptAdminUser as a department admin (role: 'admin')
+            await agent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: deptAdminUser.id,
+                role: 'admin',
+            });
+
+            // Create authenticated agent for dept admin
+            deptAdminAgent = request.agent(app);
+            await deptAdminAgent.post('/api/login').send({
+                email: 'deptadmin@example.com',
+                password: 'password123',
+            });
+        });
+
+        it('should allow department admin to add new members', async () => {
+            const response = await deptAdminAgent
+                .post(`/api/areas/${area.uid}/members`)
+                .send({
+                    user_id: newMemberUser.id,
+                    role: 'member',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.members).toBeDefined();
+
+            // Verify the new member was added
+            const addedMember = response.body.members.find(
+                (m) => m.id === newMemberUser.id
+            );
+            expect(addedMember).toBeDefined();
+            expect(addedMember.AreasMember.role).toBe('member');
+        });
+
+        it('should allow department admin to add new admin members', async () => {
+            const response = await deptAdminAgent
+                .post(`/api/areas/${area.uid}/members`)
+                .send({
+                    user_id: newMemberUser.id,
+                    role: 'admin',
+                });
+
+            expect(response.status).toBe(200);
+            expect(response.body.members).toBeDefined();
+
+            // Verify the new member was added as admin
+            const addedMember = response.body.members.find(
+                (m) => m.id === newMemberUser.id
+            );
+            expect(addedMember).toBeDefined();
+            expect(addedMember.AreasMember.role).toBe('admin');
+        });
+
+        it('should not allow regular member to add new members', async () => {
+            // Create a regular member
+            const regularMemberUser = await createTestUser({
+                email: 'regularmember@example.com',
+            });
+
+            // Add as regular member (not admin)
+            await agent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: regularMemberUser.id,
+                role: 'member',
+            });
+
+            // Create authenticated agent for regular member
+            const regularMemberAgent = request.agent(app);
+            await regularMemberAgent.post('/api/login').send({
+                email: 'regularmember@example.com',
+                password: 'password123',
+            });
+
+            // Try to add a new member as regular member - should fail
+            const response = await regularMemberAgent
+                .post(`/api/areas/${area.uid}/members`)
+                .send({
+                    user_id: newMemberUser.id,
+                    role: 'member',
+                });
+
+            expect(response.status).toBe(403);
+        });
+    });
+
+    describe('PATCH /api/v1/areas/:uid - permission tests', () => {
+        it('should reject PATCH from regular member', async () => {
+            // Create area owner
+            const owner = await createTestUser({
+                email: 'patch-owner@test.com',
+                name: 'Patch Owner',
+            });
+
+            // Create authenticated agent for owner
+            const ownerAgent = request.agent(app);
+            await ownerAgent.post('/api/login').send({
+                email: 'patch-owner@test.com',
+                password: 'password123',
+            });
+
+            // Create regular member
+            const member = await createTestUser({
+                email: 'patch-member@test.com',
+                name: 'Patch Member',
+            });
+
+            // Create authenticated agent for member
+            const memberAgent = request.agent(app);
+            await memberAgent.post('/api/login').send({
+                email: 'patch-member@test.com',
+                password: 'password123',
+            });
+
+            // Create area
+            const area = await Area.create({
+                name: 'Test Area for PATCH',
+                description: 'Original description',
+                user_id: owner.id,
+            });
+
+            // Add member with 'member' role
+            await ownerAgent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: member.id,
+                role: 'member',
+            });
+
+            // Attempt to PATCH as member - should be rejected
+            const response = await memberAgent
+                .patch(`/api/areas/${area.uid}`)
+                .send({ name: 'Hacked Name' });
+
+            expect(response.status).toBe(404); // hasAccess returns 404 for forbidden
+
+            // Verify area was not modified
+            const unchangedArea = await Area.findByPk(area.id);
+            expect(unchangedArea.name).toBe('Test Area for PATCH');
+        });
+
+        it('should allow PATCH from department admin', async () => {
+            // Create area owner
+            const owner = await createTestUser({
+                email: 'patch-owner2@test.com',
+                name: 'Patch Owner 2',
+            });
+
+            // Create authenticated agent for owner
+            const ownerAgent = request.agent(app);
+            await ownerAgent.post('/api/login').send({
+                email: 'patch-owner2@test.com',
+                password: 'password123',
+            });
+
+            // Create department admin
+            const deptAdmin = await createTestUser({
+                email: 'patch-admin@test.com',
+                name: 'Patch Admin',
+            });
+
+            // Create authenticated agent for department admin
+            const deptAdminAgent = request.agent(app);
+            await deptAdminAgent.post('/api/login').send({
+                email: 'patch-admin@test.com',
+                password: 'password123',
+            });
+
+            // Create area
+            const area = await Area.create({
+                name: 'Test Area for Admin PATCH',
+                description: 'Original description',
+                user_id: owner.id,
+            });
+
+            // Add department admin with 'admin' role
+            await ownerAgent.post(`/api/areas/${area.uid}/members`).send({
+                user_id: deptAdmin.id,
+                role: 'admin',
+            });
+
+            // Attempt to PATCH as department admin - should succeed
+            const response = await deptAdminAgent
+                .patch(`/api/areas/${area.uid}`)
+                .send({ name: 'Updated by Admin' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.name).toBe('Updated by Admin');
         });
     });
 });

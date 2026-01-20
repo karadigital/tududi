@@ -913,6 +913,9 @@
   },
   "areas": {
     "title": "Departments",
+    "edit": "Edit",
+    "details": "Details",
+    "delete": "Delete",
     "noAreasFound": "No departments found",
     "editAreaAriaLabel": "Edit department {{name}}",
     "editAreaTitle": "Edit department {{name}}",
@@ -922,7 +925,6 @@
     "loading": "Loading department details...",
     "error": "Error loading department details.",
     "notFound": "Department not found.",
-    "details": "Department Details",
     "viewProjects": "View Projects in {{name}}"
   },
   "notes": {

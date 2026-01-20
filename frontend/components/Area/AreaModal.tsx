@@ -14,6 +14,7 @@ interface AreaModalProps {
     onSave: (areaData: Partial<Area>) => Promise<void>;
     onDelete?: (areaUid: string) => Promise<void>;
     area?: Area | null;
+    readOnly?: boolean;
 }
 
 const AreaModal: React.FC<AreaModalProps> = ({
@@ -22,6 +23,7 @@ const AreaModal: React.FC<AreaModalProps> = ({
     area,
     onSave,
     onDelete,
+    readOnly = false,
 }) => {
     const { t } = useTranslation();
     const [formData, setFormData] = useState<Area>({
@@ -82,10 +84,12 @@ const AreaModal: React.FC<AreaModalProps> = ({
             });
             setError(null);
 
-            // Auto-focus on the name input when modal opens
-            setTimeout(() => {
-                nameInputRef.current?.focus();
-            }, 100);
+            // Auto-focus on the name input when modal opens (skip in read-only mode)
+            if (!readOnly) {
+                setTimeout(() => {
+                    nameInputRef.current?.focus();
+                }, 100);
+            }
         }
     }, [isOpen, area]);
 
@@ -281,7 +285,12 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                         value={formData.name}
                                                         onChange={handleChange}
                                                         required
-                                                        className="block w-full text-xl font-semibold bg-transparent text-black dark:text-white border-none focus:outline-none shadow-sm py-2"
+                                                        disabled={readOnly}
+                                                        className={`block w-full text-xl font-semibold bg-transparent text-black dark:text-white border-none focus:outline-none shadow-sm py-2 ${
+                                                            readOnly
+                                                                ? 'cursor-not-allowed opacity-60'
+                                                                : ''
+                                                        }`}
                                                         placeholder={t(
                                                             'forms.areaNamePlaceholder'
                                                         )}
@@ -298,7 +307,12 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                             formData.description
                                                         }
                                                         onChange={handleChange}
-                                                        className="block w-full h-full sm:border sm:border-gray-300 sm:dark:border-gray-600 sm:rounded-md shadow-sm py-2 px-3 sm:py-3 sm:px-3 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 sm:focus:ring-2 sm:focus:ring-blue-500 transition duration-150 ease-in-out resize-none"
+                                                        disabled={readOnly}
+                                                        className={`block w-full h-full sm:border sm:border-gray-300 sm:dark:border-gray-600 sm:rounded-md shadow-sm py-2 px-3 sm:py-3 sm:px-3 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 sm:focus:ring-2 sm:focus:ring-blue-500 transition duration-150 ease-in-out resize-none ${
+                                                            readOnly
+                                                                ? 'cursor-not-allowed opacity-60'
+                                                                : ''
+                                                        }`}
                                                         placeholder={t(
                                                             'forms.areaDescriptionPlaceholder'
                                                         )}
@@ -319,6 +333,9 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                                                 onUpdate={
                                                                     handleMembersUpdate
                                                                 }
+                                                                readOnly={
+                                                                    readOnly
+                                                                }
                                                             />
                                                         </div>
                                                     )}
@@ -336,9 +353,9 @@ const AreaModal: React.FC<AreaModalProps> = ({
 
                                 {/* Action Buttons - Below border with custom layout */}
                                 <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between sm:rounded-b-lg">
-                                    {/* Left side: Delete and Cancel */}
+                                    {/* Left side: Delete and Cancel/Close */}
                                     <div className="flex items-center space-x-3">
-                                        {area?.uid && onDelete && (
+                                        {!readOnly && area?.uid && onDelete && (
                                             <button
                                                 type="button"
                                                 onClick={handleDeleteArea}
@@ -356,28 +373,33 @@ const AreaModal: React.FC<AreaModalProps> = ({
                                             onClick={handleClose}
                                             className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 focus:outline-none transition duration-150 ease-in-out text-sm"
                                         >
-                                            {t('common.cancel')}
+                                            {readOnly
+                                                ? t('common.close', 'Close')
+                                                : t('common.cancel')}
                                         </button>
                                     </div>
 
-                                    {/* Right side: Save */}
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSubmit()}
-                                        disabled={isSubmitting}
-                                        className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none transition duration-150 ease-in-out text-sm ${
-                                            isSubmitting
-                                                ? 'opacity-50 cursor-not-allowed'
-                                                : ''
-                                        }`}
-                                        data-testid="area-save-button"
-                                    >
-                                        {isSubmitting
-                                            ? t('modals.submitting')
-                                            : formData.id && formData.id !== 0
-                                              ? t('modals.updateArea')
-                                              : t('modals.createArea')}
-                                    </button>
+                                    {/* Right side: Save - hidden when readOnly */}
+                                    {!readOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => handleSubmit()}
+                                            disabled={isSubmitting}
+                                            className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none transition duration-150 ease-in-out text-sm ${
+                                                isSubmitting
+                                                    ? 'opacity-50 cursor-not-allowed'
+                                                    : ''
+                                            }`}
+                                            data-testid="area-save-button"
+                                        >
+                                            {isSubmitting
+                                                ? t('modals.submitting')
+                                                : formData.id &&
+                                                    formData.id !== 0
+                                                  ? t('modals.updateArea')
+                                                  : t('modals.createArea')}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
