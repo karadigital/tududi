@@ -15,6 +15,7 @@ function validateCriticalPriority(taskData, existingTask = null) {
     // Check if priority is critical (value 3 or string 'critical')
     const isCritical =
         priority === 3 ||
+        priority === '3' ||
         priority === Task.PRIORITY.CRITICAL ||
         priority === 'critical';
 
