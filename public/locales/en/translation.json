@@ -736,7 +736,7 @@
     "overdueYesterday": "Consider prioritizing this task or breaking it into smaller steps.",
     "overdueMultipleDays": "This task has been postponed {{count}} times.",
     "content": "Content",
-    "noNotes": "Add some content",
+    "noNotes": "Add some task description",
     "subtasks": "Subtasks",
     "noSubtasks": "No subtasks yet",
     "noSubtasksClickToAdd": "Add subtasks",
