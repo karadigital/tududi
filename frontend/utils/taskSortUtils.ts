@@ -7,7 +7,7 @@ interface SortOptions {
 /**
  * Multi-criteria sorting for tasks in Today view sections.
  * Sorting order:
- * 1. Priority (High → Medium → Low → None)
+ * 1. Priority (Critical → High → Medium → Low → None)
  * 2. Due date (earlier first, null/undefined last)
  * 3. Project (tasks with same priority and due date grouped by project)
  *
@@ -35,15 +35,15 @@ export const sortTasksByPriorityDueDateProject = (
     if (filteredTasks.length === 0) return [];
 
     return [...filteredTasks].sort((a, b) => {
-        // 1. Priority (High → Medium → Low → None)
-        // Handle both string ('low', 'medium', 'high') and numeric (0, 1, 2) priority values
+        // 1. Priority (Critical → High → Medium → Low → None)
+        // Handle both string ('low', 'medium', 'high', 'critical') and numeric (0, 1, 2, 3) priority values
         const getPriorityValue = (priority: any): number => {
             if (typeof priority === 'number') {
-                // Backend numeric format: 0 = LOW, 1 = MEDIUM, 2 = HIGH
+                // Backend numeric format: 0 = LOW, 1 = MEDIUM, 2 = HIGH, 3 = CRITICAL
                 return priority;
             }
             // Frontend string format
-            const priorityOrder = { high: 2, medium: 1, low: 0 };
+            const priorityOrder = { critical: 3, high: 2, medium: 1, low: 0 };
             return priorityOrder[priority as keyof typeof priorityOrder] ?? -1;
         };
 

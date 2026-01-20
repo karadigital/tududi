@@ -532,7 +532,8 @@
     "low": "Thấp",
     "medium": "Trung bình",
     "high": "Cao",
-    "none": "Không có"
+    "none": "Không có",
+    "critical": "Quan trọng"
   },
   "status": {
     "notStarted": "Chưa bắt đầu",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Không thể lưu dự án.",
     "projectImageTooLarge": "Hình ảnh quá lớn. Vui lòng chọn tệp dưới 10MB.",
     "projectImageUpload": "Tải lên hình ảnh thất bại. Vui lòng thử tệp nhỏ hơn hoặc định dạng khác.",
-    "bannerSaveFailed": "Lưu biểu ngữ thất bại"
+    "bannerSaveFailed": "Lưu biểu ngữ thất bại",
+    "critical_requires_fields": "Nhiệm vụ quan trọng phải có ngày đến hạn và người được giao"
   },
   "inbox": {
     "title": "Hộp thư đến",

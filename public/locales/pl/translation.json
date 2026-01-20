@@ -532,7 +532,8 @@
     "low": "Niski",
     "medium": "Średni",
     "high": "Wysoki",
-    "none": "Brak"
+    "none": "Brak",
+    "critical": "Krytyczny"
   },
   "status": {
     "notStarted": "Nie rozpoczęto",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Nie udało się zapisać projektu.",
     "projectImageTooLarge": "Obraz jest zbyt duży. Wybierz plik o rozmiarze poniżej 10MB.",
     "projectImageUpload": "Nie udało się przesłać obrazu. Spróbuj mniejszego pliku lub innego formatu.",
-    "bannerSaveFailed": "Nie udało się zapisać banera"
+    "bannerSaveFailed": "Nie udało się zapisać banera",
+    "critical_requires_fields": "Zadania krytyczne muszą mieć datę wykonania i osobę przypisaną"
   },
   "inbox": {
     "title": "Skrzynka odbiorcza",

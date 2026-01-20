@@ -536,7 +536,8 @@
     "failedToSaveTag": "タグの保存に失敗しました。",
     "projectImageTooLarge": "画像が大きすぎます。10MB未満のファイルを選択してください。",
     "projectImageUpload": "画像のアップロードに失敗しました。より小さいファイルまたは異なる形式を試してください。",
-    "bannerSaveFailed": "バナーの保存に失敗しました"
+    "bannerSaveFailed": "バナーの保存に失敗しました",
+    "critical_requires_fields": "重要なタスクには期限と担当者が必要です"
   },
   "success": {
     "noteUpdated": "ノートが正常に更新されました！",
@@ -967,7 +968,8 @@
     "low": "低",
     "medium": "中",
     "high": "高",
-    "none": "なし"
+    "none": "なし",
+    "critical": "重大"
   },
   "status": {
     "notStarted": "未開始",

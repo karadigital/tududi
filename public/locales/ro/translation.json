@@ -532,7 +532,8 @@
     "low": "Scăzut",
     "medium": "Medie",
     "high": "Ridicat",
-    "none": "Niciuna"
+    "none": "Niciuna",
+    "critical": "Critic"
   },
   "status": {
     "notStarted": "Nefăcut",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Nu s-a putut salva proiectul.",
     "projectImageTooLarge": "Imaginea este prea mare. Te rugăm să alegi un fișier de sub 10MB.",
     "projectImageUpload": "Încărcarea imaginii a eșuat. Te rugăm să încerci un fișier mai mic sau un format diferit.",
-    "bannerSaveFailed": "Salvarea bannerului a eșuat"
+    "bannerSaveFailed": "Salvarea bannerului a eșuat",
+    "critical_requires_fields": "Sarcinile critice trebuie să aibă o dată limită și un responsabil"
   },
   "inbox": {
     "title": "Căsuța de primire",

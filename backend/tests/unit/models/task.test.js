@@ -65,6 +65,27 @@ describe('Task Model', () => {
 
             await expect(Task.create(taskData)).rejects.toThrow();
         });
+
+        it('should accept critical priority value', async () => {
+            const taskData = {
+                name: 'Test Task',
+                user_id: user.id,
+                priority: 3,
+            };
+
+            const task = await Task.create(taskData);
+            expect(task.priority).toBe(3);
+        });
+
+        it('should reject priority above critical', async () => {
+            const taskData = {
+                name: 'Test Task',
+                user_id: user.id,
+                priority: 4,
+            };
+
+            await expect(Task.create(taskData)).rejects.toThrow();
+        });
     });
 
     describe('constants', () => {
@@ -72,6 +93,7 @@ describe('Task Model', () => {
             expect(Task.PRIORITY.LOW).toBe(0);
             expect(Task.PRIORITY.MEDIUM).toBe(1);
             expect(Task.PRIORITY.HIGH).toBe(2);
+            expect(Task.PRIORITY.CRITICAL).toBe(3);
         });
 
         it('should have correct status constants', () => {
@@ -102,6 +124,10 @@ describe('Task Model', () => {
 
             task.priority = Task.PRIORITY.HIGH;
             expect(Task.getPriorityName(task.priority)).toBe('high');
+        });
+
+        it('should return correct priority name for critical', () => {
+            expect(Task.getPriorityName(3)).toBe('critical');
         });
 
         it('should return correct status name', async () => {

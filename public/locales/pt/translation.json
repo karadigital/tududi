@@ -532,7 +532,8 @@
     "low": "Baixa",
     "medium": "Média",
     "high": "Alta",
-    "none": "Nenhum"
+    "none": "Nenhum",
+    "critical": "Crítico"
   },
   "status": {
     "notStarted": "Não Iniciado",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Falha ao salvar o projeto.",
     "projectImageTooLarge": "A imagem é muito grande. Por favor, escolha um arquivo com menos de 10MB.",
     "projectImageUpload": "Falha ao carregar a imagem. Por favor, tente um arquivo menor ou um formato diferente.",
-    "bannerSaveFailed": "Falha ao salvar o banner"
+    "bannerSaveFailed": "Falha ao salvar o banner",
+    "critical_requires_fields": "Tarefas críticas devem ter uma data de vencimento e um responsável"
   },
   "inbox": {
     "title": "Caixa de Entrada",

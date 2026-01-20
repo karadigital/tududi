@@ -532,7 +532,8 @@
     "low": "Rendah",
     "medium": "Sedang",
     "high": "Tinggi",
-    "none": "Tidak ada"
+    "none": "Tidak ada",
+    "critical": "Kritis"
   },
   "status": {
     "notStarted": "Belum Dimulai",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Gagal untuk menyimpan proyek.",
     "projectImageTooLarge": "Gambar terlalu besar. Silakan pilih file di bawah 10MB.",
     "projectImageUpload": "Gagal mengunggah gambar. Silakan coba file yang lebih kecil atau format yang berbeda.",
-    "bannerSaveFailed": "Gagal menyimpan spanduk"
+    "bannerSaveFailed": "Gagal menyimpan spanduk",
+    "critical_requires_fields": "Tugas kritis harus memiliki tanggal jatuh tempo dan penerima tugas"
   },
   "inbox": {
     "title": "Kotak Masuk",

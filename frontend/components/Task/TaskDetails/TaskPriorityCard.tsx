@@ -22,7 +22,7 @@ const TaskPriorityCard: React.FC<TaskPriorityCardProps> = ({
             <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 {t('task.priority', 'Priority')}
             </h4>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-5 gap-2">
                 <button
                     type="button"
                     onClick={() => handlePriorityClick(null)}
@@ -81,6 +81,36 @@ const TaskPriorityCard: React.FC<TaskPriorityCardProps> = ({
                     <span className="sm:hidden">H</span>
                     <span className="hidden sm:inline">
                         {t('priority.high', 'High')}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (task.due_date && task.assigned_to_user_id) {
+                            handlePriorityClick('critical');
+                        }
+                    }}
+                    className={`w-full min-w-0 px-2 sm:px-3 py-2 text-sm font-medium rounded transition-colors ${
+                        !task.due_date || !task.assigned_to_user_id
+                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                            : task.priority === 'critical' ||
+                                task.priority === 3
+                              ? 'bg-red-600 dark:bg-red-700 text-white'
+                              : 'bg-red-200 dark:bg-red-900/40 text-red-800 dark:text-red-300 hover:bg-red-300 dark:hover:bg-red-900/60'
+                    }`}
+                    title={
+                        !task.due_date || !task.assigned_to_user_id
+                            ? t(
+                                  'errors.critical_requires_fields',
+                                  'Critical tasks must have a due date and assignee'
+                              )
+                            : t('priority.critical', 'Critical')
+                    }
+                    disabled={!task.due_date || !task.assigned_to_user_id}
+                >
+                    <span className="sm:hidden">!</span>
+                    <span className="hidden sm:inline">
+                        {t('priority.critical', 'Crit')}
                     </span>
                 </button>
             </div>

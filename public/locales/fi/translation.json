@@ -532,7 +532,8 @@
     "low": "Matala",
     "medium": "Keskitaso",
     "high": "Korkea",
-    "none": "Ei mitään"
+    "none": "Ei mitään",
+    "critical": "Kriittinen"
   },
   "status": {
     "notStarted": "Ei aloitettu",
@@ -588,7 +589,8 @@
     "projectSaveFailed": "Projektin tallentaminen epäonnistui.",
     "projectImageTooLarge": "Kuva on liian suuri. Valitse tiedosto, joka on alle 10MB.",
     "projectImageUpload": "Kuvan lataaminen epäonnistui. Kokeile pienempää tiedostoa tai toista formaattia.",
-    "bannerSaveFailed": "Bannerin tallentaminen epäonnistui"
+    "bannerSaveFailed": "Bannerin tallentaminen epäonnistui",
+    "critical_requires_fields": "Kriittisillä tehtävillä on oltava eräpäivä ja vastuuhenkilö"
   },
   "inbox": {
     "title": "Saapuneet",
