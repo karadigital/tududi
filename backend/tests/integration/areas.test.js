@@ -666,4 +666,114 @@ describe('/api/departments', () => {
             expect(response.body.name).toBe('Updated by Admin');
         });
     });
+
+    describe('DELETE /api/departments/:uid - department admin permission tests', () => {
+        it('should allow DELETE from department admin', async () => {
+            // Create area owner
+            const owner = await createTestUser({
+                email: 'delete-owner@test.com',
+                name: 'Delete Owner',
+            });
+
+            // Create authenticated agent for owner
+            const ownerAgent = request.agent(app);
+            await ownerAgent.post('/api/login').send({
+                email: 'delete-owner@test.com',
+                password: 'password123',
+            });
+
+            // Create department admin
+            const deptAdmin = await createTestUser({
+                email: 'delete-admin@test.com',
+                name: 'Delete Admin',
+            });
+
+            // Create authenticated agent for department admin
+            const deptAdminAgent = request.agent(app);
+            await deptAdminAgent.post('/api/login').send({
+                email: 'delete-admin@test.com',
+                password: 'password123',
+            });
+
+            // Create area
+            const area = await Area.create({
+                name: 'Test Area for Admin DELETE',
+                description: 'To be deleted by admin',
+                user_id: owner.id,
+            });
+
+            // Add department admin with 'admin' role
+            await ownerAgent.post(`/api/departments/${area.uid}/members`).send({
+                user_id: deptAdmin.id,
+                role: 'admin',
+            });
+
+            // Attempt to DELETE as department admin - should succeed
+            const response = await deptAdminAgent.delete(
+                `/api/departments/${area.uid}`
+            );
+
+            expect(response.status).toBe(204);
+
+            // Verify area is deleted
+            const deletedArea = await Area.findOne({
+                where: { uid: area.uid },
+            });
+            expect(deletedArea).toBeNull();
+        });
+
+        it('should reject DELETE from regular member', async () => {
+            // Create area owner
+            const owner = await createTestUser({
+                email: 'delete-owner2@test.com',
+                name: 'Delete Owner 2',
+            });
+
+            // Create authenticated agent for owner
+            const ownerAgent = request.agent(app);
+            await ownerAgent.post('/api/login').send({
+                email: 'delete-owner2@test.com',
+                password: 'password123',
+            });
+
+            // Create regular member
+            const member = await createTestUser({
+                email: 'delete-member@test.com',
+                name: 'Delete Member',
+            });
+
+            // Create authenticated agent for member
+            const memberAgent = request.agent(app);
+            await memberAgent.post('/api/login').send({
+                email: 'delete-member@test.com',
+                password: 'password123',
+            });
+
+            // Create area
+            const area = await Area.create({
+                name: 'Test Area for Member DELETE',
+                description: 'Should not be deleted by member',
+                user_id: owner.id,
+            });
+
+            // Add member with 'member' role (not admin)
+            await ownerAgent.post(`/api/departments/${area.uid}/members`).send({
+                user_id: member.id,
+                role: 'member',
+            });
+
+            // Attempt to DELETE as regular member - should be rejected
+            const response = await memberAgent.delete(
+                `/api/departments/${area.uid}`
+            );
+
+            expect(response.status).toBe(404); // hasAccess returns 404 for forbidden
+
+            // Verify area still exists
+            const unchangedArea = await Area.findOne({
+                where: { uid: area.uid },
+            });
+            expect(unchangedArea).not.toBeNull();
+        });
+    });
 });
