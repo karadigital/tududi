@@ -271,10 +271,43 @@ function ownedOrAssignedTasksWhere(userId) {
     };
 }
 
+/**
+ * Returns a WHERE clause for tasks that the user can take action on.
+ * This includes tasks the user owns, is assigned to, or is subscribed to.
+ * Used for search where we want to show all tasks the user is involved with.
+ *
+ * @param {number} userId - The user ID
+ * @returns {Promise<Object>} Sequelize WHERE clause
+ */
+async function actionableTasksWhere(userId) {
+    const conditions = [
+        { user_id: userId }, // Owned tasks
+        { assigned_to_user_id: userId }, // Assigned tasks
+    ];
+
+    // Get subscribed task IDs
+    const subscribedTaskIds = await sequelize.query(
+        `SELECT DISTINCT task_id FROM tasks_subscribers WHERE user_id = :userId`,
+        {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+            raw: true,
+        }
+    );
+
+    if (subscribedTaskIds.length > 0) {
+        const taskIds = subscribedTaskIds.map((row) => row.task_id);
+        conditions.push({ id: { [Op.in]: taskIds } }); // Subscribed tasks
+    }
+
+    return { [Op.or]: conditions };
+}
+
 module.exports = {
     ACCESS,
     getAccess,
     ownershipOrPermissionWhere,
     getSharedUidsForUser,
     ownedOrAssignedTasksWhere,
+    actionableTasksWhere,
 };

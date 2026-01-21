@@ -283,7 +283,8 @@ router.get('/tasks', async (req, res) => {
             userId,
             timezone,
             type,
-            include_lists
+            include_lists,
+            {}
         );
 
         if (hasPagination) {

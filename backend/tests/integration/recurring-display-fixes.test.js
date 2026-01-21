@@ -25,9 +25,9 @@ describe('Recurring Task Display Fixes', () => {
     });
 
     describe('Recurring Task Names', () => {
-        it('should preserve actual task name for daily recurring tasks', async () => {
+        it('should show actual task name for daily recurring task', async () => {
             const recurringTemplate = await Task.create({
-                name: 'Daily Workout Original Name',
+                name: 'Daily Workout',
                 user_id: user.id,
                 project_id: project.id,
                 recurrence_type: 'daily',
@@ -44,12 +44,12 @@ describe('Recurring Task Display Fixes', () => {
                 (t) => t.id === recurringTemplate.id
             );
             expect(task).toBeDefined();
-            expect(task.name).toBe('Daily Workout Original Name');
-            expect(task.original_name).toBe('Daily Workout Original Name');
+            expect(task.name).toBe('Daily Workout');
+            expect(task.original_name).toBe('Daily Workout');
             expect(task.recurrence_type).toBe('daily');
         });
 
-        it('should preserve actual task name for weekly recurring tasks', async () => {
+        it('should show actual task name for weekly recurring tasks', async () => {
             const weeklyTask = await Task.create({
                 name: 'Weekly Review Task',
                 user_id: user.id,
@@ -70,7 +70,7 @@ describe('Recurring Task Display Fixes', () => {
             expect(task.original_name).toBe('Weekly Review Task');
         });
 
-        it('should preserve actual task name for monthly recurring tasks', async () => {
+        it('should show actual task name for monthly recurring tasks', async () => {
             const monthlyTask = await Task.create({
                 name: 'Monthly Report',
                 user_id: user.id,
@@ -91,7 +91,7 @@ describe('Recurring Task Display Fixes', () => {
             expect(task.original_name).toBe('Monthly Report');
         });
 
-        it('should preserve actual task name for yearly recurring tasks', async () => {
+        it('should show actual task name for yearly recurring tasks', async () => {
             const yearlyTask = await Task.create({
                 name: 'Annual Tax Filing',
                 user_id: user.id,
@@ -112,7 +112,7 @@ describe('Recurring Task Display Fixes', () => {
             expect(task.original_name).toBe('Annual Tax Filing');
         });
 
-        it('should not modify names of non-recurring tasks', async () => {
+        it('should show actual task name for non-recurring tasks', async () => {
             const regularTask = await Task.create({
                 name: 'Regular Task Name',
                 user_id: user.id,
@@ -133,7 +133,7 @@ describe('Recurring Task Display Fixes', () => {
             expect(task.original_name).toBe('Regular Task Name');
         });
 
-        it('should not modify names of recurring task instances', async () => {
+        it('should filter out recurring task instances from list', async () => {
             const template = await Task.create({
                 name: 'Template Task',
                 user_id: user.id,
@@ -152,8 +152,6 @@ describe('Recurring Task Display Fixes', () => {
                 priority: Task.PRIORITY.MEDIUM,
             });
 
-            // Since instances are filtered out, we won't see them in the response
-            // But if they were included, they should keep their original name
             const response = await agent.get('/api/tasks');
 
             expect(response.status).toBe(200);
@@ -218,7 +216,7 @@ describe('Recurring Task Display Fixes', () => {
             // Past recurring template should be hidden
             expect(taskIds).not.toContain(pastRecurring.id);
 
-            // Future recurring template should be shown with its actual name
+            // Future recurring template should be shown with actual name
             expect(taskIds).toContain(futureRecurring.id);
             expect(taskNames).toContain('Future Daily Task');
 
