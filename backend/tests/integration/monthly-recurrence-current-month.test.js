@@ -154,26 +154,21 @@ describe('Monthly Recurrence - Current Month Bug Fix', () => {
         expect(task.recurrence_month_day).toBe(20);
         expect(task.recurrence_interval).toBe(1);
 
+        // Use a fixed mock date (Dec 3rd) so the test is deterministic
+        // Since the 20th hasn't passed yet, first iteration should be Dec 20th
+        const mockDate = new Date('2025-12-03T10:00:00Z');
         const iterations = await calculateNextIterations(
             task,
-            new Date(),
+            mockDate,
             'America/New_York'
         );
 
         expect(iterations.length).toBeGreaterThan(0);
 
-        const today = new Date();
         const firstIteration = new Date(iterations[0].utc_date);
-        const expectedMonth =
-            today.getUTCDate() < 20
-                ? today.getUTCMonth()
-                : new Date(
-                      today.getUTCFullYear(),
-                      today.getUTCMonth() + 1,
-                      1
-                  ).getUTCMonth();
-
-        expect(firstIteration.getUTCMonth()).toBe(expectedMonth);
+        // First iteration should be December 20th (current month since 20th is in the future)
+        expect(firstIteration.getUTCFullYear()).toBe(2025);
+        expect(firstIteration.getUTCMonth()).toBe(11); // December
         expect(firstIteration.getUTCDate()).toBe(20);
     });
 });
