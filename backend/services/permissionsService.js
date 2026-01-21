@@ -257,9 +257,24 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
     return result;
 }
 
+/**
+ * Returns a WHERE clause for tasks that the user owns or is assigned to.
+ * This is a stricter filter than ownershipOrPermissionWhere, used for
+ * suggested tasks where we only want to suggest tasks the user can act on.
+ *
+ * @param {number} userId - The user ID
+ * @returns {Object} Sequelize WHERE clause
+ */
+function ownedOrAssignedTasksWhere(userId) {
+    return {
+        [Op.or]: [{ user_id: userId }, { assigned_to_user_id: userId }],
+    };
+}
+
 module.exports = {
     ACCESS,
     getAccess,
     ownershipOrPermissionWhere,
     getSharedUidsForUser,
+    ownedOrAssignedTasksWhere,
 };
