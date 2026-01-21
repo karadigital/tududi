@@ -899,6 +899,129 @@ describe('Universal Search Routes', () => {
             });
         });
 
+        describe('Actionable Tasks (Owned, Assigned, Subscribed)', () => {
+            let otherUser;
+            const { sequelize } = require('../../models');
+
+            beforeEach(async () => {
+                // Create another user who owns tasks
+                otherUser = await createTestUser({
+                    email: 'task-owner@example.com',
+                });
+
+                // Task owned by current user
+                await Task.create({
+                    user_id: user.id,
+                    name: 'My owned task',
+                    status: 0,
+                });
+
+                // Task owned by other user but assigned to current user
+                await Task.create({
+                    user_id: otherUser.id,
+                    name: 'Assigned to me task',
+                    assigned_to_user_id: user.id,
+                    status: 0,
+                });
+
+                // Task owned by other user, current user is subscribed
+                const subscribedTask = await Task.create({
+                    user_id: otherUser.id,
+                    name: 'Subscribed task',
+                    status: 0,
+                });
+
+                // Subscribe current user to this task
+                await sequelize.query(
+                    `INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`,
+                    { replacements: [subscribedTask.id, user.id] }
+                );
+
+                // Task owned by other user (should NOT appear in search)
+                await Task.create({
+                    user_id: otherUser.id,
+                    name: 'Other user task',
+                    status: 0,
+                });
+            });
+
+            it('should return tasks user owns', async () => {
+                const response = await agent.get('/api/search').query({
+                    q: 'owned',
+                    filters: 'Task',
+                });
+
+                expect(response.status).toBe(200);
+                const tasks = response.body.results.filter(
+                    (r) => r.type === 'Task'
+                );
+                expect(tasks.length).toBe(1);
+                expect(tasks[0].name).toBe('My owned task');
+            });
+
+            it('should return tasks assigned to user', async () => {
+                const response = await agent.get('/api/search').query({
+                    q: 'Assigned',
+                    filters: 'Task',
+                });
+
+                expect(response.status).toBe(200);
+                const tasks = response.body.results.filter(
+                    (r) => r.type === 'Task'
+                );
+                expect(tasks.length).toBe(1);
+                expect(tasks[0].name).toBe('Assigned to me task');
+            });
+
+            it('should return tasks user is subscribed to', async () => {
+                const response = await agent.get('/api/search').query({
+                    q: 'Subscribed',
+                    filters: 'Task',
+                });
+
+                expect(response.status).toBe(200);
+                const tasks = response.body.results.filter(
+                    (r) => r.type === 'Task'
+                );
+                expect(tasks.length).toBe(1);
+                expect(tasks[0].name).toBe('Subscribed task');
+            });
+
+            it('should not return tasks user has no relationship to', async () => {
+                const response = await agent.get('/api/search').query({
+                    q: 'Other user',
+                    filters: 'Task',
+                });
+
+                expect(response.status).toBe(200);
+                const tasks = response.body.results.filter(
+                    (r) => r.type === 'Task'
+                );
+                expect(tasks.length).toBe(0);
+            });
+
+            it('should return all actionable tasks when searching broadly', async () => {
+                const response = await agent.get('/api/search').query({
+                    q: 'task',
+                    filters: 'Task',
+                });
+
+                expect(response.status).toBe(200);
+                const tasks = response.body.results.filter(
+                    (r) => r.type === 'Task'
+                );
+                const taskNames = tasks.map((t) => t.name);
+
+                // Should include owned, assigned, and subscribed tasks
+                expect(taskNames).toContain('My owned task');
+                expect(taskNames).toContain('Assigned to me task');
+                expect(taskNames).toContain('Subscribed task');
+
+                // Should NOT include task with no relationship
+                expect(taskNames).not.toContain('Other user task');
+            });
+        });
+
         describe('Result Format', () => {
             beforeEach(async () => {
                 await Task.create({

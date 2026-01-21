@@ -3,6 +3,7 @@ const { Task, Tag, Project, Area, Note, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 const { serializeTasks } = require('./tasks/core/serializers');
+const { actionableTasksWhere } = require('../services/permissionsService');
 const router = express.Router();
 
 // Helper function to convert priority string to integer
@@ -167,10 +168,11 @@ router.get('/', async (req, res) => {
 
         // Search Tasks
         if (filterTypes.includes('Task')) {
-            const taskConditions = {
-                user_id: userId,
-            };
-            const taskExtraConditions = [];
+            // Get tasks user owns, is assigned to, or is subscribed to
+            const actionableWhere = await actionableTasksWhere(userId);
+            // Build conditions - actionableWhere must always be applied via Op.and
+            const taskConditions = {};
+            const taskExtraConditions = [actionableWhere]; // Always filter by actionable tasks
 
             // Exclude subtasks and recurring instances if requested
             if (excludeSubtasks === 'true') {
@@ -178,19 +180,21 @@ router.get('/', async (req, res) => {
                 taskConditions.recurring_parent_id = null;
             }
 
-            // Add search query filter if specified
+            // Add search query filter if specified (as separate Op.and condition)
             if (searchQuery) {
                 const lowerQuery = searchQuery.toLowerCase();
-                taskConditions[Op.or] = [
-                    sequelize.where(
-                        sequelize.fn('LOWER', sequelize.col('Task.name')),
-                        { [Op.like]: `%${lowerQuery}%` }
-                    ),
-                    sequelize.where(
-                        sequelize.fn('LOWER', sequelize.col('Task.note')),
-                        { [Op.like]: `%${lowerQuery}%` }
-                    ),
-                ];
+                taskExtraConditions.push({
+                    [Op.or]: [
+                        sequelize.where(
+                            sequelize.fn('LOWER', sequelize.col('Task.name')),
+                            { [Op.like]: `%${lowerQuery}%` }
+                        ),
+                        sequelize.where(
+                            sequelize.fn('LOWER', sequelize.col('Task.note')),
+                            { [Op.like]: `%${lowerQuery}%` }
+                        ),
+                    ],
+                });
             }
 
             // Add priority filter if specified (convert string to integer)

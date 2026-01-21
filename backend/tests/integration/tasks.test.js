@@ -425,11 +425,10 @@ describe('Tasks Routes', () => {
             );
 
             expect(templateTask).toBeDefined();
-            // The template name gets transformed to show the recurrence type in the API response
-            expect(templateTask.name).toBe('Daily');
+            // The template keeps its original name (no transformation)
+            expect(templateTask.name).toBe('RecurringTask');
             expect(templateTask.recurrence_type).toBe('daily');
             expect(templateTask.recurring_parent_id).toBeNull();
-            // The original name is preserved in original_name field
             expect(templateTask.original_name).toBe('RecurringTask');
 
             expect(instanceTask).toBeDefined();
