@@ -5,6 +5,57 @@ const { isAdmin } = require('./rolesService');
 
 const ACCESS = { NONE: 'none', RO: 'ro', RW: 'rw', ADMIN: 'admin' };
 
+/**
+ * Get all user IDs from departments where the given user is an admin.
+ * A user is a department admin if they are:
+ * 1. The owner of an area (user_id in areas table), OR
+ * 2. Have role='admin' in areas_members table
+ *
+ * @param {number} userId - The user ID to check
+ * @returns {Promise<number[]>} Array of all member user IDs from those departments (including the admin)
+ */
+async function getDepartmentMemberUserIds(userId) {
+    // Find areas where user is an admin (either as owner or as admin member)
+    const adminAreas = await sequelize.query(
+        `SELECT DISTINCT a.id
+         FROM areas a
+         WHERE a.user_id = :userId
+         UNION
+         SELECT DISTINCT am.area_id
+         FROM areas_members am
+         WHERE am.user_id = :userId AND am.role = 'admin'`,
+        {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+            raw: true,
+        }
+    );
+
+    if (adminAreas.length === 0) {
+        return [];
+    }
+
+    const areaIds = adminAreas.map((row) => row.id);
+
+    // Get all member user IDs from those areas
+    const members = await sequelize.query(
+        `SELECT DISTINCT user_id
+         FROM areas_members
+         WHERE area_id IN (:areaIds)
+         UNION
+         SELECT DISTINCT user_id
+         FROM areas
+         WHERE id IN (:areaIds)`,
+        {
+            replacements: { areaIds },
+            type: QueryTypes.SELECT,
+            raw: true,
+        }
+    );
+
+    return members.map((row) => row.user_id);
+}
+
 async function getSharedUidsForUser(resourceType, userId) {
     const rows = await Permission.findAll({
         where: { user_id: userId, resource_type: resourceType },
@@ -28,6 +79,10 @@ async function getAccess(userId, resourceType, resourceUid) {
         }
     }
 
+    // Superadmin gets RW access to tasks (not ADMIN, to maintain consistent behavior)
+    if (resourceType === 'task' && (await isAdmin(userUid))) return ACCESS.RW;
+
+    // For non-task resources, superadmin gets ADMIN access
     if (await isAdmin(userUid)) return ACCESS.ADMIN;
 
     // ownership via model
@@ -50,6 +105,10 @@ async function getAccess(userId, resourceType, resourceUid) {
 
         // Check if user is assigned to the task
         if (t.assigned_to_user_id === userId) return ACCESS.RW;
+
+        // Check if user is a department admin and the task owner is in their department
+        const memberUserIds = await getDepartmentMemberUserIds(userId);
+        if (memberUserIds.includes(t.user_id)) return ACCESS.RW;
 
         // Check if user has access through the parent project
         if (t.project_id) {
@@ -158,9 +217,12 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
 
     const isUserAdmin = await isAdmin(userUid);
 
-    // Admin users should NOT see all resources automatically
-    // They should only see their own resources and shared resources, like regular users
-    // If admin-level system-wide visibility is needed, it should be via dedicated admin endpoints
+    // Superadmin sees all tasks
+    if (isUserAdmin && resourceType === 'task') {
+        const result = {};
+        if (cache) cache.set(cacheKey, result);
+        return result;
+    }
 
     const sharedUids = await getSharedUidsForUser(resourceType, userId);
 
@@ -206,6 +268,12 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             if (subscribedTaskIds.length > 0) {
                 const taskIds = subscribedTaskIds.map((row) => row.task_id);
                 conditions.push({ id: { [Op.in]: taskIds } }); // Subscribed tasks
+            }
+
+            // Department admins can see tasks of their department members
+            const memberUserIds = await getDepartmentMemberUserIds(userId);
+            if (memberUserIds.length > 0) {
+                conditions.push({ user_id: { [Op.in]: memberUserIds } }); // Tasks owned by department members
             }
         }
 
