@@ -71,7 +71,21 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
         const user = await User.findByPk(userId);
         if (!user) throw new Error('User not found');
 
-        // Check if already member
+        // Check if user is already a member of ANOTHER department
+        const otherDepartmentMember = await sequelize.query(
+            `SELECT * FROM areas_members WHERE user_id = :userId AND area_id != :areaId`,
+            {
+                replacements: { areaId, userId },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+
+        if (otherDepartmentMember && otherDepartmentMember.length > 0) {
+            throw new Error('User is already a member of another department');
+        }
+
+        // Check if already member of THIS area
         const existingMember = await sequelize.query(
             `SELECT * FROM areas_members WHERE area_id = :areaId AND user_id = :userId`,
             {
