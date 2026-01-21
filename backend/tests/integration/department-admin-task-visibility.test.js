@@ -53,10 +53,14 @@ describe('Department Admin Task Visibility', () => {
         let superadmin, regularUser, superadminAgent;
 
         beforeEach(async () => {
-            superadmin = await createTestUser({ email: uniqueEmail('superadmin') });
+            superadmin = await createTestUser({
+                email: uniqueEmail('superadmin'),
+            });
             await makeSuperadmin(superadmin.id);
 
-            regularUser = await createTestUser({ email: uniqueEmail('regular') });
+            regularUser = await createTestUser({
+                email: uniqueEmail('regular'),
+            });
 
             superadminAgent = await loginAgent(superadmin.email);
         });
@@ -110,10 +114,14 @@ describe('Department Admin Task Visibility', () => {
 
         beforeEach(async () => {
             // Create department admin (also the area owner)
-            deptAdmin = await createTestUser({ email: uniqueEmail('deptadmin') });
+            deptAdmin = await createTestUser({
+                email: uniqueEmail('deptadmin'),
+            });
 
             // Create department member
-            deptMember = await createTestUser({ email: uniqueEmail('deptmember') });
+            deptMember = await createTestUser({
+                email: uniqueEmail('deptmember'),
+            });
 
             // Create outsider (not in department)
             outsider = await createTestUser({ email: uniqueEmail('outsider') });
@@ -204,7 +212,9 @@ describe('Department Admin Task Visibility', () => {
             expect(taskIds).not.toContain(outsiderTask.id);
 
             // Also verify direct access is forbidden
-            const directRes = await deptAdminAgent.get(`/api/task/${outsiderTask.uid}`);
+            const directRes = await deptAdminAgent.get(
+                `/api/task/${outsiderTask.uid}`
+            );
             expect(directRes.status).toBe(403);
         });
     });
@@ -214,7 +224,9 @@ describe('Department Admin Task Visibility', () => {
 
         beforeEach(async () => {
             // Create department admin
-            deptAdmin = await createTestUser({ email: uniqueEmail('deptadmin') });
+            deptAdmin = await createTestUser({
+                email: uniqueEmail('deptadmin'),
+            });
 
             // Create two regular members
             member1 = await createTestUser({ email: uniqueEmail('member1') });
@@ -262,7 +274,9 @@ describe('Department Admin Task Visibility', () => {
             expect(taskIds).not.toContain(member2Task.id);
 
             // Also verify direct access is forbidden
-            const directRes = await member1Agent.get(`/api/task/${member2Task.uid}`);
+            const directRes = await member1Agent.get(
+                `/api/task/${member2Task.uid}`
+            );
             expect(directRes.status).toBe(403);
         });
     });
@@ -272,8 +286,12 @@ describe('Department Admin Task Visibility', () => {
 
         beforeEach(async () => {
             // Create two department admins
-            dept1Admin = await createTestUser({ email: uniqueEmail('dept1admin') });
-            dept2Admin = await createTestUser({ email: uniqueEmail('dept2admin') });
+            dept1Admin = await createTestUser({
+                email: uniqueEmail('dept1admin'),
+            });
+            dept2Admin = await createTestUser({
+                email: uniqueEmail('dept2admin'),
+            });
 
             // Create a regular user
             user = await createTestUser({ email: uniqueEmail('user') });
@@ -310,7 +328,9 @@ describe('Department Admin Task Visibility', () => {
                 .send({ user_id: user.id, role: 'member' });
 
             expect(res.status).toBe(400);
-            expect(res.body.error).toBe('User is already a member of another department');
+            expect(res.body.error).toBe(
+                'User is already a member of another department'
+            );
         });
     });
 });
