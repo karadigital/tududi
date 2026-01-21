@@ -48,8 +48,7 @@ async function addDashboardLists(
     userId,
     timezone,
     queryType,
-    includeLists,
-    serializationOptions
+    includeLists
 ) {
     if (queryType !== 'today' || includeLists !== 'true') {
         return;
@@ -73,8 +72,7 @@ async function addDashboardLists(
             key === 'tasks_today_plan' ? 'today_plan_tasks' : key;
         serializedLists[key] = await serializeTasks(
             metricsData[metricsKey],
-            timezone,
-            serializationOptions
+            timezone
         );
     }
 

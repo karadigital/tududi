@@ -266,15 +266,8 @@ router.get('/tasks', async (req, res) => {
             userId
         );
 
-        const serializationOptions =
-            type === 'today' ? { preserveOriginalName: true } : {};
-
         const response = {
-            tasks: await serializeTasks(
-                paginatedTasks,
-                timezone,
-                serializationOptions
-            ),
+            tasks: await serializeTasks(paginatedTasks, timezone),
         };
 
         const serializedGrouped = await serializeGroupedTasks(
@@ -290,8 +283,7 @@ router.get('/tasks', async (req, res) => {
             userId,
             timezone,
             type,
-            include_lists,
-            serializationOptions
+            include_lists
         );
 
         if (hasPagination) {
@@ -421,8 +413,7 @@ router.post('/task', async (req, res) => {
 
         const serializedTask = await serializeTask(
             taskWithAssociations,
-            req.currentUser.timezone,
-            { skipDisplayNameTransform: true }
+            req.currentUser.timezone
         );
 
         res.set({
@@ -457,8 +448,7 @@ router.get('/task/:uid', requireTaskReadAccess, async (req, res) => {
 
         const serializedTask = await serializeTask(
             task,
-            req.currentUser.timezone,
-            { skipDisplayNameTransform: true }
+            req.currentUser.timezone
         );
 
         res.json(serializedTask);
@@ -836,8 +826,7 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
 
         const serializedTask = await serializeTask(
             taskWithAssociations,
-            req.currentUser.timezone,
-            { skipDisplayNameTransform: true }
+            req.currentUser.timezone
         );
 
         res.json(serializedTask);
