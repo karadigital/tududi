@@ -30,34 +30,6 @@ async function serializeTask(
 
     const { Subtasks, ...taskWithoutSubtasks } = taskJson;
 
-    let displayName = taskJson.name;
-    if (
-        !options.skipDisplayNameTransform &&
-        !options.preserveOriginalName &&
-        taskJson.recurrence_type &&
-        taskJson.recurrence_type !== 'none' &&
-        !taskJson.recurring_parent_id
-    ) {
-        switch (taskJson.recurrence_type) {
-            case 'daily':
-                displayName = 'Daily';
-                break;
-            case 'weekly':
-                displayName = 'Weekly';
-                break;
-            case 'monthly':
-                displayName = 'Monthly';
-                break;
-            case 'yearly':
-                displayName = 'Yearly';
-                break;
-            default:
-                displayName =
-                    taskJson.recurrence_type.charAt(0).toUpperCase() +
-                    taskJson.recurrence_type.slice(1);
-        }
-    }
-
     let recurringParentUid = null;
     if (taskJson.recurring_parent_id) {
         const parentTask = await taskRepository.findById(
@@ -71,7 +43,7 @@ async function serializeTask(
 
     return {
         ...taskWithoutSubtasks,
-        name: displayName,
+        name: taskJson.name,
         original_name: taskJson.name,
         uid: task.uid,
         recurring_parent_uid: recurringParentUid,
