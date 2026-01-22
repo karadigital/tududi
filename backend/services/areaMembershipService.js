@@ -71,7 +71,21 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
         const user = await User.findByPk(userId);
         if (!user) throw new Error('User not found');
 
-        // Check if already member
+        // Check if user is already a member of ANOTHER department
+        const otherDepartmentMember = await sequelize.query(
+            `SELECT * FROM areas_members WHERE user_id = :userId AND area_id != :areaId`,
+            {
+                replacements: { areaId, userId },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+
+        if (otherDepartmentMember && otherDepartmentMember.length > 0) {
+            throw new Error('User is already a member of another department');
+        }
+
+        // Check if already member of THIS area
         const existingMember = await sequelize.query(
             `SELECT * FROM areas_members WHERE area_id = :areaId AND user_id = :userId`,
             {
@@ -86,14 +100,30 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
         }
 
         // Add member with role
-        await sequelize.query(
-            `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, :role, datetime('now'), datetime('now'))`,
-            {
-                replacements: { areaId, userId, role },
-                type: QueryTypes.INSERT,
+        // Use try-catch to handle race conditions where concurrent requests
+        // might bypass the pre-checks but hit the unique constraint
+        try {
+            await sequelize.query(
+                `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
+                 VALUES (:areaId, :userId, :role, datetime('now'), datetime('now'))`,
+                {
+                    replacements: { areaId, userId, role },
+                    type: QueryTypes.INSERT,
+                }
+            );
+        } catch (insertError) {
+            // Handle unique constraint violation (TOCTOU race condition)
+            if (
+                insertError.name === 'SequelizeUniqueConstraintError' ||
+                (insertError.message &&
+                    insertError.message.includes('UNIQUE constraint failed'))
+            ) {
+                throw new Error(
+                    'User is already a member of another department'
+                );
             }
-        );
+            throw insertError;
+        }
 
         // Create permission cascade via execAction
         const { execAction } = require('./execAction');

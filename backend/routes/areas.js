@@ -333,6 +333,12 @@ router.post(
         } catch (error) {
             logError('Error adding area member:', error);
 
+            if (
+                error.message ===
+                'User is already a member of another department'
+            ) {
+                return res.status(400).json({ error: error.message });
+            }
             if (error.message === 'User is already a member') {
                 return res.status(400).json({ error: error.message });
             }
