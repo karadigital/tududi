@@ -13,10 +13,13 @@ import {
     CalendarDaysIcon,
     CalendarIcon,
     PlayIcon,
-    FireIcon,
-    ArrowUpIcon,
-    ArrowDownIcon,
 } from '@heroicons/react/24/outline';
+import {
+    HiChevronDoubleDown,
+    HiChevronDoubleUp,
+    HiOutlineFire,
+} from 'react-icons/hi';
+import { FaEquals } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import { Task, PriorityType } from '../../../entities/Task';
 import { formatDateTime } from '../../../utils/dateUtils';
@@ -273,13 +276,13 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                 : task.priority;
 
         if (priority === 'low' || priority === 0) {
-            return ArrowDownIcon;
+            return HiChevronDoubleDown;
         } else if (priority === 'medium' || priority === 1) {
-            return ArrowUpIcon;
+            return FaEquals;
         } else if (priority === 'high' || priority === 2) {
-            return FireIcon;
+            return HiChevronDoubleUp;
         } else if (priority === 'critical' || priority === 3) {
-            return ExclamationTriangleIcon;
+            return HiOutlineFire;
         }
         return XMarkIcon;
     };
@@ -568,7 +571,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                             );
                                                         }}
                                                     >
-                                                        <ArrowDownIcon
+                                                        <HiChevronDoubleDown
                                                             className={`h-4 w-4 ${getPriorityIconClass('low')}`}
                                                         />
                                                         <span className="capitalize flex-1">
@@ -600,7 +603,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                             );
                                                         }}
                                                     >
-                                                        <ArrowUpIcon
+                                                        <FaEquals
                                                             className={`h-4 w-4 ${getPriorityIconClass('medium')}`}
                                                         />
                                                         <span className="capitalize flex-1">
@@ -632,7 +635,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                             );
                                                         }}
                                                     >
-                                                        <FireIcon
+                                                        <HiChevronDoubleUp
                                                             className={`h-4 w-4 ${getPriorityIconClass('high')}`}
                                                         />
                                                         <span className="capitalize flex-1">
@@ -679,7 +682,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                                             );
                                                         }}
                                                     >
-                                                        <ExclamationTriangleIcon
+                                                        <HiOutlineFire
                                                             className={`h-4 w-4 ${getPriorityIconClass('critical')}`}
                                                         />
                                                         <span className="capitalize flex-1">

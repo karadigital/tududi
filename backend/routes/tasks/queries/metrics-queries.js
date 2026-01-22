@@ -186,15 +186,25 @@ async function fetchNonProjectTasks(
     limit = null
 ) {
     const exclusionIds = [...excludedTaskIds, ...somedayTaskIds];
+
+    // Use Op.and to properly combine visibleTasksWhere (which may contain Op.or)
+    // with the project_id filter (which also uses Op.or)
+    const baseConditions = {
+        status: {
+            [Op.in]: [Task.STATUS.NOT_STARTED, Task.STATUS.WAITING],
+        },
+        [Op.or]: [{ project_id: null }, { project_id: '' }],
+        parent_task_id: null,
+        recurring_parent_id: null,
+    };
+
+    if (exclusionIds.length > 0) {
+        baseConditions.id = { [Op.notIn]: exclusionIds };
+    }
+
     const queryOptions = {
         where: {
-            ...visibleTasksWhere,
-            status: {
-                [Op.in]: [Task.STATUS.NOT_STARTED, Task.STATUS.WAITING],
-            },
-            [Op.or]: [{ project_id: null }, { project_id: '' }],
-            parent_task_id: null,
-            recurring_parent_id: null,
+            [Op.and]: [visibleTasksWhere, baseConditions],
         },
         include: getTaskIncludeConfig(),
         order: [
@@ -203,10 +213,6 @@ async function fetchNonProjectTasks(
             ['project_id', 'ASC'],
         ],
     };
-
-    if (exclusionIds.length > 0) {
-        queryOptions.where.id = { [Op.notIn]: exclusionIds };
-    }
 
     if (limit && Number.isInteger(limit)) {
         queryOptions.limit = limit;
@@ -222,15 +228,25 @@ async function fetchProjectTasks(
     limit = null
 ) {
     const exclusionIds = [...excludedTaskIds, ...somedayTaskIds];
+
+    // Use Op.and to properly combine visibleTasksWhere (which may contain Op.or)
+    // with the base conditions
+    const baseConditions = {
+        status: {
+            [Op.in]: [Task.STATUS.NOT_STARTED, Task.STATUS.WAITING],
+        },
+        project_id: { [Op.not]: null, [Op.ne]: '' },
+        parent_task_id: null,
+        recurring_parent_id: null,
+    };
+
+    if (exclusionIds.length > 0) {
+        baseConditions.id = { [Op.notIn]: exclusionIds };
+    }
+
     const queryOptions = {
         where: {
-            ...visibleTasksWhere,
-            status: {
-                [Op.in]: [Task.STATUS.NOT_STARTED, Task.STATUS.WAITING],
-            },
-            project_id: { [Op.not]: null, [Op.ne]: '' },
-            parent_task_id: null,
-            recurring_parent_id: null,
+            [Op.and]: [visibleTasksWhere, baseConditions],
         },
         include: getTaskIncludeConfig(),
         order: [
@@ -239,10 +255,6 @@ async function fetchProjectTasks(
             ['project_id', 'ASC'],
         ],
     };
-
-    if (exclusionIds.length > 0) {
-        queryOptions.where.id = { [Op.notIn]: exclusionIds };
-    }
 
     if (limit && Number.isInteger(limit)) {
         queryOptions.limit = limit;

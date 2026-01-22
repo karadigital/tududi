@@ -1,7 +1,10 @@
 const { Task } = require('../../../models');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
-const permissionsService = require('../../../services/permissionsService');
+const {
+    ownershipOrPermissionWhere,
+    ownedOrAssignedTasksWhere,
+} = require('../../../services/permissionsService');
 const {
     countTotalOpenTasks,
     countTasksPendingOverMonth,
@@ -72,7 +75,7 @@ const multiCriteriaTaskSort = (a, b) => {
 };
 
 async function computeSuggestedTasks(
-    visibleTasksWhere,
+    suggestableTasksWhere,
     userId,
     totalOpenTasks,
     tasksInProgress,
@@ -97,11 +100,15 @@ async function computeSuggestedTasks(
 
     const [nonProjectTasks, projectTasks] = await Promise.all([
         fetchNonProjectTasks(
-            visibleTasksWhere,
+            suggestableTasksWhere,
             excludedTaskIds,
             somedayTaskIds
         ),
-        fetchProjectTasks(visibleTasksWhere, excludedTaskIds, somedayTaskIds),
+        fetchProjectTasks(
+            suggestableTasksWhere,
+            excludedTaskIds,
+            somedayTaskIds
+        ),
     ]);
 
     let combinedTasks = [...nonProjectTasks, ...projectTasks];
@@ -192,12 +199,16 @@ async function computeTaskMetrics(
     userTimezone = 'UTC',
     permissionCache = null
 ) {
-    const visibleTasksWhere =
-        await permissionsService.ownershipOrPermissionWhere(
-            'task',
-            userId,
-            permissionCache
-        );
+    const visibleTasksWhere = await ownershipOrPermissionWhere(
+        'task',
+        userId,
+        permissionCache
+    );
+
+    // For suggested tasks, use a stricter filter: only tasks the user owns or is assigned to.
+    // This prevents suggesting tasks the user can only view (e.g., as a department admin)
+    // but cannot reasonably "start working on" themselves.
+    const suggestableTasksWhere = ownedOrAssignedTasksWhere(userId);
 
     const [
         totalOpenTasks,
@@ -220,7 +231,7 @@ async function computeTaskMetrics(
     ]);
 
     const suggestedTasks = await computeSuggestedTasks(
-        visibleTasksWhere,
+        suggestableTasksWhere,
         userId,
         totalOpenTasks,
         tasksInProgress,

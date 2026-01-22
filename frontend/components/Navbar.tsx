@@ -1,11 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-    UserIcon,
-    Bars3Icon,
-    BoltIcon,
-    InboxIcon,
-} from '@heroicons/react/24/solid';
+import { UserIcon, Bars3Icon } from '@heroicons/react/24/solid';
+// BoltIcon, InboxIcon removed - Hidden by ASID-734
 import { EnvelopeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import PomodoroTimer from './Shared/PomodoroTimer';
@@ -215,6 +211,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         <MagnifyingGlassIcon className="h-5 w-5" />
                     </button>
 
+                    {/* Hidden by request of ASID-734
                     <button
                         onClick={() => navigate('/inbox')}
                         className="flex items-center bg-blue-500 hover:bg-blue-600 text-white rounded-full focus:outline-none transition-all duration-200 px-2 py-2 md:px-3 md:py-2"
@@ -224,6 +221,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         <BoltIcon className="h-4 w-4 text-white" />
                         <InboxIcon className="hidden md:inline-block ml-1.5 h-4 w-4 text-blue-200" />
                     </button>
+                    */}
                     {pomodoroEnabled && <PomodoroTimer />}
 
                     <NotificationsDropdown isDarkMode={isDarkMode} />
