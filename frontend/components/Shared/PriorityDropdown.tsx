@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
-    ChevronDownIcon,
-    ArrowDownIcon,
-    ArrowUpIcon,
-    FireIcon,
-    XMarkIcon,
-    ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+    HiChevronDoubleDown,
+    HiChevronDoubleUp,
+    HiOutlineFire,
+} from 'react-icons/hi';
+import { FaEquals } from 'react-icons/fa6';
 import { PriorityType } from '../../entities/Task';
 import { useTranslation } from 'react-i18next';
 
@@ -40,28 +39,28 @@ const PriorityDropdown: React.FC<PriorityDropdownProps> = ({
             value: 'low',
             label: t('priority.low', 'Low'),
             icon: (
-                <ArrowDownIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                <HiChevronDoubleDown className="w-5 h-5 text-blue-500 dark:text-blue-400" />
             ),
         },
         {
             value: 'medium',
             label: t('priority.medium', 'Medium'),
             icon: (
-                <ArrowUpIcon className="w-5 h-5 text-orange-500 dark:text-orange-400" />
+                <FaEquals className="w-5 h-5 text-orange-500 dark:text-orange-400" />
             ),
         },
         {
             value: 'high',
             label: t('priority.high', 'High'),
             icon: (
-                <FireIcon className="w-5 h-5 text-red-500 dark:text-red-400" />
+                <HiChevronDoubleUp className="w-5 h-5 text-red-500 dark:text-red-400" />
             ),
         },
         {
             value: 'critical',
             label: t('priority.critical', 'Critical'),
             icon: (
-                <ExclamationTriangleIcon className="w-5 h-5 text-red-600 dark:text-red-500" />
+                <HiOutlineFire className="w-5 h-5 text-red-600 dark:text-red-500" />
             ),
         },
     ];
