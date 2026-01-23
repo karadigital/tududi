@@ -117,4 +117,105 @@ describe('Department Admin Auto-Subscription', () => {
             expect.objectContaining({ id: deptAdmin.id })
         );
     });
+
+    it('should allow dept admin to unsubscribe from auto-subscribed task', async () => {
+        // Create task as member (admin gets auto-subscribed)
+        const taskRes = await memberAgent
+            .post('/api/task')
+            .send({ name: 'Task for unsubscribe test' });
+
+        expect(taskRes.status).toBe(201);
+
+        // Verify admin is subscribed
+        const beforeRes = await adminAgent.get(
+            `/api/task/${taskRes.body.uid}/subscribers`
+        );
+        expect(beforeRes.body.subscribers).toContainEqual(
+            expect.objectContaining({ id: deptAdmin.id })
+        );
+
+        // Admin unsubscribes
+        const unsubRes = await adminAgent
+            .post(`/api/task/${taskRes.body.uid}/unsubscribe`)
+            .send({ user_id: deptAdmin.id });
+
+        expect(unsubRes.status).toBe(200);
+
+        // Verify admin is no longer subscribed
+        const afterRes = await adminAgent.get(
+            `/api/task/${taskRes.body.uid}/subscribers`
+        );
+        expect(afterRes.body.subscribers).not.toContainEqual(
+            expect.objectContaining({ id: deptAdmin.id })
+        );
+    });
+
+    it('should subscribe multiple admins when department has more than one', async () => {
+        // Create a second admin
+        const deptAdmin2 = await createTestUser({
+            email: `dept-admin2-${Date.now()}@test.com`,
+            name: 'Dept',
+            surname: 'Admin2',
+        });
+
+        // Add second admin to department
+        await sequelize.query(
+            `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
+             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
+            {
+                replacements: { areaId: area.id, userId: deptAdmin2.id },
+                type: QueryTypes.INSERT,
+            }
+        );
+
+        // Create task as member
+        const taskRes = await memberAgent
+            .post('/api/task')
+            .send({ name: 'Task for multiple admins test' });
+
+        expect(taskRes.status).toBe(201);
+
+        // Check that both admins are subscribed
+        const subscribersRes = await memberAgent.get(
+            `/api/task/${taskRes.body.uid}/subscribers`
+        );
+
+        expect(subscribersRes.body.subscribers).toContainEqual(
+            expect.objectContaining({ id: deptAdmin.id })
+        );
+        expect(subscribersRes.body.subscribers).toContainEqual(
+            expect.objectContaining({ id: deptAdmin2.id })
+        );
+    });
+
+    it('should not subscribe users without department membership', async () => {
+        // Create a user without department membership
+        const noDeptUser = await createTestUser({
+            email: `no-dept-${Date.now()}@test.com`,
+            name: 'No',
+            surname: 'Dept',
+        });
+
+        const noDeptAgent = request.agent(app);
+        await noDeptAgent
+            .post('/api/login')
+            .send({ email: noDeptUser.email, password: 'password123' });
+
+        // Create task as user without department
+        const taskRes = await noDeptAgent
+            .post('/api/task')
+            .send({ name: 'Task from user without department' });
+
+        expect(taskRes.status).toBe(201);
+
+        // Check that no one is subscribed (no department = no admins to subscribe)
+        const subscribersRes = await noDeptAgent.get(
+            `/api/task/${taskRes.body.uid}/subscribers`
+        );
+
+        // Should have no subscribers (or only the owner if auto-subscribed)
+        expect(subscribersRes.body.subscribers).not.toContainEqual(
+            expect.objectContaining({ id: deptAdmin.id })
+        );
+    });
 });
