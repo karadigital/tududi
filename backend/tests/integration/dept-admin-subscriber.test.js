@@ -77,10 +77,13 @@ describe('Department Admin Auto-Subscription', () => {
             where: { user_id: [deptOwner.id, deptMember.id, deptAdmin.id] },
             force: true,
         });
-        await sequelize.query(`DELETE FROM areas_members WHERE area_id = :areaId`, {
-            replacements: { areaId: area.id },
-            type: QueryTypes.DELETE,
-        });
+        await sequelize.query(
+            `DELETE FROM areas_members WHERE area_id = :areaId`,
+            {
+                replacements: { areaId: area.id },
+                type: QueryTypes.DELETE,
+            }
+        );
         await area.destroy();
     });
 

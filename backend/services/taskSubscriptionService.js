@@ -1,4 +1,10 @@
-const { Task, User, Permission, Notification, AreasMember } = require('../models');
+const {
+    Task,
+    User,
+    Permission,
+    Notification,
+    AreasMember,
+} = require('../models');
 const { logError } = require('./logService');
 const {
     shouldSendInAppNotification,

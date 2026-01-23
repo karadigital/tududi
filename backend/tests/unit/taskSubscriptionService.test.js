@@ -1,4 +1,6 @@
-const { subscribeDepartmentAdmins } = require('../../services/taskSubscriptionService');
+const {
+    subscribeDepartmentAdmins,
+} = require('../../services/taskSubscriptionService');
 
 // Mock the models
 jest.mock('../../models', () => {

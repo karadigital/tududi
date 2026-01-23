@@ -45,7 +45,9 @@ module.exports = {
             { type: QueryTypes.SELECT }
         );
 
-        console.log(`Processing ${tasks.length} tasks for dept admin subscription`);
+        console.log(
+            `Processing ${tasks.length} tasks for dept admin subscription`
+        );
 
         let subscriptionsCreated = 0;
         let permissionsCreated = 0;
@@ -97,7 +99,10 @@ module.exports = {
                      AND resource_uid = :resourceUid
                      AND propagation = 'subscription'`,
                     {
-                        replacements: { userId: adminUserId, resourceUid: task.uid },
+                        replacements: {
+                            userId: adminUserId,
+                            resourceUid: task.uid,
+                        },
                         type: QueryTypes.SELECT,
                     }
                 );
@@ -121,10 +126,14 @@ module.exports = {
             }
         }
 
-        console.log(`Migration complete: ${subscriptionsCreated} subscriptions created, ${permissionsCreated} permissions created`);
+        console.log(
+            `Migration complete: ${subscriptionsCreated} subscriptions created, ${permissionsCreated} permissions created`
+        );
     },
 
     async down(queryInterface, Sequelize) {
-        console.log('Down migration not implemented - subscriptions will remain');
+        console.log(
+            'Down migration not implemented - subscriptions will remain'
+        );
     },
 };
