@@ -73,7 +73,10 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
 
         // Check if user is already a member of ANOTHER department
         const otherDepartmentMember = await sequelize.query(
-            `SELECT * FROM areas_members WHERE user_id = :userId AND area_id != :areaId`,
+            `SELECT am.*, a.name as department_name
+             FROM areas_members am
+             JOIN areas a ON am.area_id = a.id
+             WHERE am.user_id = :userId AND am.area_id != :areaId`,
             {
                 replacements: { areaId, userId },
                 type: QueryTypes.SELECT,
@@ -82,7 +85,11 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
         );
 
         if (otherDepartmentMember && otherDepartmentMember.length > 0) {
-            throw new Error('User is already a member of another department');
+            const error = new Error(
+                'User is already a member of another department'
+            );
+            error.departmentName = otherDepartmentMember[0].department_name;
+            throw error;
         }
 
         // Check if already member of THIS area

@@ -337,7 +337,10 @@ router.post(
                 error.message ===
                 'User is already a member of another department'
             ) {
-                return res.status(400).json({ error: error.message });
+                return res.status(400).json({
+                    error: error.message,
+                    departmentName: error.departmentName,
+                });
             }
             if (error.message === 'User is already a member') {
                 return res.status(400).json({ error: error.message });
