@@ -478,6 +478,65 @@ async function notifySubscribersAboutStatusChange(task, changedBy) {
     }
 }
 
+/**
+ * Subscribe department admins to a task
+ * Automatically subscribes all admins of the task owner's department
+ *
+ * @param {number} taskId - Task ID to subscribe admins to
+ * @param {number} taskOwnerId - User ID of the task owner
+ * @returns {Promise<void>}
+ */
+async function subscribeDepartmentAdmins(taskId, taskOwnerId) {
+    try {
+        const { AreasMember, sequelize } = require('../models');
+        const { QueryTypes } = require('sequelize');
+
+        // Find the department the task owner belongs to
+        const ownerMembership = await AreasMember.findOne({
+            where: { user_id: taskOwnerId },
+        });
+
+        if (!ownerMembership) {
+            // Task owner is not in any department, nothing to do
+            return;
+        }
+
+        const areaId = ownerMembership.area_id;
+
+        // Find all admins of this department
+        const admins = await sequelize.query(
+            `SELECT user_id FROM areas_members WHERE area_id = :areaId AND role = 'admin'`,
+            {
+                replacements: { areaId },
+                type: QueryTypes.SELECT,
+            }
+        );
+
+        if (!admins || admins.length === 0) {
+            return;
+        }
+
+        // Subscribe each admin to the task
+        for (const admin of admins) {
+            try {
+                await subscribeToTask(taskId, admin.user_id, taskOwnerId);
+            } catch (error) {
+                // Ignore "already subscribed" errors - this is expected
+                // when the admin manually subscribed before auto-subscription
+                if (error.message !== 'User already subscribed') {
+                    logError(
+                        `Error subscribing admin ${admin.user_id} to task ${taskId}:`,
+                        error
+                    );
+                }
+            }
+        }
+    } catch (error) {
+        logError('Error subscribing department admins:', error);
+        // Don't throw - auto-subscription failure shouldn't break task creation
+    }
+}
+
 module.exports = {
     subscribeToTask,
     unsubscribeFromTask,
@@ -486,4 +545,5 @@ module.exports = {
     notifySubscribers,
     notifySubscribersAboutUpdate,
     notifySubscribersAboutStatusChange,
+    subscribeDepartmentAdmins,
 };

@@ -386,6 +386,17 @@ router.post('/task', async (req, res) => {
         await updateTaskTags(task, tagsData, req.currentUser.id);
         await createSubtasks(task.id, subtasks, req.currentUser.id);
 
+        // Auto-subscribe department admins to the task
+        try {
+            const {
+                subscribeDepartmentAdmins,
+            } = require('../../services/taskSubscriptionService');
+            await subscribeDepartmentAdmins(task.id, req.currentUser.id);
+        } catch (subError) {
+            logError('Error auto-subscribing department admins:', subError);
+            // Don't fail task creation if subscription fails
+        }
+
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES,
         });
