@@ -1,4 +1,4 @@
-const { Task, User, Permission, Notification } = require('../models');
+const { Task, User, Permission, Notification, AreasMember } = require('../models');
 const { logError } = require('./logService');
 const {
     shouldSendInAppNotification,
@@ -478,6 +478,56 @@ async function notifySubscribersAboutStatusChange(task, changedBy) {
     }
 }
 
+/**
+ * Auto-subscribe department admins to a task
+ * @param {number} taskId - The created task ID
+ * @param {number} taskOwnerId - The user ID who created/owns the task
+ */
+async function subscribeDepartmentAdmins(taskId, taskOwnerId) {
+    try {
+        // 1. Get owner's department
+        const membership = await AreasMember.findOne({
+            where: { user_id: taskOwnerId },
+        });
+
+        if (!membership) {
+            return;
+        }
+
+        // 2. Find all admins in that department
+        const admins = await AreasMember.findAll({
+            where: {
+                area_id: membership.area_id,
+                role: 'admin',
+            },
+        });
+
+        if (!admins || admins.length === 0) {
+            return;
+        }
+
+        // 3. Subscribe each admin (skip if they are the task owner)
+        for (const admin of admins) {
+            if (admin.user_id === taskOwnerId) {
+                continue;
+            }
+
+            try {
+                await subscribeToTask(taskId, admin.user_id, taskOwnerId);
+            } catch (error) {
+                if (error.message !== 'User already subscribed') {
+                    logError(
+                        `Error subscribing dept admin ${admin.user_id} to task ${taskId}:`,
+                        error
+                    );
+                }
+            }
+        }
+    } catch (error) {
+        logError('Error in subscribeDepartmentAdmins:', error);
+    }
+}
+
 module.exports = {
     subscribeToTask,
     unsubscribeFromTask,
@@ -486,4 +536,5 @@ module.exports = {
     notifySubscribers,
     notifySubscribersAboutUpdate,
     notifySubscribersAboutStatusChange,
+    subscribeDepartmentAdmins,
 };
