@@ -1,14 +1,18 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Area, Task, sequelize } = require('../../models');
+const { Area, Task, User, sequelize } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 const { QueryTypes } = require('sequelize');
 
 describe('Department Admin Auto-Subscription', () => {
     let deptOwner, deptAdmin, deptMember, area;
     let ownerAgent, memberAgent, adminAgent;
+    let additionalUsers = [];
 
     beforeEach(async () => {
+        // Reset additional users array
+        additionalUsers = [];
+
         // Create test users with unique emails
         deptOwner = await createTestUser({
             email: `dept-owner-${Date.now()}@test.com`,
@@ -37,9 +41,13 @@ describe('Department Admin Auto-Subscription', () => {
         // Add admin to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
+             VALUES (:areaId, :userId, 'admin', :now, :now)`,
             {
-                replacements: { areaId: area.id, userId: deptAdmin.id },
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin.id,
+                    now: new Date(),
+                },
                 type: QueryTypes.INSERT,
             }
         );
@@ -47,9 +55,13 @@ describe('Department Admin Auto-Subscription', () => {
         // Add member to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'member', datetime('now'), datetime('now'))`,
+             VALUES (:areaId, :userId, 'member', :now, :now)`,
             {
-                replacements: { areaId: area.id, userId: deptMember.id },
+                replacements: {
+                    areaId: area.id,
+                    userId: deptMember.id,
+                    now: new Date(),
+                },
                 type: QueryTypes.INSERT,
             }
         );
@@ -72,9 +84,35 @@ describe('Department Admin Auto-Subscription', () => {
     });
 
     afterEach(async () => {
+        // Collect all user IDs for cleanup (main users + dynamically created)
+        const allUserIds = [
+            deptOwner.id,
+            deptMember.id,
+            deptAdmin.id,
+            ...additionalUsers.map((u) => u.id),
+        ];
+
+        // Clean up tasks_subscribers for all users (including subscriptions)
+        await sequelize.query(
+            `DELETE FROM tasks_subscribers WHERE user_id IN (:userIds)`,
+            {
+                replacements: { userIds: allUserIds },
+                type: QueryTypes.DELETE,
+            }
+        );
+
+        // Clean up permissions for all users
+        await sequelize.query(
+            `DELETE FROM permissions WHERE user_id IN (:userIds)`,
+            {
+                replacements: { userIds: allUserIds },
+                type: QueryTypes.DELETE,
+            }
+        );
+
         // Clean up in reverse order of dependencies
         await Task.destroy({
-            where: { user_id: [deptOwner.id, deptMember.id, deptAdmin.id] },
+            where: { user_id: allUserIds },
             force: true,
         });
         await sequelize.query(
@@ -85,6 +123,11 @@ describe('Department Admin Auto-Subscription', () => {
             }
         );
         await area.destroy();
+
+        // Destroy dynamically created users
+        for (const user of additionalUsers) {
+            await User.destroy({ where: { id: user.id }, force: true });
+        }
     });
 
     it('should auto-subscribe department admin when member creates a task', async () => {
@@ -160,13 +203,18 @@ describe('Department Admin Auto-Subscription', () => {
             name: 'Dept',
             surname: 'Admin2',
         });
+        additionalUsers.push(deptAdmin2);
 
         // Add second admin to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
+             VALUES (:areaId, :userId, 'admin', :now, :now)`,
             {
-                replacements: { areaId: area.id, userId: deptAdmin2.id },
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin2.id,
+                    now: new Date(),
+                },
                 type: QueryTypes.INSERT,
             }
         );
@@ -198,6 +246,7 @@ describe('Department Admin Auto-Subscription', () => {
             name: 'No',
             surname: 'Dept',
         });
+        additionalUsers.push(noDeptUser);
 
         const noDeptAgent = request.agent(app);
         await noDeptAgent

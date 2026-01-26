@@ -83,9 +83,13 @@ module.exports = {
                 // Add subscription
                 await sequelize.query(
                     `INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at)
-                     VALUES (:taskId, :userId, datetime('now'), datetime('now'))`,
+                     VALUES (:taskId, :userId, :now, :now)`,
                     {
-                        replacements: { taskId: task.id, userId: adminUserId },
+                        replacements: {
+                            taskId: task.id,
+                            userId: adminUserId,
+                            now: new Date(),
+                        },
                         type: QueryTypes.INSERT,
                     }
                 );
@@ -111,12 +115,13 @@ module.exports = {
                     // Create permission
                     await sequelize.query(
                         `INSERT INTO permissions (user_id, resource_type, resource_uid, access_level, propagation, granted_by_user_id, created_at, updated_at)
-                         VALUES (:userId, 'task', :resourceUid, 'rw', 'subscription', :grantedBy, datetime('now'), datetime('now'))`,
+                         VALUES (:userId, 'task', :resourceUid, 'rw', 'subscription', :grantedBy, :now, :now)`,
                         {
                             replacements: {
                                 userId: adminUserId,
                                 resourceUid: task.uid,
                                 grantedBy: task.user_id,
+                                now: new Date(),
                             },
                             type: QueryTypes.INSERT,
                         }
