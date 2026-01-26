@@ -41,22 +41,36 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     const [newSubtaskName, setNewSubtaskName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const pendingFocusRef = useRef(false);
+    const isAddingSubtaskRef = useRef(isAddingSubtask);
+    const blurTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Auto-focus input when adding mode is activated or after subtask creation
+    // Keep ref in sync with state
+    useEffect(() => {
+        isAddingSubtaskRef.current = isAddingSubtask;
+    }, [isAddingSubtask]);
+
+    // Auto-focus input when adding mode is activated or subtasks list changes
     useEffect(() => {
         if (isAddingSubtask && inputRef.current) {
-            // Use setTimeout to ensure focus happens after React's render cycle completes
-            // This is more reliable than requestAnimationFrame for React state updates
+            // Use setTimeout to ensure focus happens after React's render cycle
+            // Check ref (not stale closure) to handle rapid Escape presses
             const timeoutId = setTimeout(() => {
-                if (inputRef.current && isAddingSubtask) {
+                if (isAddingSubtaskRef.current && inputRef.current) {
                     inputRef.current.focus();
-                    pendingFocusRef.current = false;
                 }
             }, 0);
             return () => clearTimeout(timeoutId);
         }
     }, [isAddingSubtask, subtasks.length]);
+
+    // Cleanup blur timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (blurTimeoutRef.current) {
+                clearTimeout(blurTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleAddSubtaskClick = () => {
         setIsAddingSubtask(true);
@@ -74,14 +88,11 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
 
         try {
             setIsSubmitting(true);
-            // Mark that we need to refocus after the subtasks list updates
-            pendingFocusRef.current = true;
             await onCreateSubtask(trimmedName);
             setNewSubtaskName('');
             // Focus will be restored by useEffect when subtasks.length changes
         } catch (error) {
             console.error('Error creating subtask:', error);
-            pendingFocusRef.current = false;
         } finally {
             setIsSubmitting(false);
         }
@@ -99,13 +110,8 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
 
     const handleBlur = () => {
         // Use a small delay to allow click events on nearby elements to fire first
-        setTimeout(() => {
-            // Don't cancel if we're in rapid entry mode (just submitted a subtask)
-            if (
-                !newSubtaskName.trim() &&
-                !pendingFocusRef.current &&
-                !isSubmitting
-            ) {
+        blurTimeoutRef.current = setTimeout(() => {
+            if (!newSubtaskName.trim()) {
                 handleCancelAdd();
             }
         }, 150);

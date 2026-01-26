@@ -38,10 +38,10 @@ test.describe('Inline Subtask Creation', () => {
     }
 
     // Helper to delete a task via API
-    async function deleteTestTask(context, baseURL, taskId: string | number) {
+    async function deleteTestTask(context, baseURL, taskUid: string) {
         const appUrl =
             baseURL ?? process.env.APP_URL ?? 'http://localhost:8080';
-        await context.request.delete(`${appUrl}/api/task/${taskId}`);
+        await context.request.delete(`${appUrl}/api/task/${taskUid}`);
     }
 
     // Helper to navigate to task detail page
@@ -88,7 +88,7 @@ test.describe('Inline Subtask Creation', () => {
             // Input should still be visible and cleared for rapid entry
             await expect(page.getByTestId('inline-subtask-input')).toBeVisible();
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 
@@ -132,7 +132,7 @@ test.describe('Inline Subtask Creation', () => {
                 await expect(page.getByText(name)).toBeVisible();
             }
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 
@@ -173,7 +173,7 @@ test.describe('Inline Subtask Creation', () => {
             // Subtask should NOT be created
             await expect(page.getByText(subtaskName)).not.toBeVisible();
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 
@@ -211,7 +211,7 @@ test.describe('Inline Subtask Creation', () => {
             // Add button should be visible again
             await expect(page.getByTestId('add-subtask-button').first()).toBeVisible();
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 
@@ -249,7 +249,7 @@ test.describe('Inline Subtask Creation', () => {
             const subtaskItems = page.locator('[data-testid^="task-item-"]');
             await expect(subtaskItems).toHaveCount(0);
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 
@@ -289,13 +289,6 @@ test.describe('Inline Subtask Creation', () => {
             // Wait for subtask to appear
             await expect(page.getByText(subtaskName)).toBeVisible({ timeout: 10000 });
 
-            // Wait for input to be cleared (indicates creation complete)
-            const inputAfterCreate = page.getByTestId('inline-subtask-input');
-            await expect(inputAfterCreate).toHaveValue('', { timeout: 5000 });
-
-            // Ensure input is focused before pressing Escape
-            await inputAfterCreate.focus();
-
             // Press Escape to close the input
             await page.keyboard.press('Escape');
 
@@ -305,7 +298,7 @@ test.describe('Inline Subtask Creation', () => {
             // Add button should be visible again
             await expect(page.getByTestId('add-subtask-button').first()).toBeVisible();
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 
@@ -347,7 +340,7 @@ test.describe('Inline Subtask Creation', () => {
             // Wait for the subtask to appear
             await expect(page.getByText(subtaskName)).toBeVisible({ timeout: 10000 });
         } finally {
-            await deleteTestTask(context, baseURL, task.id);
+            await deleteTestTask(context, baseURL, task.uid);
         }
     });
 });

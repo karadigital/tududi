@@ -1,14 +1,24 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Area, Task, sequelize } = require('../../models');
+const {
+    Area,
+    Task,
+    User,
+    Role,
+    Action,
+    Permission,
+    sequelize,
+} = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 const { QueryTypes } = require('sequelize');
 
 describe('Department Admin Auto-Subscription', () => {
     let deptOwner, deptAdmin, deptMember, area;
     let ownerAgent, memberAgent, adminAgent;
+    let extraUserIds = [];
 
     beforeEach(async () => {
+        extraUserIds = [];
         // Create test users with unique emails
         deptOwner = await createTestUser({
             email: `dept-owner-${Date.now()}@test.com`,
@@ -73,10 +83,40 @@ describe('Department Admin Auto-Subscription', () => {
 
     afterEach(async () => {
         // Clean up in reverse order of dependencies
+        const allUserIds = [
+            deptOwner.id,
+            deptMember.id,
+            deptAdmin.id,
+            ...extraUserIds,
+        ];
+
+        // Clean up task subscriptions for extra users first
+        for (const userId of extraUserIds) {
+            await sequelize.query(
+                `DELETE FROM tasks_subscribers WHERE user_id = :userId`,
+                {
+                    replacements: { userId },
+                    type: QueryTypes.DELETE,
+                }
+            );
+        }
+
         await Task.destroy({
-            where: { user_id: [deptOwner.id, deptMember.id, deptAdmin.id] },
+            where: { user_id: allUserIds },
             force: true,
         });
+
+        // Clean up area memberships for extra users
+        for (const userId of extraUserIds) {
+            await sequelize.query(
+                `DELETE FROM areas_members WHERE user_id = :userId`,
+                {
+                    replacements: { userId },
+                    type: QueryTypes.DELETE,
+                }
+            );
+        }
+
         await sequelize.query(
             `DELETE FROM areas_members WHERE area_id = :areaId`,
             {
@@ -85,6 +125,33 @@ describe('Department Admin Auto-Subscription', () => {
             }
         );
         await area.destroy();
+
+        // Delete extra users created during tests (dependencies first, then users)
+        if (extraUserIds.length > 0) {
+            // Clean up any actions or permissions that reference extra users
+            await Action.destroy({
+                where: {
+                    [sequelize.Sequelize.Op.or]: [
+                        { actor_user_id: extraUserIds },
+                        { target_user_id: extraUserIds },
+                    ],
+                },
+            });
+            await Permission.destroy({
+                where: {
+                    [sequelize.Sequelize.Op.or]: [
+                        { user_id: extraUserIds },
+                        { granted_by_user_id: extraUserIds },
+                    ],
+                },
+            });
+            await Role.destroy({
+                where: { user_id: extraUserIds },
+            });
+            await User.destroy({
+                where: { id: extraUserIds },
+            });
+        }
     });
 
     it('should auto-subscribe department admin when member creates a task', async () => {
@@ -160,6 +227,7 @@ describe('Department Admin Auto-Subscription', () => {
             name: 'Dept',
             surname: 'Admin2',
         });
+        extraUserIds.push(deptAdmin2.id);
 
         // Add second admin to department
         await sequelize.query(
@@ -198,6 +266,7 @@ describe('Department Admin Auto-Subscription', () => {
             name: 'No',
             surname: 'Dept',
         });
+        extraUserIds.push(noDeptUser.id);
 
         const noDeptAgent = request.agent(app);
         await noDeptAgent
