@@ -361,6 +361,128 @@ describe('Tasks Routes', () => {
         });
     });
 
+    describe('Task Visibility (Assigned/Subscribed)', () => {
+        let otherUser;
+        const { sequelize } = require('../../models');
+
+        beforeEach(async () => {
+            // Create another user who owns tasks
+            otherUser = await createTestUser({
+                email: 'task-owner@example.com',
+            });
+        });
+
+        it('should return tasks assigned to user', async () => {
+            // Create task owned by other user but assigned to current user
+            const assignedTask = await Task.create({
+                user_id: otherUser.id,
+                name: 'Assigned to me task',
+                assigned_to_user_id: user.id,
+                status: 0,
+            });
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const taskIds = response.body.tasks.map((t) => t.id);
+            expect(taskIds).toContain(assignedTask.id);
+        });
+
+        it('should return tasks user is subscribed to', async () => {
+            // Create task owned by other user
+            const subscribedTask = await Task.create({
+                user_id: otherUser.id,
+                name: 'Subscribed task',
+                status: 0,
+            });
+
+            // Subscribe current user to this task
+            await sequelize.query(
+                `INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`,
+                { replacements: [subscribedTask.id, user.id] }
+            );
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const taskIds = response.body.tasks.map((t) => t.id);
+            expect(taskIds).toContain(subscribedTask.id);
+        });
+
+        it('should not return tasks with no relationship', async () => {
+            // Create task owned by other user with no relationship
+            const otherTask = await Task.create({
+                user_id: otherUser.id,
+                name: 'Other user task',
+                status: 0,
+            });
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const taskIds = response.body.tasks.map((t) => t.id);
+            expect(taskIds).not.toContain(otherTask.id);
+        });
+
+        it('should return all actionable tasks (owned, assigned, subscribed)', async () => {
+            // Task owned by current user
+            const ownedTask = await Task.create({
+                user_id: user.id,
+                name: 'My owned task',
+                status: 0,
+            });
+
+            // Task owned by other user but assigned to current user
+            const assignedTask = await Task.create({
+                user_id: otherUser.id,
+                name: 'Assigned to me task',
+                assigned_to_user_id: user.id,
+                status: 0,
+            });
+
+            // Task owned by other user, current user is subscribed
+            const subscribedTask = await Task.create({
+                user_id: otherUser.id,
+                name: 'Subscribed task',
+                status: 0,
+            });
+
+            // Subscribe current user to this task
+            await sequelize.query(
+                `INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at) VALUES (?, ?, datetime('now'), datetime('now'))`,
+                { replacements: [subscribedTask.id, user.id] }
+            );
+
+            // Task owned by other user (should NOT appear)
+            const otherTask = await Task.create({
+                user_id: otherUser.id,
+                name: 'Other user task',
+                status: 0,
+            });
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const taskIds = response.body.tasks.map((t) => t.id);
+
+            // Should include owned, assigned, and subscribed tasks
+            expect(taskIds).toContain(ownedTask.id);
+            expect(taskIds).toContain(assignedTask.id);
+            expect(taskIds).toContain(subscribedTask.id);
+
+            // Should NOT include task with no relationship
+            expect(taskIds).not.toContain(otherTask.id);
+        });
+    });
+
     describe('Recurring task search functionality', () => {
         it('should include recurring task instances in search results', async () => {
             const today = new Date();
