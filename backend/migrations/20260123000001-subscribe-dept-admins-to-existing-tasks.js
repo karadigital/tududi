@@ -24,10 +24,13 @@ module.exports = {
             { type: QueryTypes.SELECT }
         );
 
-        // Build a map: user_id -> area_id
-        const userToDept = {};
+        // Build a map: user_id -> [area_ids]
+        const userToDepts = {};
         for (const member of deptMembers) {
-            userToDept[member.user_id] = member.area_id;
+            if (!userToDepts[member.user_id]) {
+                userToDepts[member.user_id] = [];
+            }
+            userToDepts[member.user_id].push(member.area_id);
         }
 
         // Build a map: area_id -> [admin_user_ids]
@@ -53,15 +56,22 @@ module.exports = {
         let permissionsCreated = 0;
 
         for (const task of tasks) {
-            const taskOwnerDept = userToDept[task.user_id];
+            const taskOwnerDepts = userToDepts[task.user_id] || [];
 
-            if (!taskOwnerDept) {
+            if (taskOwnerDepts.length === 0) {
                 continue;
             }
 
-            const admins = deptToAdmins[taskOwnerDept] || [];
+            // Collect all admins from all departments the owner belongs to
+            const allAdmins = new Set();
+            for (const deptId of taskOwnerDepts) {
+                const admins = deptToAdmins[deptId] || [];
+                for (const adminId of admins) {
+                    allAdmins.add(adminId);
+                }
+            }
 
-            for (const adminUserId of admins) {
+            for (const adminUserId of allAdmins) {
                 if (adminUserId === task.user_id) {
                     continue;
                 }
