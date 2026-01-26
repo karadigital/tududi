@@ -687,6 +687,53 @@ const TaskDetails: React.FC = () => {
         }
     };
 
+    const handleCreateSubtask = async (name: string) => {
+        if (!task?.uid || !task?.id) return;
+
+        try {
+            // Create the new subtask object
+            const newSubtask: Partial<Task> = {
+                name: name.trim(),
+                status: 'not_started',
+                priority: 'low',
+                today: false,
+                parent_task_id: task.id,
+                isNew: true,
+            };
+
+            // Append the new subtask to existing subtasks
+            const currentSubtasks = task.Subtasks || task.subtasks || [];
+            const updatedSubtasks = [...currentSubtasks, newSubtask];
+
+            // Update the task with the new subtask
+            await updateTask(task.uid, { ...task, subtasks: updatedSubtasks });
+
+            // Refresh the task data
+            if (uid) {
+                const updatedTask = await fetchTaskByUid(uid);
+                const existingIndex = tasksStore.tasks.findIndex(
+                    (t: Task) => t.uid === uid
+                );
+                if (existingIndex >= 0) {
+                    const updatedTasks = [...tasksStore.tasks];
+                    updatedTasks[existingIndex] = updatedTask;
+                    tasksStore.setTasks(updatedTasks);
+                }
+            }
+
+            showSuccessToast(
+                t('task.subtaskCreated', 'Subtask created successfully')
+            );
+            setTimelineRefreshKey((prev) => prev + 1);
+        } catch (error) {
+            console.error('Error creating subtask:', error);
+            showErrorToast(
+                t('task.subtaskCreateError', 'Failed to create subtask')
+            );
+            throw error;
+        }
+    };
+
     const handleProjectSelection = async (project: Project) => {
         if (!task?.uid) return;
 
@@ -1358,6 +1405,7 @@ const TaskDetails: React.FC = () => {
                                     onToggleSubtaskCompletion={
                                         handleToggleSubtaskCompletion
                                     }
+                                    onCreateSubtask={handleCreateSubtask}
                                     showHeader={true}
                                     showFooterLink={true}
                                     onNavigateToTab={() =>
@@ -1463,6 +1511,7 @@ const TaskDetails: React.FC = () => {
                                 onToggleSubtaskCompletion={
                                     handleToggleSubtaskCompletion
                                 }
+                                onCreateSubtask={handleCreateSubtask}
                             />
                         </div>
                     )}
