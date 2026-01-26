@@ -172,11 +172,18 @@ const Areas: React.FC = () => {
             setIsConfirmDialogOpen(false);
             setAreaToDelete(null);
             useStore.getState().areasStore.setError(false);
-            showSuccessToast(t('success.areaDeleted', 'Department deleted successfully'));
+            showSuccessToast(
+                t('success.areaDeleted', 'Department deleted successfully')
+            );
         } catch (error) {
             console.error('Error deleting area:', error);
             useStore.getState().areasStore.setError(true);
-            showErrorToast(t('errors.failedToDeleteArea', 'Failed to delete department. You may not have permission.'));
+            showErrorToast(
+                t(
+                    'errors.failedToDeleteArea',
+                    'Failed to delete department. You may not have permission.'
+                )
+            );
             setIsConfirmDialogOpen(false);
         } finally {
             useStore.getState().areasStore.setLoading(false);
