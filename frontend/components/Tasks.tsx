@@ -477,7 +477,10 @@ const Tasks: React.FC = () => {
         });
     };
 
-    const handleTaskCreate = async (taskData: Partial<Task>, pendingFiles?: File[]) => {
+    const handleTaskCreate = async (
+        taskData: Partial<Task>,
+        pendingFiles?: File[]
+    ) => {
         try {
             const newTask = await createTask(taskData as Task);
 

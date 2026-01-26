@@ -227,7 +227,11 @@ const Layout: React.FC<LayoutProps> = ({
                 const createdTask = await createTask(taskData);
 
                 // Upload any pending attachments after task is created
-                if (pendingFiles && pendingFiles.length > 0 && createdTask.uid) {
+                if (
+                    pendingFiles &&
+                    pendingFiles.length > 0 &&
+                    createdTask.uid
+                ) {
                     await Promise.all(
                         pendingFiles.map((file) =>
                             uploadAttachment(createdTask.uid, file)
