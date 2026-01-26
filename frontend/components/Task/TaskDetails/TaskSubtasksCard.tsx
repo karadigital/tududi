@@ -41,13 +41,22 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     const [newSubtaskName, setNewSubtaskName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const pendingFocusRef = useRef(false);
 
-    // Auto-focus input when adding mode is activated
+    // Auto-focus input when adding mode is activated or after subtask creation
     useEffect(() => {
         if (isAddingSubtask && inputRef.current) {
-            inputRef.current.focus();
+            // Use setTimeout to ensure focus happens after React's render cycle completes
+            // This is more reliable than requestAnimationFrame for React state updates
+            const timeoutId = setTimeout(() => {
+                if (inputRef.current && isAddingSubtask) {
+                    inputRef.current.focus();
+                    pendingFocusRef.current = false;
+                }
+            }, 0);
+            return () => clearTimeout(timeoutId);
         }
-    }, [isAddingSubtask]);
+    }, [isAddingSubtask, subtasks.length]);
 
     const handleAddSubtaskClick = () => {
         setIsAddingSubtask(true);
@@ -65,14 +74,14 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
 
         try {
             setIsSubmitting(true);
+            // Mark that we need to refocus after the subtasks list updates
+            pendingFocusRef.current = true;
             await onCreateSubtask(trimmedName);
             setNewSubtaskName('');
-            // Keep input open for rapid entry
-            if (inputRef.current) {
-                inputRef.current.focus();
-            }
+            // Focus will be restored by useEffect when subtasks.length changes
         } catch (error) {
             console.error('Error creating subtask:', error);
+            pendingFocusRef.current = false;
         } finally {
             setIsSubmitting(false);
         }
@@ -91,7 +100,12 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     const handleBlur = () => {
         // Use a small delay to allow click events on nearby elements to fire first
         setTimeout(() => {
-            if (!newSubtaskName.trim()) {
+            // Don't cancel if we're in rapid entry mode (just submitted a subtask)
+            if (
+                !newSubtaskName.trim() &&
+                !pendingFocusRef.current &&
+                !isSubmitting
+            ) {
                 handleCancelAdd();
             }
         }, 150);

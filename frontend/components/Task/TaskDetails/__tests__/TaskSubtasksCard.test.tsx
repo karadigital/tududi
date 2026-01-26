@@ -110,14 +110,17 @@ describe('TaskSubtasksCard - Inline Subtask Creation', () => {
     });
 
     describe('Inline Input Behavior', () => {
-        it('input is auto-focused when shown', () => {
+        it('input is auto-focused when shown', async () => {
             render(<TaskSubtasksCard {...defaultProps} />);
 
             const addButton = screen.getByTestId('add-subtask-button');
             fireEvent.click(addButton);
 
             const input = screen.getByTestId('inline-subtask-input');
-            expect(document.activeElement).toBe(input);
+            // Focus happens asynchronously via setTimeout
+            await waitFor(() => {
+                expect(document.activeElement).toBe(input);
+            });
         });
 
         it('shows placeholder text', () => {
@@ -289,6 +292,54 @@ describe('TaskSubtasksCard - Inline Subtask Creation', () => {
             expect(
                 screen.getByTestId('inline-subtask-input')
             ).toBeInTheDocument();
+        });
+
+        it('input remains focused after subtasks list updates', async () => {
+            const mockCreateSubtask = jest.fn().mockResolvedValue(undefined);
+            const { rerender } = render(
+                <TaskSubtasksCard
+                    {...defaultProps}
+                    subtasks={[]}
+                    onCreateSubtask={mockCreateSubtask}
+                />
+            );
+
+            // Click add button and type
+            const addButton = screen.getByTestId('add-subtask-button');
+            fireEvent.click(addButton);
+
+            const input = screen.getByTestId('inline-subtask-input');
+            fireEvent.change(input, { target: { value: 'New Subtask' } });
+            fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' });
+
+            await waitFor(() => {
+                expect(mockCreateSubtask).toHaveBeenCalledWith('New Subtask');
+            });
+
+            // Simulate parent updating subtasks prop (as would happen after API call)
+            const newSubtask: Task = {
+                id: 100,
+                uid: 'new-subtask-uid',
+                name: 'New Subtask',
+                status: 'not_started',
+                priority: 'low',
+                today: false,
+                parent_task_id: 1,
+            } as Task;
+
+            rerender(
+                <TaskSubtasksCard
+                    {...defaultProps}
+                    subtasks={[newSubtask]}
+                    onCreateSubtask={mockCreateSubtask}
+                />
+            );
+
+            // Input should still be focused after the re-render
+            await waitFor(() => {
+                const newInput = screen.getByTestId('inline-subtask-input');
+                expect(document.activeElement).toBe(newInput);
+            });
         });
     });
 
