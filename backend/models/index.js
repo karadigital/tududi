@@ -15,9 +15,44 @@ dbConfig = {
         createdAt: 'created_at',
         updatedAt: 'updated_at',
     },
+    // Enable WAL mode and busy timeout for test environment to handle parallel test execution
+    // This prevents SQLITE_BUSY errors when multiple E2E tests run concurrently
+    ...(config.environment === 'test' && {
+        pool: {
+            max: 5, // Allow multiple connections with WAL mode
+            min: 0,
+            acquire: 60000, // Wait up to 60s to acquire connection
+            idle: 10000,
+        },
+        retry: {
+            max: 10, // Retry queries on transient errors
+        },
+    }),
 };
 
 const sequelize = new Sequelize(dbConfig);
+
+// Set SQLite pragmas for test environment to handle parallel test execution
+// These pragmas MUST be set before any other database operations
+if (config.environment === 'test') {
+    // Create a promise that will be resolved when pragmas are set
+    // This ensures pragmas are set before any model operations
+    const pragmasInitialized = (async () => {
+        try {
+            // WAL mode allows concurrent readers and a single writer
+            await sequelize.query('PRAGMA journal_mode = WAL;');
+            // Wait up to 60 seconds for locks
+            await sequelize.query('PRAGMA busy_timeout = 60000;');
+            // Normal synchronous mode for better performance
+            await sequelize.query('PRAGMA synchronous = NORMAL;');
+        } catch (err) {
+            console.error('Failed to set SQLite pragmas:', err.message);
+        }
+    })();
+
+    // Export the promise so it can be awaited if needed
+    sequelize.pragmasInitialized = pragmasInitialized;
+}
 
 const User = require('./user')(sequelize);
 const Area = require('./area')(sequelize);

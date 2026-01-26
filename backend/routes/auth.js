@@ -29,73 +29,105 @@ router.get('/registration-status', async (req, res) => {
     res.json({ enabled: await isRegistrationEnabled() });
 });
 
+// Helper function to check if error is a retryable database error
+const isRetryableDbError = (error) => {
+    const message = error.message || '';
+    const originalMessage = error.original?.message || '';
+    return (
+        message.includes('SQLITE_BUSY') ||
+        message.includes('database is locked') ||
+        originalMessage.includes('SQLITE_BUSY') ||
+        originalMessage.includes('database is locked') ||
+        error.name === 'SequelizeTimeoutError'
+    );
+};
+
 // Register new user
 router.post('/register', async (req, res) => {
     const { sequelize } = require('../models');
-    const transaction = await sequelize.transaction();
+    const maxRetries = 5;
+    const retryDelayMs = 200;
 
-    try {
-        if (!(await isRegistrationEnabled())) {
-            await transaction.rollback();
-            return res
-                .status(404)
-                .json({ error: 'Registration is not enabled' });
-        }
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        const transaction = await sequelize.transaction();
 
-        const { email, password } = req.body;
+        try {
+            if (!(await isRegistrationEnabled())) {
+                await transaction.rollback();
+                return res
+                    .status(404)
+                    .json({ error: 'Registration is not enabled' });
+            }
 
-        if (!email || !password) {
-            await transaction.rollback();
-            return res
-                .status(400)
-                .json({ error: 'Email and password are required' });
-        }
+            const { email, password } = req.body;
 
-        const { user, verificationToken } = await createUnverifiedUser(
-            email,
-            password,
-            transaction
-        );
+            if (!email || !password) {
+                await transaction.rollback();
+                return res
+                    .status(400)
+                    .json({ error: 'Email and password are required' });
+            }
 
-        const emailResult = await sendVerificationEmail(
-            user,
-            verificationToken
-        );
-
-        if (!emailResult.success) {
-            await transaction.rollback();
-            logError(
-                new Error(emailResult.reason),
-                'Email sending failed during registration, rolling back user creation'
+            const { user, verificationToken } = await createUnverifiedUser(
+                email,
+                password,
+                transaction
             );
+
+            const emailResult = await sendVerificationEmail(
+                user,
+                verificationToken
+            );
+
+            if (!emailResult.success) {
+                await transaction.rollback();
+                logError(
+                    new Error(emailResult.reason),
+                    'Email sending failed during registration, rolling back user creation'
+                );
+                return res.status(500).json({
+                    error: 'Failed to send verification email. Please try again later.',
+                });
+            }
+
+            await transaction.commit();
+
+            return res.status(201).json({
+                message:
+                    'Registration successful. Please check your email to verify your account.',
+            });
+        } catch (error) {
+            await transaction.rollback().catch(() => {});
+
+            // Check for retryable database errors (SQLite busy/locked)
+            if (isRetryableDbError(error) && attempt < maxRetries) {
+                // Wait before retrying with exponential backoff
+                await new Promise((resolve) =>
+                    setTimeout(resolve, retryDelayMs * attempt)
+                );
+                continue;
+            }
+
+            if (error.message === 'Email already registered') {
+                return res.status(400).json({ error: error.message });
+            }
+            if (
+                error.message === 'Invalid email format' ||
+                error.message === 'Password must be at least 6 characters long'
+            ) {
+                return res.status(400).json({ error: error.message });
+            }
+            logError('Registration error:', error);
             return res.status(500).json({
-                error: 'Failed to send verification email. Please try again later.',
+                error: 'Registration failed. Please try again.',
             });
         }
-
-        await transaction.commit();
-
-        res.status(201).json({
-            message:
-                'Registration successful. Please check your email to verify your account.',
-        });
-    } catch (error) {
-        await transaction.rollback();
-
-        if (error.message === 'Email already registered') {
-            return res.status(400).json({ error: error.message });
-        }
-        if (
-            error.message === 'Invalid email format' ||
-            error.message === 'Password must be at least 6 characters long'
-        ) {
-            return res.status(400).json({ error: error.message });
-        }
-        logError('Registration error:', error);
-        res.status(500).json({
-            error: 'Registration failed. Please try again.',
-        });
     }
+
+    // If we exhausted all retries
+    return res.status(500).json({
+        error: 'Registration failed due to high server load. Please try again.',
+    });
 });
 
 // Verify email
