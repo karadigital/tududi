@@ -28,7 +28,7 @@ interface TaskAttachmentsSectionProps {
     onAttachmentsChange?: (attachments: Attachment[]) => void;
     // For new tasks - pending mode
     pendingFiles?: PendingFile[];
-    onPendingFilesChange?: (files: PendingFile[]) => void;
+    onPendingFilesChange?: React.Dispatch<React.SetStateAction<PendingFile[]>>;
     disabled?: boolean;
 }
 
@@ -103,7 +103,8 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
                     file,
                     preview: ev.target?.result as string,
                 };
-                onPendingFilesChange([...pendingFiles, newFile]);
+                // Use functional update to avoid race conditions with concurrent file adds
+                onPendingFilesChange((prev) => [...prev, newFile]);
             };
             reader.readAsDataURL(file);
         } else {
@@ -111,7 +112,8 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
                 id: `pending-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 file,
             };
-            onPendingFilesChange([...pendingFiles, newFile]);
+            // Use functional update to avoid race conditions with concurrent file adds
+            onPendingFilesChange((prev) => [...prev, newFile]);
         }
     };
 
@@ -168,7 +170,8 @@ const TaskAttachmentsSection: React.FC<TaskAttachmentsSectionProps> = ({
 
     const handleDeletePendingFile = (fileId: string) => {
         if (!onPendingFilesChange) return;
-        onPendingFilesChange(pendingFiles.filter((f) => f.id !== fileId));
+        // Use functional update to avoid race conditions
+        onPendingFilesChange((prev) => prev.filter((f) => f.id !== fileId));
     };
 
     const handleDownload = (attachment: Attachment) => {

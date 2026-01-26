@@ -1094,7 +1094,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                     onToggleSection={toggleSection}
                                     formData={formData}
                                     subtasksCount={subtasks.length}
-                                    attachmentsCount={attachments.length}
+                                    attachmentsCount={
+                                        attachments.length + pendingFiles.length
+                                    }
                                 />
 
                                 {/* Action Buttons - Below border with custom layout */}

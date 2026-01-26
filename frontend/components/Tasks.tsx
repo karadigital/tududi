@@ -52,7 +52,7 @@ const getSearchPlaceholder = (language: string): string => {
 
 const Tasks: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const { showSuccessToast } = useToast();
+    const { showSuccessToast, showErrorToast } = useToast();
     const { isSidebarOpen } = useSidebar();
     const [tasks, setTasks] = useState<Task[]>([]);
     const projects = useStore((state: any) => state.projectsStore.projects);
@@ -484,13 +484,28 @@ const Tasks: React.FC = () => {
         try {
             const newTask = await createTask(taskData as Task);
 
-            // Upload any pending attachments after task is created
+            // Upload any pending attachments after task is created (non-fatal)
             if (pendingFiles && pendingFiles.length > 0 && newTask.uid) {
-                await Promise.all(
+                const uploadResults = await Promise.allSettled(
                     pendingFiles.map((file) =>
                         uploadAttachment(newTask.uid, file)
                     )
                 );
+                const failedUploads = uploadResults.filter(
+                    (r) => r.status === 'rejected'
+                );
+                if (failedUploads.length > 0) {
+                    console.error(
+                        'Some attachments failed to upload:',
+                        failedUploads
+                    );
+                    showErrorToast(
+                        t(
+                            'task.attachments.someUploadsFailed',
+                            'Some attachments failed to upload'
+                        )
+                    );
+                }
             }
 
             setTasks((prevTasks) => [newTask, ...prevTasks]);

@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({
     children,
 }) => {
     const { t } = useTranslation();
-    const { showSuccessToast } = useToast();
+    const { showSuccessToast, showErrorToast } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
     const isUpcomingView = location.pathname === '/upcoming';
@@ -226,17 +226,32 @@ const Layout: React.FC<LayoutProps> = ({
             } else {
                 const createdTask = await createTask(taskData);
 
-                // Upload any pending attachments after task is created
+                // Upload any pending attachments after task is created (non-fatal)
                 if (
                     pendingFiles &&
                     pendingFiles.length > 0 &&
                     createdTask.uid
                 ) {
-                    await Promise.all(
+                    const uploadResults = await Promise.allSettled(
                         pendingFiles.map((file) =>
                             uploadAttachment(createdTask.uid, file)
                         )
                     );
+                    const failedUploads = uploadResults.filter(
+                        (r) => r.status === 'rejected'
+                    );
+                    if (failedUploads.length > 0) {
+                        console.error(
+                            'Some attachments failed to upload:',
+                            failedUploads
+                        );
+                        showErrorToast(
+                            t(
+                                'task.attachments.someUploadsFailed',
+                                'Some attachments failed to upload'
+                            )
+                        );
+                    }
                 }
 
                 // Notify Tasks component that a task was created
