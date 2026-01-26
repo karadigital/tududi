@@ -1328,6 +1328,119 @@ describe('Universal Search Routes', () => {
         });
     });
 
+    describe('Admin Area Search', () => {
+        let adminUser, adminAgent, regularUser, regularAgent;
+
+        beforeEach(async () => {
+            // Create admin user
+            adminUser = await createTestUser({
+                email: 'admin-search@example.com',
+                is_admin: true,
+            });
+
+            adminAgent = request.agent(app);
+            await adminAgent.post('/api/login').send({
+                email: 'admin-search@example.com',
+                password: 'password123',
+            });
+
+            // Create regular user
+            regularUser = await createTestUser({
+                email: 'regular-search@example.com',
+            });
+
+            regularAgent = request.agent(app);
+            await regularAgent.post('/api/login').send({
+                email: 'regular-search@example.com',
+                password: 'password123',
+            });
+
+            // Create areas owned by different users
+            await Area.create({
+                user_id: adminUser.id,
+                name: 'Admin Department',
+                description: 'Department owned by admin',
+            });
+
+            await Area.create({
+                user_id: regularUser.id,
+                name: 'Regular User Department',
+                description: 'Department owned by regular user',
+            });
+
+            await Area.create({
+                user_id: user.id,
+                name: 'Test User Department',
+                description: 'Department owned by test user',
+            });
+        });
+
+        it('should allow admin to search all departments', async () => {
+            const response = await adminAgent.get('/api/search').query({
+                filters: 'Area',
+            });
+
+            expect(response.status).toBe(200);
+            const areas = response.body.results.filter(
+                (r) => r.type === 'Area'
+            );
+            const areaNames = areas.map((a) => a.name);
+
+            // Admin should see all areas
+            expect(areaNames).toContain('Admin Department');
+            expect(areaNames).toContain('Regular User Department');
+            expect(areaNames).toContain('Test User Department');
+        });
+
+        it('should allow admin to search departments by name across all users', async () => {
+            const response = await adminAgent.get('/api/search').query({
+                q: 'Regular',
+                filters: 'Area',
+            });
+
+            expect(response.status).toBe(200);
+            const areas = response.body.results.filter(
+                (r) => r.type === 'Area'
+            );
+
+            // Admin should find the regular user's department
+            expect(areas.length).toBe(1);
+            expect(areas[0].name).toBe('Regular User Department');
+        });
+
+        it('should restrict non-admin users to their own departments', async () => {
+            const response = await regularAgent.get('/api/search').query({
+                filters: 'Area',
+            });
+
+            expect(response.status).toBe(200);
+            const areas = response.body.results.filter(
+                (r) => r.type === 'Area'
+            );
+            const areaNames = areas.map((a) => a.name);
+
+            // Regular user should only see their own area
+            expect(areaNames).toContain('Regular User Department');
+            expect(areaNames).not.toContain('Admin Department');
+            expect(areaNames).not.toContain('Test User Department');
+        });
+
+        it('should not return other users departments for non-admin search', async () => {
+            const response = await regularAgent.get('/api/search').query({
+                q: 'Admin',
+                filters: 'Area',
+            });
+
+            expect(response.status).toBe(200);
+            const areas = response.body.results.filter(
+                (r) => r.type === 'Area'
+            );
+
+            // Regular user should not find the admin's department
+            expect(areas.length).toBe(0);
+        });
+    });
+
     describe('Pagination', () => {
         it('should paginate search results with limit and offset', async () => {
             // Create 25 tasks to test pagination (more than default limit of 20)

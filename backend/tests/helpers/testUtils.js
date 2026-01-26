@@ -23,9 +23,9 @@ const createTestUser = async (userData = {}) => {
                 },
             });
 
-            // If role already exists (created by migration), update it to non-admin unless explicitly requested
-            if (!created && !userData.is_admin) {
-                await role.update({ is_admin: false });
+            // If role already exists (created by migration), update it to match the requested admin status
+            if (!created) {
+                await role.update({ is_admin: userData.is_admin || false });
             }
         } catch (error) {
             // Continue even if role management fails (e.g., roles table doesn't exist yet)

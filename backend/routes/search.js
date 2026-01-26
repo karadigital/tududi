@@ -1,9 +1,18 @@
 const express = require('express');
-const { Task, Tag, Project, Area, Note, sequelize } = require('../models');
+const {
+    Task,
+    Tag,
+    Project,
+    Area,
+    Note,
+    User,
+    sequelize,
+} = require('../models');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 const { serializeTasks } = require('./tasks/core/serializers');
 const { actionableTasksWhere } = require('../services/permissionsService');
+const { isAdmin } = require('../services/rolesService');
 const router = express.Router();
 
 // Helper function to convert priority string to integer
@@ -39,6 +48,18 @@ router.get('/', async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
+
+        // Get user's UID for admin check
+        const user = await User.findByPk(userId, {
+            attributes: ['uid'],
+        });
+
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+
+        // Check if user is admin
+        const userIsAdmin = await isAdmin(user.uid);
 
         const {
             q: query,
@@ -452,9 +473,12 @@ router.get('/', async (req, res) => {
 
         // Search Areas
         if (filterTypes.includes('Area')) {
-            const areaConditions = {
-                user_id: userId,
-            };
+            const areaConditions = {};
+
+            // Non-admin users can only see their own areas
+            if (!userIsAdmin) {
+                areaConditions.user_id = userId;
+            }
 
             if (searchQuery) {
                 const lowerQuery = searchQuery.toLowerCase();
