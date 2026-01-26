@@ -14,6 +14,7 @@ import {
     toggleTaskToday,
     GroupedTasks,
 } from '../utils/tasksService';
+import { uploadAttachment } from '../utils/attachmentsService';
 import { useStore } from '../store/useStore';
 import { useToast } from './Shared/ToastContext';
 import { SortOption } from './Shared/SortFilterButton';
@@ -476,9 +477,19 @@ const Tasks: React.FC = () => {
         });
     };
 
-    const handleTaskCreate = async (taskData: Partial<Task>) => {
+    const handleTaskCreate = async (taskData: Partial<Task>, pendingFiles?: File[]) => {
         try {
             const newTask = await createTask(taskData as Task);
+
+            // Upload any pending attachments after task is created
+            if (pendingFiles && pendingFiles.length > 0 && newTask.uid) {
+                await Promise.all(
+                    pendingFiles.map((file) =>
+                        uploadAttachment(newTask.uid, file)
+                    )
+                );
+            }
+
             setTasks((prevTasks) => [newTask, ...prevTasks]);
 
             const taskLink = (
@@ -501,8 +512,8 @@ const Tasks: React.FC = () => {
         }
     };
 
-    const handleModalTaskCreate = async (task: Task) => {
-        await handleTaskCreate(task);
+    const handleModalTaskCreate = async (task: Task, pendingFiles?: File[]) => {
+        await handleTaskCreate(task, pendingFiles);
         setShowCreateTaskModal(false);
     };
 

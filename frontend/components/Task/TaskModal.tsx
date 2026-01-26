@@ -25,7 +25,9 @@ import TaskSubtasksSection from './TaskForm/TaskSubtasksSection';
 import TaskPrioritySection from './TaskForm/TaskPrioritySection';
 import TaskDueDateSection from './TaskForm/TaskDueDateSection';
 import TaskDeferUntilSection from './TaskForm/TaskDeferUntilSection';
-import TaskAttachmentsSection from './TaskForm/TaskAttachmentsSection';
+import TaskAttachmentsSection, {
+    PendingFile,
+} from './TaskForm/TaskAttachmentsSection';
 import TaskAssigneeSection from './TaskForm/TaskAssigneeSection';
 import TaskSectionToggle from './TaskForm/TaskSectionToggle';
 import TaskModalActions from './TaskForm/TaskModalActions';
@@ -34,7 +36,7 @@ interface TaskModalProps {
     isOpen: boolean;
     onClose: () => void;
     task: Task;
-    onSave: (task: Task) => void | Promise<void>;
+    onSave: (task: Task, pendingFiles?: File[]) => void | Promise<void>;
     onDelete: (taskUid: string) => Promise<void>;
     projects: Project[];
     onCreateProject: (name: string) => Promise<Project>;
@@ -82,6 +84,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         useState(false);
     const [subtasks, setSubtasks] = useState<Task[]>([]);
     const [attachments, setAttachments] = useState<Attachment[]>([]);
+    const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
     // Collapsible section states - subtasks is derived from autoFocusSubtasks
     const [baseSections, setBaseSections] = useState({
@@ -438,7 +441,9 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 subtasks: subtasks,
             };
 
-            await onSave(finalFormData as any);
+            // Pass pending files for new tasks
+            const filesToUpload = pendingFiles.map((pf) => pf.file);
+            await onSave(finalFormData as any, filesToUpload.length > 0 ? filesToUpload : undefined);
 
             // Refresh tags from server to sync any newly created tags with their proper UIDs
             if (newTagNames.length > 0) {
@@ -619,6 +624,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             } else if (!isOpen) {
                 // Reset attachments when modal closes
                 setAttachments([]);
+                setPendingFiles([]);
             }
         };
 
@@ -1046,31 +1052,34 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                                     </div>
                                                 )}
 
-                                                {expandedSections.attachments &&
-                                                    task.uid && (
-                                                        <div
-                                                            className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 px-4"
-                                                            data-section="attachments"
-                                                        >
-                                                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                                                                {t(
-                                                                    'forms.task.attachments',
-                                                                    'Attachments'
-                                                                )}
-                                                            </h3>
-                                                            <TaskAttachmentsSection
-                                                                taskUid={
-                                                                    task.uid
-                                                                }
-                                                                attachments={
-                                                                    attachments
-                                                                }
-                                                                onAttachmentsChange={
-                                                                    setAttachments
-                                                                }
-                                                            />
-                                                        </div>
-                                                    )}
+                                                {expandedSections.attachments && (
+                                                    <div
+                                                        className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 px-4"
+                                                        data-section="attachments"
+                                                    >
+                                                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                            {t(
+                                                                'forms.task.attachments',
+                                                                'Attachments'
+                                                            )}
+                                                        </h3>
+                                                        <TaskAttachmentsSection
+                                                            taskUid={task.uid}
+                                                            attachments={
+                                                                attachments
+                                                            }
+                                                            onAttachmentsChange={
+                                                                setAttachments
+                                                            }
+                                                            pendingFiles={
+                                                                pendingFiles
+                                                            }
+                                                            onPendingFilesChange={
+                                                                setPendingFiles
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
                                             </fieldset>
                                         </form>
                                     </div>
