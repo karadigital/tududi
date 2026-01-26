@@ -443,7 +443,10 @@ const TaskModal: React.FC<TaskModalProps> = ({
 
             // Pass pending files for new tasks
             const filesToUpload = pendingFiles.map((pf) => pf.file);
-            await onSave(finalFormData as any, filesToUpload.length > 0 ? filesToUpload : undefined);
+            await onSave(
+                finalFormData as any,
+                filesToUpload.length > 0 ? filesToUpload : undefined
+            );
 
             // Refresh tags from server to sync any newly created tags with their proper UIDs
             if (newTagNames.length > 0) {
