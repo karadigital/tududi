@@ -20,6 +20,7 @@ import ProjectModal from '../Project/ProjectModal';
 import NoteModal from '../Note/NoteModal';
 import QuickCaptureInput from './QuickCaptureInput';
 import { createTask } from '../../utils/tasksService';
+import { uploadAttachment } from '../../utils/attachmentsService';
 import { createProject } from '../../utils/projectsService';
 import { createNote } from '../../utils/notesService';
 import { isUrl } from '../../utils/urlService';
@@ -296,9 +297,19 @@ const InboxItems: React.FC = () => {
         setIsNoteModalOpen(true);
     };
 
-    const handleSaveTask = async (task: Task) => {
+    const handleSaveTask = async (task: Task, pendingFiles?: File[]) => {
         try {
             const createdTask = await createTask(task);
+
+            // Upload any pending attachments after task is created
+            if (pendingFiles && pendingFiles.length > 0 && createdTask.uid) {
+                await Promise.all(
+                    pendingFiles.map((file) =>
+                        uploadAttachment(createdTask.uid, file)
+                    )
+                );
+            }
+
             const taskLink = (
                 <span>
                     {t('task.created', 'Task')}{' '}

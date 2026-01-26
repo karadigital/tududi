@@ -27,6 +27,7 @@ import {
     updateProject,
 } from './utils/projectsService';
 import { createTask, updateTask } from './utils/tasksService';
+import { uploadAttachment } from './utils/attachmentsService';
 import { isAuthError } from './utils/authUtils';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -205,7 +206,7 @@ const Layout: React.FC<LayoutProps> = ({
         }
     };
 
-    const handleSaveTask = async (taskData: Task) => {
+    const handleSaveTask = async (taskData: Task, pendingFiles?: File[]) => {
         try {
             if (taskData.uid) {
                 await updateTask(taskData.uid, taskData);
@@ -224,6 +225,15 @@ const Layout: React.FC<LayoutProps> = ({
                 showSuccessToast(taskLink);
             } else {
                 const createdTask = await createTask(taskData);
+
+                // Upload any pending attachments after task is created
+                if (pendingFiles && pendingFiles.length > 0 && createdTask.uid) {
+                    await Promise.all(
+                        pendingFiles.map((file) =>
+                            uploadAttachment(createdTask.uid, file)
+                        )
+                    );
+                }
 
                 // Notify Tasks component that a task was created
                 window.dispatchEvent(
