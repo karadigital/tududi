@@ -93,6 +93,7 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
             // Focus will be restored by useEffect when subtasks.length changes
         } catch (error) {
             console.error('Error creating subtask:', error);
+            throw error;
         } finally {
             setIsSubmitting(false);
         }

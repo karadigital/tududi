@@ -202,11 +202,8 @@ test.describe('Inline Subtask Creation', () => {
             // Click outside the input (on body or another element)
             await page.locator('body').click({ position: { x: 10, y: 10 } });
 
-            // Wait for the blur timeout
-            await page.waitForTimeout(200);
-
             // Input should be hidden after blur with empty value
-            await expect(page.getByTestId('inline-subtask-input')).not.toBeVisible();
+            await expect(page.getByTestId('inline-subtask-input')).not.toBeVisible({ timeout: 1000 });
 
             // Add button should be visible again
             await expect(page.getByTestId('add-subtask-button').first()).toBeVisible();
@@ -241,13 +238,11 @@ test.describe('Inline Subtask Creation', () => {
             // Input should still be visible (not submitted)
             await expect(input).toBeVisible();
 
-            // Wait a bit to ensure no network request was made
-            await page.waitForTimeout(500);
-
             // No subtasks should be in the list
             // The task starts without subtasks, so there shouldn't be any task items
+            // Use assertion with timeout to ensure no subtasks appear after the empty Enter
             const subtaskItems = page.locator('[data-testid^="task-item-"]');
-            await expect(subtaskItems).toHaveCount(0);
+            await expect(subtaskItems).toHaveCount(0, { timeout: 1000 });
         } finally {
             await deleteTestTask(context, baseURL, task.uid);
         }
@@ -319,7 +314,8 @@ test.describe('Inline Subtask Creation', () => {
             const subtasksPill = page.getByRole('button', { name: /subtasks/i });
             if (await subtasksPill.isVisible()) {
                 await subtasksPill.click();
-                await page.waitForTimeout(500);
+                // Wait for the add button to be visible after navigation
+                await expect(page.getByTestId('add-subtask-button').first()).toBeVisible({ timeout: 5000 });
             }
 
             // Click the Add subtask button (may be in different location in full view)

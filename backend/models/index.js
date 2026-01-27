@@ -47,6 +47,7 @@ if (config.environment === 'test') {
             await sequelize.query('PRAGMA synchronous = NORMAL;');
         } catch (err) {
             console.error('Failed to set SQLite pragmas:', err.message);
+            throw err;
         }
     })();
 
