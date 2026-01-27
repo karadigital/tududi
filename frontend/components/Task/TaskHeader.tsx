@@ -443,8 +443,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                             </div>
                         )}
                         {/* Project, tags, due date, and recurrence in same row, with spacing when they exist */}
-                        {!isUpcomingView && (
-                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-x-auto">
+                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-x-auto">
                                 {project && !hideProjectName && (
                                     <div className="flex items-center">
                                         <FolderIcon className="h-3 w-3 mr-1" />
@@ -592,7 +591,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         </div>
                                     )}
                             </div>
-                        )}
                     </div>
                 </div>
                 {!isUpcomingView && !task.habit_mode && (
