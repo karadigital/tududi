@@ -101,7 +101,7 @@ router.post('/register', async (req, res) => {
 
             // Check for retryable database errors (SQLite busy/locked)
             if (isRetryableDbError(error) && attempt < maxRetries) {
-                // Wait before retrying with exponential backoff
+                // Wait before retrying with incremental backoff
                 await new Promise((resolve) =>
                     setTimeout(resolve, retryDelayMs * attempt)
                 );
