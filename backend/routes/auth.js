@@ -52,9 +52,11 @@ router.post('/register', async (req, res) => {
     let createdUserId = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const transaction = await sequelize.transaction();
+        let transaction = null;
 
         try {
+            transaction = await sequelize.transaction();
+
             if (!(await isRegistrationEnabled())) {
                 await transaction.rollback();
                 return res
@@ -105,15 +107,24 @@ router.post('/register', async (req, res) => {
                     'Registration successful. Please check your email to verify your account.',
             });
         } catch (error) {
-            await transaction.rollback().catch(() => {});
+            if (transaction) {
+                await transaction.rollback().catch(() => {});
+            }
 
             // Check for retryable database errors (SQLite busy/locked)
-            if (isRetryableDbError(error) && attempt < maxRetries) {
-                // Wait before retrying with exponential backoff
-                await new Promise((resolve) =>
-                    setTimeout(resolve, retryDelayMs * Math.pow(2, attempt - 1))
-                );
-                continue;
+            if (isRetryableDbError(error)) {
+                if (attempt < maxRetries) {
+                    // Wait before retrying with exponential backoff
+                    await new Promise((resolve) =>
+                        setTimeout(
+                            resolve,
+                            retryDelayMs * Math.pow(2, attempt - 1)
+                        )
+                    );
+                    continue;
+                }
+                // Exhausted retries for retryable error - break to post-loop response
+                break;
             }
 
             if (error.message === 'Email already registered') {
@@ -125,7 +136,7 @@ router.post('/register', async (req, res) => {
             ) {
                 return res.status(400).json({ error: error.message });
             }
-            logError('Registration error:', error);
+            logError(error, 'Registration error:');
             return res.status(500).json({
                 error: 'Registration failed. Please try again.',
             });

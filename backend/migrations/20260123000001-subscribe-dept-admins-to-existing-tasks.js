@@ -24,10 +24,13 @@ module.exports = {
             { type: QueryTypes.SELECT }
         );
 
-        // Build a map: user_id -> area_id
-        const userToDept = {};
+        // Build a map: user_id -> [area_ids] (array to handle multiple dept memberships)
+        const userToDepts = {};
         for (const member of deptMembers) {
-            userToDept[member.user_id] = member.area_id;
+            if (!userToDepts[member.user_id]) {
+                userToDepts[member.user_id] = [];
+            }
+            userToDepts[member.user_id].push(member.area_id);
         }
 
         // Build a map: area_id -> [admin_user_ids]
@@ -57,13 +60,21 @@ module.exports = {
 
         try {
             for (const task of tasks) {
-                const taskOwnerDept = userToDept[task.user_id];
+                const taskOwnerDepts = userToDepts[task.user_id];
 
-                if (!taskOwnerDept) {
+                if (!taskOwnerDepts || taskOwnerDepts.length === 0) {
                     continue;
                 }
 
-                const admins = deptToAdmins[taskOwnerDept] || [];
+                // Collect all unique admins across all departments the task owner belongs to
+                const adminSet = new Set();
+                for (const deptId of taskOwnerDepts) {
+                    const deptAdminsList = deptToAdmins[deptId] || [];
+                    for (const adminId of deptAdminsList) {
+                        adminSet.add(adminId);
+                    }
+                }
+                const admins = Array.from(adminSet);
 
                 for (const adminUserId of admins) {
                     if (adminUserId === task.user_id) {
@@ -103,13 +114,12 @@ module.exports = {
                     );
                     subscriptionsCreated++;
 
-                    // Check if permission already exists
+                    // Check if permission already exists (any propagation type to avoid unique constraint violation)
                     const existingPerm = await sequelize.query(
                         `SELECT 1 FROM permissions
                          WHERE user_id = :userId
                          AND resource_type = 'task'
-                         AND resource_uid = :resourceUid
-                         AND propagation = 'subscription'`,
+                         AND resource_uid = :resourceUid`,
                         {
                             replacements: {
                                 userId: adminUserId,
@@ -152,87 +162,21 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        const sequelize = queryInterface.sequelize;
-
-        // Find all subscription-based permissions for tasks
-        const subscriptionPermissions = await sequelize.query(
-            `SELECT p.user_id, p.resource_uid, t.id as task_id
-             FROM permissions p
-             JOIN tasks t ON t.uid = p.resource_uid
-             WHERE p.resource_type = 'task'
-             AND p.propagation = 'subscription'`,
-            { type: QueryTypes.SELECT }
+        // Safe no-op: This migration cannot safely determine which subscription permissions
+        // it created vs. those created through normal application usage. Deleting all
+        // subscription-based permissions would remove data this migration didn't create.
+        //
+        // To fully reverse this migration, manually identify and remove:
+        // 1. tasks_subscribers entries created by this migration
+        // 2. permissions entries with propagation='subscription' created by this migration
+        //
+        // Consider using a database backup from before the migration was run.
+        console.warn(
+            'WARNING: Down migration for subscribe-dept-admins-to-existing-tasks is a no-op. ' +
+                'This migration created subscription permissions that cannot be safely distinguished ' +
+                'from those created through normal application usage. Manual cleanup may be required ' +
+                'if you need to fully reverse this migration.'
         );
-
-        if (!subscriptionPermissions || subscriptionPermissions.length === 0) {
-            console.log(
-                'No subscription-based permissions found, skipping down migration'
-            );
-            return;
-        }
-
-        console.log(
-            `Removing ${subscriptionPermissions.length} subscription-based permissions and their subscriptions`
-        );
-
-        let subscriptionsRemoved = 0;
-        let permissionsRemoved = 0;
-
-        // Wrap all modifications in a transaction for atomicity
-        const transaction = await sequelize.transaction();
-
-        try {
-            for (const perm of subscriptionPermissions) {
-                // Remove the subscription
-                const [, subMeta] = await sequelize.query(
-                    `DELETE FROM tasks_subscribers
-                     WHERE task_id = :taskId AND user_id = :userId`,
-                    {
-                        replacements: {
-                            taskId: perm.task_id,
-                            userId: perm.user_id,
-                        },
-                        type: QueryTypes.DELETE,
-                        transaction,
-                    }
-                );
-                if (subMeta && subMeta.changes > 0) {
-                    subscriptionsRemoved += subMeta.changes;
-                } else {
-                    subscriptionsRemoved++;
-                }
-
-                // Remove the permission
-                const [, permMeta] = await sequelize.query(
-                    `DELETE FROM permissions
-                     WHERE user_id = :userId
-                     AND resource_type = 'task'
-                     AND resource_uid = :resourceUid
-                     AND propagation = 'subscription'`,
-                    {
-                        replacements: {
-                            userId: perm.user_id,
-                            resourceUid: perm.resource_uid,
-                        },
-                        type: QueryTypes.DELETE,
-                        transaction,
-                    }
-                );
-                if (permMeta && permMeta.changes > 0) {
-                    permissionsRemoved += permMeta.changes;
-                } else {
-                    permissionsRemoved++;
-                }
-            }
-
-            await transaction.commit();
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-
-        console.log(
-            `Down migration complete: ${subscriptionsRemoved} subscriptions removed, ${permissionsRemoved} permissions removed`
-        );
+        return;
     },
 };

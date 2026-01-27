@@ -92,8 +92,8 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
             setNewSubtaskName('');
             // Focus will be restored by useEffect when subtasks.length changes
         } catch (error) {
+            // Error is logged here; the upstream handler (onCreateSubtask) handles toast notifications
             console.error('Error creating subtask:', error);
-            throw error;
         } finally {
             setIsSubmitting(false);
         }
@@ -135,6 +135,7 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
                         'task.typeSubtaskPlaceholder',
                         'Type subtask and press Enter'
                     )}
+                    aria-label={t('task.addSubtask', 'Add subtask')}
                     disabled={isSubmitting}
                     className="flex-1 text-base bg-transparent border-none outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 disabled:opacity-50"
                     data-testid="inline-subtask-input"
