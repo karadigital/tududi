@@ -100,7 +100,8 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter') {
+        // Ignore Enter during IME composition (for CJK language input)
+        if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
             e.preventDefault();
             createSubtask();
         } else if (e.key === 'Escape') {

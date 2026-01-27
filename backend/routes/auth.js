@@ -85,10 +85,22 @@ router.post('/register', async (req, res) => {
             createdUserId = user.id;
 
             // Send verification email outside the transaction
-            const emailResult = await sendVerificationEmail(
-                user,
-                verificationToken
-            );
+            let emailResult;
+            try {
+                emailResult = await sendVerificationEmail(
+                    user,
+                    verificationToken
+                );
+            } catch (emailError) {
+                logError(
+                    emailError,
+                    'Email sending threw during registration, cleaning up user'
+                );
+                await removeUnverifiedUser(createdUserId);
+                return res.status(500).json({
+                    error: 'Failed to send verification email. Please try again later.',
+                });
+            }
 
             if (!emailResult.success) {
                 // Compensating cleanup: remove the unverified user since email failed
