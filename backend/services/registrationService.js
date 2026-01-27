@@ -206,14 +206,14 @@ const removeUnverifiedUser = async (userId) => {
         }
 
         if (user.email_verified) {
-            logInfo(
-                `User ${userId} is already verified, skipping cleanup`
-            );
+            logInfo(`User ${userId} is already verified, skipping cleanup`);
             return { success: false, reason: 'User is already verified' };
         }
 
         await user.destroy();
-        logInfo(`Removed unverified user ${userId} during registration cleanup`);
+        logInfo(
+            `Removed unverified user ${userId} during registration cleanup`
+        );
         return { success: true };
     } catch (error) {
         logError(error, `Failed to remove unverified user ${userId}`);
