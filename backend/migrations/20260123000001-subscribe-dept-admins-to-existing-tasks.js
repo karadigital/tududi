@@ -75,7 +75,10 @@ module.exports = {
                         `SELECT 1 FROM tasks_subscribers
                          WHERE task_id = :taskId AND user_id = :userId`,
                         {
-                            replacements: { taskId: task.id, userId: adminUserId },
+                            replacements: {
+                                taskId: task.id,
+                                userId: adminUserId,
+                            },
                             type: QueryTypes.SELECT,
                             transaction,
                         }
@@ -90,7 +93,10 @@ module.exports = {
                         `INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at)
                          VALUES (:taskId, :userId, datetime('now'), datetime('now'))`,
                         {
-                            replacements: { taskId: task.id, userId: adminUserId },
+                            replacements: {
+                                taskId: task.id,
+                                userId: adminUserId,
+                            },
                             type: QueryTypes.INSERT,
                             transaction,
                         }
@@ -159,7 +165,9 @@ module.exports = {
         );
 
         if (!subscriptionPermissions || subscriptionPermissions.length === 0) {
-            console.log('No subscription-based permissions found, skipping down migration');
+            console.log(
+                'No subscription-based permissions found, skipping down migration'
+            );
             return;
         }
 
@@ -180,7 +188,10 @@ module.exports = {
                     `DELETE FROM tasks_subscribers
                      WHERE task_id = :taskId AND user_id = :userId`,
                     {
-                        replacements: { taskId: perm.task_id, userId: perm.user_id },
+                        replacements: {
+                            taskId: perm.task_id,
+                            userId: perm.user_id,
+                        },
                         type: QueryTypes.DELETE,
                         transaction,
                     }
