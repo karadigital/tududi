@@ -8,6 +8,7 @@ const {
     createUnverifiedUser,
     sendVerificationEmail,
     verifyUserEmail,
+    removeUnverifiedUser,
 } = require('../services/registrationService');
 const packageJson = require('../../package.json');
 const { authLimiter } = require('../middleware/rateLimiter');
@@ -48,6 +49,8 @@ router.post('/register', async (req, res) => {
     const maxRetries = 5;
     const retryDelayMs = 200;
 
+    let createdUserId = null;
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         const transaction = await sequelize.transaction();
 
@@ -74,23 +77,28 @@ router.post('/register', async (req, res) => {
                 transaction
             );
 
+            // Commit the transaction immediately after user creation
+            // to avoid holding the DB lock during external I/O (email sending)
+            await transaction.commit();
+            createdUserId = user.id;
+
+            // Send verification email outside the transaction
             const emailResult = await sendVerificationEmail(
                 user,
                 verificationToken
             );
 
             if (!emailResult.success) {
-                await transaction.rollback();
+                // Compensating cleanup: remove the unverified user since email failed
                 logError(
                     new Error(emailResult.reason),
-                    'Email sending failed during registration, rolling back user creation'
+                    'Email sending failed during registration, cleaning up user'
                 );
+                await removeUnverifiedUser(createdUserId);
                 return res.status(500).json({
                     error: 'Failed to send verification email. Please try again later.',
                 });
             }
-
-            await transaction.commit();
 
             return res.status(201).json({
                 message:
