@@ -27,6 +27,7 @@ import {
     updateProject,
 } from './utils/projectsService';
 import { createTask, updateTask } from './utils/tasksService';
+import { uploadAttachment } from './utils/attachmentsService';
 import { isAuthError } from './utils/authUtils';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
@@ -46,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({
     children,
 }) => {
     const { t } = useTranslation();
-    const { showSuccessToast } = useToast();
+    const { showSuccessToast, showErrorToast } = useToast();
     const navigate = useNavigate();
     const location = useLocation();
     const isUpcomingView = location.pathname === '/upcoming';
@@ -205,7 +206,7 @@ const Layout: React.FC<LayoutProps> = ({
         }
     };
 
-    const handleSaveTask = async (taskData: Task) => {
+    const handleSaveTask = async (taskData: Task, pendingFiles?: File[]) => {
         try {
             if (taskData.uid) {
                 await updateTask(taskData.uid, taskData);
@@ -224,6 +225,34 @@ const Layout: React.FC<LayoutProps> = ({
                 showSuccessToast(taskLink);
             } else {
                 const createdTask = await createTask(taskData);
+
+                // Upload any pending attachments after task is created (non-fatal)
+                if (
+                    pendingFiles &&
+                    pendingFiles.length > 0 &&
+                    createdTask.uid
+                ) {
+                    const uploadResults = await Promise.allSettled(
+                        pendingFiles.map((file) =>
+                            uploadAttachment(createdTask.uid, file)
+                        )
+                    );
+                    const failedUploads = uploadResults.filter(
+                        (r) => r.status === 'rejected'
+                    );
+                    if (failedUploads.length > 0) {
+                        console.error(
+                            'Some attachments failed to upload:',
+                            failedUploads
+                        );
+                        showErrorToast(
+                            t(
+                                'task.attachments.someUploadsFailed',
+                                'Some attachments failed to upload'
+                            )
+                        );
+                    }
+                }
 
                 // Notify Tasks component that a task was created
                 window.dispatchEvent(
