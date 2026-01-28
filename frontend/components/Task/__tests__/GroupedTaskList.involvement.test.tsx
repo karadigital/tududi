@@ -57,7 +57,6 @@ const getGroupTaskCount = (label: string): string => {
 const defaultProps = {
     tasks: [] as Task[],
     groupBy: 'involvement' as const,
-    currentUserId: 1,
     currentUserUid: 'user-1',
     onTaskUpdate: jest.fn(),
     onTaskDelete: jest.fn(),
@@ -86,7 +85,7 @@ describe('GroupedTaskList - Involvement Grouping', () => {
         const taskAssignedToMe = createTask({
             id: 1,
             name: 'My Assigned Task',
-            assigned_to_user_id: 1, // Current user ID
+            AssignedTo: { id: 1, uid: 'user-1', email: 'me@example.com' },
         });
 
         renderWithRouter(
@@ -105,7 +104,11 @@ describe('GroupedTaskList - Involvement Grouping', () => {
         const taskAssignedToOther = createTask({
             id: 2,
             name: 'Other Person Task',
-            assigned_to_user_id: 99, // Different user ID
+            AssignedTo: {
+                id: 99,
+                uid: 'other-user',
+                email: 'other@example.com',
+            },
         });
 
         renderWithRouter(
@@ -144,7 +147,7 @@ describe('GroupedTaskList - Involvement Grouping', () => {
         const taskAssignedAndSubscribed = createTask({
             id: 4,
             name: 'Assigned And Subscribed Task',
-            assigned_to_user_id: 1, // Assigned to current user
+            AssignedTo: { id: 1, uid: 'user-1', email: 'me@example.com' },
             Subscribers: [{ id: 1, uid: 'user-1', email: 'test@example.com' }], // Also subscribed
         });
 

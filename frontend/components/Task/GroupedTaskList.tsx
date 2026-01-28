@@ -15,7 +15,6 @@ interface GroupedTaskListProps {
     groupedTasks?: GroupedTasks | null;
     groupBy?: 'none' | 'project' | 'assignee' | 'status' | 'involvement';
     currentUserUid?: string | null;
-    currentUserId?: number | null;
     onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
     onTaskCreate?: (task: Task) => void;
@@ -66,7 +65,6 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     groupedTasks,
     groupBy = 'none',
     currentUserUid,
-    currentUserId,
     onTaskUpdate,
     onTaskCompletionToggle,
     onTaskDelete,
@@ -500,21 +498,24 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
         const subscribedTasks: Task[] = [];
 
         filteredBySearch.forEach((task) => {
-            // Check if assigned to current user
-            if (task.assigned_to_user_id === currentUserId) {
+            // Check if assigned to current user (using uid for consistency)
+            if (
+                currentUserUid !== null &&
+                task.AssignedTo?.uid === currentUserUid
+            ) {
                 assignedToMeTasks.push(task);
             }
 
             // Check if assigned to someone else (not null/undefined and not current user)
             if (
-                task.assigned_to_user_id != null &&
-                task.assigned_to_user_id !== currentUserId
+                task.AssignedTo != null &&
+                task.AssignedTo.uid !== currentUserUid
             ) {
                 assignedToOthersTasks.push(task);
             }
 
-            // Check if current user is a subscriber
-            if (task.Subscribers?.some((s) => s.id === currentUserId)) {
+            // Check if current user is a subscriber (using uid for consistency)
+            if (task.Subscribers?.some((s) => s.uid === currentUserUid)) {
                 subscribedTasks.push(task);
             }
         });
@@ -542,7 +543,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
         ];
 
         return groups;
-    }, [groupBy, tasks, showCompletedTasks, searchQuery, currentUserId, t]);
+    }, [groupBy, tasks, showCompletedTasks, searchQuery, currentUserUid, t]);
 
     const toggleRecurringGroup = (templateId: number) => {
         setExpandedRecurringGroups((prev) => {

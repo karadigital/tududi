@@ -70,7 +70,6 @@ const Tasks: React.FC = () => {
         'none' | 'project' | 'assignee' | 'involvement'
     >('none');
     const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
-    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
         []
     );
@@ -437,11 +436,6 @@ const Tasks: React.FC = () => {
                 setCurrentUserUid(currentUser.uid);
             } else {
                 setCurrentUserUid(null);
-            }
-            if (currentUser?.id) {
-                setCurrentUserId(currentUser.id);
-            } else {
-                setCurrentUserId(null);
             }
         };
 
@@ -910,7 +904,7 @@ const Tasks: React.FC = () => {
                                                                       'involvement'
                                                                     ? t(
                                                                           'tasks.groupByInvolvement',
-                                                                          'My Involvement'
+                                                                          'Involvement'
                                                                       )
                                                                     : t(
                                                                           'tasks.grouping.none',
@@ -1258,7 +1252,6 @@ const Tasks: React.FC = () => {
                                         groupedTasks={null}
                                         groupBy="involvement"
                                         currentUserUid={currentUserUid}
-                                        currentUserId={currentUserId}
                                         onTaskCreate={handleTaskCreate}
                                         onTaskUpdate={handleTaskUpdate}
                                         onTaskCompletionToggle={
