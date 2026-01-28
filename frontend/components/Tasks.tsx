@@ -66,9 +66,9 @@ const Tasks: React.FC = () => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showCompleted, setShowCompleted] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [groupBy, setGroupBy] = useState<'none' | 'project' | 'assignee' | 'involvement'>(
-        'none'
-    );
+    const [groupBy, setGroupBy] = useState<
+        'none' | 'project' | 'assignee' | 'involvement'
+    >('none');
     const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
@@ -390,7 +390,9 @@ const Tasks: React.FC = () => {
         setIsLoadingMore(true);
         const shouldDisablePagination =
             !isUpcomingView &&
-            (groupBy === 'project' || groupBy === 'assignee' || groupBy === 'involvement');
+            (groupBy === 'project' ||
+                groupBy === 'assignee' ||
+                groupBy === 'involvement');
         if (all || shouldDisablePagination) {
             const newLimit = totalCount > 0 ? totalCount : 10000;
             await fetchData(true, {
@@ -411,7 +413,10 @@ const Tasks: React.FC = () => {
 
     useEffect(() => {
         const shouldDisablePagination =
-            isUpcomingView || groupBy === 'project' || groupBy === 'assignee' || groupBy === 'involvement';
+            isUpcomingView ||
+            groupBy === 'project' ||
+            groupBy === 'assignee' ||
+            groupBy === 'involvement';
         fetchData(
             true,
             shouldDisablePagination
