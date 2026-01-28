@@ -1247,6 +1247,25 @@ const Tasks: React.FC = () => {
                                         showCompletedTasks={showCompleted}
                                         searchQuery={taskSearchQuery}
                                     />
+                                ) : groupBy === 'involvement' ? (
+                                    <GroupedTaskList
+                                        tasks={displayTasks}
+                                        groupedTasks={null}
+                                        groupBy="involvement"
+                                        currentUserUid={currentUserUid}
+                                        currentUserId={currentUserId}
+                                        onTaskCreate={handleTaskCreate}
+                                        onTaskUpdate={handleTaskUpdate}
+                                        onTaskCompletionToggle={
+                                            handleTaskCompletionToggle
+                                        }
+                                        onTaskDelete={handleTaskDelete}
+                                        projects={projects}
+                                        hideProjectName={false}
+                                        onToggleToday={handleToggleToday}
+                                        showCompletedTasks={showCompleted}
+                                        searchQuery={taskSearchQuery}
+                                    />
                                 ) : (
                                     <TaskList
                                         tasks={displayTasks}
