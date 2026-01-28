@@ -66,10 +66,11 @@ const Tasks: React.FC = () => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showCompleted, setShowCompleted] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [groupBy, setGroupBy] = useState<'none' | 'project' | 'assignee'>(
+    const [groupBy, setGroupBy] = useState<'none' | 'project' | 'assignee' | 'involvement'>(
         'none'
     );
     const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
         []
     );
@@ -208,7 +209,8 @@ const Tasks: React.FC = () => {
             (localStorage.getItem('tasks_group_by') as
                 | 'none'
                 | 'project'
-                | 'assignee') || 'none';
+                | 'assignee'
+                | 'involvement') || 'none';
         setGroupBy(savedGroupBy);
 
         const params = new URLSearchParams(location.search);
@@ -430,6 +432,11 @@ const Tasks: React.FC = () => {
                 setCurrentUserUid(currentUser.uid);
             } else {
                 setCurrentUserUid(null);
+            }
+            if (currentUser?.id) {
+                setCurrentUserId(currentUser.id);
+            } else {
+                setCurrentUserId(null);
             }
         };
 

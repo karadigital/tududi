@@ -13,8 +13,9 @@ import { GroupedTasks } from '../../utils/tasksService';
 interface GroupedTaskListProps {
     tasks: Task[];
     groupedTasks?: GroupedTasks | null;
-    groupBy?: 'none' | 'project' | 'assignee' | 'status';
+    groupBy?: 'none' | 'project' | 'assignee' | 'status' | 'involvement';
     currentUserUid?: string | null;
+    currentUserId?: number | null;
     onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
     onTaskCreate?: (task: Task) => void;
@@ -53,11 +54,19 @@ interface StatusGroup {
     order: number;
 }
 
+interface InvolvementGroup {
+    key: 'assigned_to_me' | 'assigned_to_others' | 'subscribed';
+    label: string;
+    tasks: Task[];
+    order: number;
+}
+
 const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     tasks,
     groupedTasks,
     groupBy = 'none',
     currentUserUid,
+    currentUserId,
     onTaskUpdate,
     onTaskCompletionToggle,
     onTaskDelete,
@@ -453,6 +462,87 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
 
         return groups;
     }, [groupBy, tasks, showCompletedTasks, searchQuery, t]);
+
+    // Group tasks by involvement when requested
+    // Note: Tasks CAN appear in multiple groups (e.g., assigned to me AND subscribed)
+    const groupedByInvolvement = useMemo(() => {
+        if (groupBy !== 'involvement') return null;
+
+        // Apply completion filter
+        const filtered = showCompletedTasks
+            ? tasks
+            : tasks.filter((task) => {
+                  const isCompleted =
+                      task.status === 'done' ||
+                      task.status === 'archived' ||
+                      task.status === 2 ||
+                      task.status === 3;
+                  return !isCompleted;
+              });
+
+        // Apply search filter
+        const filteredBySearch = searchQuery?.trim()
+            ? filtered.filter(
+                  (task) =>
+                      (task.name || '')
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase()) ||
+                      (task.note || '')
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+              )
+            : filtered;
+
+        // Categorize tasks into 3 involvement groups
+        // Note: A task CAN appear in multiple groups (intentional per design)
+        const assignedToMeTasks: Task[] = [];
+        const assignedToOthersTasks: Task[] = [];
+        const subscribedTasks: Task[] = [];
+
+        filteredBySearch.forEach((task) => {
+            // Check if assigned to current user
+            if (task.assigned_to_user_id === currentUserId) {
+                assignedToMeTasks.push(task);
+            }
+
+            // Check if assigned to someone else (not null and not current user)
+            if (
+                task.assigned_to_user_id !== null &&
+                task.assigned_to_user_id !== currentUserId
+            ) {
+                assignedToOthersTasks.push(task);
+            }
+
+            // Check if current user is a subscriber
+            if (task.Subscribers?.some((s) => s.id === currentUserId)) {
+                subscribedTasks.push(task);
+            }
+        });
+
+        // Always return all 3 groups (even if empty) for consistent UI
+        const groups: InvolvementGroup[] = [
+            {
+                key: 'assigned_to_me',
+                label: t('tasks.assignedToMe', 'Assigned to me'),
+                tasks: assignedToMeTasks,
+                order: 0,
+            },
+            {
+                key: 'assigned_to_others',
+                label: t('tasks.assignedToOthers', 'Assigned to others'),
+                tasks: assignedToOthersTasks,
+                order: 1,
+            },
+            {
+                key: 'subscribed',
+                label: t('tasks.subscribed', 'Subscribed'),
+                tasks: subscribedTasks,
+                order: 2,
+            },
+        ];
+
+        return groups;
+    }, [groupBy, tasks, showCompletedTasks, searchQuery, currentUserId, t]);
 
     const toggleRecurringGroup = (templateId: number) => {
         setExpandedRecurringGroups((prev) => {
