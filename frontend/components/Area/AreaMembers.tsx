@@ -13,6 +13,7 @@ import {
 } from '../../utils/areasService';
 import { getApiPath } from '../../config/paths';
 import { getDefaultHeaders } from '../../utils/authUtils';
+import { useToast } from '../Shared/ToastContext';
 
 interface AreaMembersProps {
     area: Area;
@@ -28,11 +29,11 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
     readOnly = false,
 }) => {
     const { t } = useTranslation();
+    const { showSuccessToast, showErrorToast } = useToast();
     const [showManageModal, setShowManageModal] = useState(false);
     const [allUsers, setAllUsers] = useState<AreaMember[]>([]);
     const [members, setMembers] = useState<AreaMember[]>(area.Members || []);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     // Support both snake_case (areas_members) and PascalCase (AreasMember) from API
     const getRole = (m: AreaMember) =>
@@ -74,7 +75,8 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         if (!area.uid) return;
 
         setLoading(true);
-        setError(null);
+        const user = allUsers.find((u) => u.id === userId);
+        const userName = user?.name || user?.email || 'User';
 
         try {
             const updatedMembers = await addAreaMember(area.uid, userId, role);
@@ -82,14 +84,33 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
             if (onUpdate) {
                 onUpdate(updatedMembers);
             }
+            showSuccessToast(
+                t(
+                    'area.member_added',
+                    '{{name}} has been added to the department',
+                    { name: userName }
+                )
+            );
         } catch (err: any) {
             console.error('Error adding member:', err);
-            console.error('Error details:', {
-                message: err.message,
-                response: err.response,
-                status: err.status,
-            });
-            setError(err.message || 'Failed to add member');
+            if (
+                err.message ===
+                    'User is already a member of another department' &&
+                err.departmentName
+            ) {
+                showErrorToast(
+                    t(
+                        'area.already_in_department',
+                        'This user is already in department {{dept_name}}. Remove them from their current department before adding them here.',
+                        { dept_name: err.departmentName }
+                    )
+                );
+            } else {
+                showErrorToast(
+                    err.message ||
+                        t('area.add_member_failed', 'Failed to add member')
+                );
+            }
         } finally {
             setLoading(false);
         }
@@ -99,7 +120,8 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         if (!area.uid) return;
 
         setLoading(true);
-        setError(null);
+        const user = allUsers.find((u) => u.id === userId);
+        const userName = user?.name || user?.email || 'User';
 
         try {
             const updatedMembers = await removeAreaMember(area.uid, userId);
@@ -107,9 +129,19 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
             if (onUpdate) {
                 onUpdate(updatedMembers);
             }
+            showSuccessToast(
+                t(
+                    'area.member_removed',
+                    '{{name}} has been removed from the department',
+                    { name: userName }
+                )
+            );
         } catch (err: any) {
-            setError(err.message || 'Failed to remove member');
             console.error('Error removing member:', err);
+            const errorMessage = err.message
+                ? `${t('area.remove_member_failed', 'Failed to remove member')}: ${err.message}`
+                : t('area.remove_member_failed', 'Failed to remove member');
+            showErrorToast(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -122,7 +154,6 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         if (!area.uid) return;
 
         setLoading(true);
-        setError(null);
 
         try {
             const updatedMembers = await updateAreaMemberRole(
@@ -135,8 +166,11 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                 onUpdate(updatedMembers);
             }
         } catch (err: any) {
-            setError(err.message || 'Failed to update role');
             console.error('Error updating role:', err);
+            const errorMessage = err.message
+                ? `${t('area.update_role_failed', 'Failed to update role')}: ${err.message}`
+                : t('area.update_role_failed', 'Failed to update role');
+            showErrorToast(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -185,13 +219,6 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                     </button>
                 )}
             </div>
-
-            {/* Error message */}
-            {error && (
-                <div className="text-sm text-red-600 dark:text-red-400">
-                    {error}
-                </div>
-            )}
 
             {/* Members list */}
             <div className="space-y-3">
