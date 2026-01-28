@@ -75,6 +75,10 @@ describe('Subscriber edit permissions via subscribeToTask', () => {
             },
             raw: true,
         });
+        expect(perm).not.toBeNull();
+        expect(perm.access_level).toBe('ro');
+
+        const res = await subscriberAgent
 
         const res = await subscriberAgent
             .patch(`/api/task/${task.uid}`)
