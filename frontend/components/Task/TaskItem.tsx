@@ -181,17 +181,20 @@ const TaskItem: React.FC<TaskItemProps> = ({
         setProjectList(projects);
     }, [projects]);
 
+    // Calculate subtask counts for display
+    const subtasksCount = subtasks.length;
+    const completedSubtasksCount = subtasks.filter(
+        (subtask) =>
+            subtask.status === 'done' ||
+            subtask.status === 2 ||
+            subtask.status === 'archived' ||
+            subtask.status === 3
+    ).length;
+
     // Calculate completion percentage
     const calculateCompletionPercentage = () => {
-        if (subtasks.length === 0) return 0;
-        const completedCount = subtasks.filter(
-            (subtask) =>
-                subtask.status === 'done' ||
-                subtask.status === 2 ||
-                subtask.status === 'archived' ||
-                subtask.status === 3
-        ).length;
-        return Math.round((completedCount / subtasks.length) * 100);
+        if (subtasksCount === 0) return 0;
+        return Math.round((completedSubtasksCount / subtasksCount) * 100);
     };
 
     const completionPercentage = calculateCompletionPercentage();
@@ -493,6 +496,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
                     isUpcomingView={isUpcomingView}
+                    subtasksCount={subtasksCount}
+                    completedSubtasksCount={completedSubtasksCount}
                 />
 
                 {/* Progress bar at bottom of parent task */}

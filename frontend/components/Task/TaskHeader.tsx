@@ -39,6 +39,9 @@ interface TaskHeaderProps {
     onEdit?: (e: React.MouseEvent) => void;
     onDelete?: (e: React.MouseEvent) => void;
     isUpcomingView?: boolean;
+    // Props for subtask count display
+    subtasksCount?: number;
+    completedSubtasksCount?: number;
 }
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
@@ -57,6 +60,9 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
     onEdit,
     onDelete,
     isUpcomingView = false,
+    // Props for subtask count display
+    subtasksCount,
+    completedSubtasksCount,
 }) => {
     const { t } = useTranslation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -575,6 +581,16 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         <span>{getAssigneeDisplayName()}</span>
                                     </div>
                                 )}
+                                {subtasksCount !== undefined &&
+                                    subtasksCount > 0 && (
+                                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                            <ListBulletIcon className="h-3 w-3 mr-1" />
+                                            <span>
+                                                {completedSubtasksCount}/
+                                                {subtasksCount}
+                                            </span>
+                                        </div>
+                                    )}
                             </div>
                         )}
                     </div>
@@ -1175,6 +1191,14 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     )}
                                     <UserCircleIcon className="h-3 w-3 mr-1" />
                                     <span>{getAssigneeDisplayName()}</span>
+                                </div>
+                            )}
+                            {subtasksCount !== undefined && subtasksCount > 0 && (
+                                <div className="flex items-center">
+                                    <ListBulletIcon className="h-3 w-3 mr-1" />
+                                    <span>
+                                        {completedSubtasksCount}/{subtasksCount}
+                                    </span>
                                 </div>
                             )}
                         </div>
