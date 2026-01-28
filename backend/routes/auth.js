@@ -8,6 +8,7 @@ const {
     createUnverifiedUser,
     sendVerificationEmail,
     verifyUserEmail,
+    removeUnverifiedUser,
 } = require('../services/registrationService');
 const packageJson = require('../../package.json');
 const { authLimiter } = require('../middleware/rateLimiter');
@@ -29,73 +30,135 @@ router.get('/registration-status', async (req, res) => {
     res.json({ enabled: await isRegistrationEnabled() });
 });
 
+// Helper function to check if error is a retryable database error
+const isRetryableDbError = (error) => {
+    const message = error.message || '';
+    const originalMessage = error.original?.message || '';
+    return (
+        message.includes('SQLITE_BUSY') ||
+        message.includes('database is locked') ||
+        originalMessage.includes('SQLITE_BUSY') ||
+        originalMessage.includes('database is locked') ||
+        error.name === 'SequelizeTimeoutError'
+    );
+};
+
 // Register new user
 router.post('/register', async (req, res) => {
     const { sequelize } = require('../models');
-    const transaction = await sequelize.transaction();
+    const maxRetries = 5;
+    const retryDelayMs = 200;
 
-    try {
-        if (!(await isRegistrationEnabled())) {
-            await transaction.rollback();
-            return res
-                .status(404)
-                .json({ error: 'Registration is not enabled' });
-        }
+    let createdUserId = null;
 
-        const { email, password } = req.body;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        let transaction = null;
 
-        if (!email || !password) {
-            await transaction.rollback();
-            return res
-                .status(400)
-                .json({ error: 'Email and password are required' });
-        }
+        try {
+            transaction = await sequelize.transaction();
 
-        const { user, verificationToken } = await createUnverifiedUser(
-            email,
-            password,
-            transaction
-        );
+            if (!(await isRegistrationEnabled())) {
+                await transaction.rollback();
+                return res
+                    .status(404)
+                    .json({ error: 'Registration is not enabled' });
+            }
 
-        const emailResult = await sendVerificationEmail(
-            user,
-            verificationToken
-        );
+            const { email, password } = req.body;
 
-        if (!emailResult.success) {
-            await transaction.rollback();
-            logError(
-                new Error(emailResult.reason),
-                'Email sending failed during registration, rolling back user creation'
+            if (!email || !password) {
+                await transaction.rollback();
+                return res
+                    .status(400)
+                    .json({ error: 'Email and password are required' });
+            }
+
+            const { user, verificationToken } = await createUnverifiedUser(
+                email,
+                password,
+                transaction
             );
+
+            // Commit the transaction immediately after user creation
+            // to avoid holding the DB lock during external I/O (email sending)
+            await transaction.commit();
+            createdUserId = user.id;
+
+            // Send verification email outside the transaction
+            let emailResult;
+            try {
+                emailResult = await sendVerificationEmail(
+                    user,
+                    verificationToken
+                );
+            } catch (emailError) {
+                logError(
+                    emailError,
+                    'Email sending threw during registration, cleaning up user'
+                );
+                await removeUnverifiedUser(createdUserId);
+                return res.status(500).json({
+                    error: 'Failed to send verification email. Please try again later.',
+                });
+            }
+
+            if (!emailResult.success) {
+                // Compensating cleanup: remove the unverified user since email failed
+                logError(
+                    new Error(emailResult.reason),
+                    'Email sending failed during registration, cleaning up user'
+                );
+                await removeUnverifiedUser(createdUserId);
+                return res.status(500).json({
+                    error: 'Failed to send verification email. Please try again later.',
+                });
+            }
+
+            return res.status(201).json({
+                message:
+                    'Registration successful. Please check your email to verify your account.',
+            });
+        } catch (error) {
+            if (transaction) {
+                await transaction.rollback().catch(() => {});
+            }
+
+            // Check for retryable database errors (SQLite busy/locked)
+            if (isRetryableDbError(error)) {
+                if (attempt < maxRetries) {
+                    // Wait before retrying with exponential backoff
+                    await new Promise((resolve) =>
+                        setTimeout(
+                            resolve,
+                            retryDelayMs * Math.pow(2, attempt - 1)
+                        )
+                    );
+                    continue;
+                }
+                // Exhausted retries for retryable error - break to post-loop response
+                break;
+            }
+
+            if (error.message === 'Email already registered') {
+                return res.status(400).json({ error: error.message });
+            }
+            if (
+                error.message === 'Invalid email format' ||
+                error.message === 'Password must be at least 6 characters long'
+            ) {
+                return res.status(400).json({ error: error.message });
+            }
+            logError(error, 'Registration error:');
             return res.status(500).json({
-                error: 'Failed to send verification email. Please try again later.',
+                error: 'Registration failed. Please try again.',
             });
         }
-
-        await transaction.commit();
-
-        res.status(201).json({
-            message:
-                'Registration successful. Please check your email to verify your account.',
-        });
-    } catch (error) {
-        await transaction.rollback();
-
-        if (error.message === 'Email already registered') {
-            return res.status(400).json({ error: error.message });
-        }
-        if (
-            error.message === 'Invalid email format' ||
-            error.message === 'Password must be at least 6 characters long'
-        ) {
-            return res.status(400).json({ error: error.message });
-        }
-        logError('Registration error:', error);
-        res.status(500).json({
-            error: 'Registration failed. Please try again.',
-        });
     }
+
+    // If we exhausted all retries
+    return res.status(500).json({
+        error: 'Registration failed due to high server load. Please try again.',
+    });
 });
 
 // Verify email

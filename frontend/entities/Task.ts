@@ -77,6 +77,11 @@ export interface Task {
         avatar_image?: string;
     }[];
     subscriber_count?: number;
+    // Subtask state flags
+    isNew?: boolean; // Backend flag for new subtasks
+    _isNew?: boolean; // UI flag for new subtasks
+    isEdited?: boolean; // Backend flag for edited subtasks
+    _isEdited?: boolean; // UI flag for edited subtasks
 }
 
 export type StatusType =

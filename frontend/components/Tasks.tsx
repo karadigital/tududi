@@ -14,6 +14,7 @@ import {
     toggleTaskToday,
     GroupedTasks,
 } from '../utils/tasksService';
+import { uploadAttachment } from '../utils/attachmentsService';
 import { useStore } from '../store/useStore';
 import { useToast } from './Shared/ToastContext';
 import { SortOption } from './Shared/SortFilterButton';
@@ -51,7 +52,7 @@ const getSearchPlaceholder = (language: string): string => {
 
 const Tasks: React.FC = () => {
     const { t, i18n } = useTranslation();
-    const { showSuccessToast } = useToast();
+    const { showSuccessToast, showErrorToast } = useToast();
     const { isSidebarOpen } = useSidebar();
     const [tasks, setTasks] = useState<Task[]>([]);
     const projects = useStore((state: any) => state.projectsStore.projects);
@@ -476,9 +477,37 @@ const Tasks: React.FC = () => {
         });
     };
 
-    const handleTaskCreate = async (taskData: Partial<Task>) => {
+    const handleTaskCreate = async (
+        taskData: Partial<Task>,
+        pendingFiles?: File[]
+    ) => {
         try {
             const newTask = await createTask(taskData as Task);
+
+            // Upload any pending attachments after task is created (non-fatal)
+            if (pendingFiles && pendingFiles.length > 0 && newTask.uid) {
+                const uploadResults = await Promise.allSettled(
+                    pendingFiles.map((file) =>
+                        uploadAttachment(newTask.uid, file)
+                    )
+                );
+                const failedUploads = uploadResults.filter(
+                    (r) => r.status === 'rejected'
+                );
+                if (failedUploads.length > 0) {
+                    console.error(
+                        'Some attachments failed to upload:',
+                        failedUploads
+                    );
+                    showErrorToast(
+                        t(
+                            'task.attachments.someUploadsFailed',
+                            'Some attachments failed to upload'
+                        )
+                    );
+                }
+            }
+
             setTasks((prevTasks) => [newTask, ...prevTasks]);
 
             const taskLink = (
@@ -501,8 +530,8 @@ const Tasks: React.FC = () => {
         }
     };
 
-    const handleModalTaskCreate = async (task: Task) => {
-        await handleTaskCreate(task);
+    const handleModalTaskCreate = async (task: Task, pendingFiles?: File[]) => {
+        await handleTaskCreate(task, pendingFiles);
         setShowCreateTaskModal(false);
     };
 

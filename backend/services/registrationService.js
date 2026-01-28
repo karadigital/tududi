@@ -196,6 +196,31 @@ The Tududi Team`;
     }
 };
 
+const removeUnverifiedUser = async (userId) => {
+    try {
+        const user = await User.findByPk(userId);
+
+        if (!user) {
+            logInfo(`User ${userId} not found for cleanup`);
+            return { success: false, reason: 'User not found' };
+        }
+
+        if (user.email_verified) {
+            logInfo(`User ${userId} is already verified, skipping cleanup`);
+            return { success: false, reason: 'User is already verified' };
+        }
+
+        await user.destroy();
+        logInfo(
+            `Removed unverified user ${userId} during registration cleanup`
+        );
+        return { success: true };
+    } catch (error) {
+        logError(error, `Failed to remove unverified user ${userId}`);
+        return { success: false, reason: error.message };
+    }
+};
+
 const cleanupExpiredTokens = async () => {
     const now = new Date();
 
@@ -235,4 +260,5 @@ module.exports = {
     sendVerificationEmail,
     isVerificationTokenValid,
     cleanupExpiredTokens,
+    removeUnverifiedUser,
 };

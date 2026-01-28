@@ -101,7 +101,9 @@ export const addAreaMember = async (
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to add area member');
+        const error = new Error(errorData.error || 'Failed to add area member');
+        (error as any).departmentName = errorData.departmentName;
+        throw error;
     }
 
     const data = await response.json();

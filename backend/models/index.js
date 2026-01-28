@@ -15,9 +15,60 @@ dbConfig = {
         createdAt: 'created_at',
         updatedAt: 'updated_at',
     },
+    // Enable WAL mode and busy timeout for test environment to handle parallel test execution
+    // This prevents SQLITE_BUSY errors when multiple E2E tests run concurrently
+    ...(config.environment === 'test' && {
+        pool: {
+            max: 5, // Allow multiple connections with WAL mode
+            min: 0,
+            acquire: 60000, // Wait up to 60s to acquire connection
+            idle: 10000,
+        },
+        retry: {
+            max: 10, // Retry queries on transient errors
+        },
+    }),
 };
 
 const sequelize = new Sequelize(dbConfig);
+
+// Set SQLite pragmas for test environment to handle parallel test execution
+// These pragmas MUST be set on every new connection (not just once) because pooled
+// connections need the per-connection settings like busy_timeout and synchronous
+if (config.environment === 'test') {
+    // Register afterConnect hook to set PRAGMAs on each new pooled connection
+    sequelize.addHook('afterConnect', async (connection) => {
+        try {
+            // WAL mode allows concurrent readers and a single writer
+            await connection.run('PRAGMA journal_mode = WAL;');
+            // Wait up to 60 seconds for locks
+            await connection.run('PRAGMA busy_timeout = 60000;');
+            // Normal synchronous mode for better performance
+            await connection.run('PRAGMA synchronous = NORMAL;');
+        } catch (err) {
+            console.error(
+                'Failed to set SQLite pragmas on connection:',
+                err.message
+            );
+            throw err;
+        }
+    });
+
+    // Also set pragmas on the initial connection for verification
+    const pragmasInitialized = (async () => {
+        try {
+            await sequelize.query('PRAGMA journal_mode = WAL;');
+            await sequelize.query('PRAGMA busy_timeout = 60000;');
+            await sequelize.query('PRAGMA synchronous = NORMAL;');
+        } catch (err) {
+            console.error('Failed to set initial SQLite pragmas:', err.message);
+            throw err;
+        }
+    })();
+
+    // Export the promise so it can be awaited if needed
+    sequelize.pragmasInitialized = pragmasInitialized;
+}
 
 const User = require('./user')(sequelize);
 const Area = require('./area')(sequelize);
