@@ -182,7 +182,9 @@ describe('Tasks Routes', () => {
                 .send({ name: 'Updated' });
 
             expect(response.status).toBe(403);
-            expect(response.body.error).toBe('Forbidden');
+            expect(response.body.error).toBe(
+                'You are not allowed to edit this task. Please contact the creator if you want to make this change.'
+            );
         });
 
         it("should not allow updating other user's tasks", async () => {
@@ -202,7 +204,9 @@ describe('Tasks Routes', () => {
                 .send({ name: 'Updated' });
 
             expect(response.status).toBe(403);
-            expect(response.body.error).toBe('Forbidden');
+            expect(response.body.error).toBe(
+                'You are not allowed to edit this task. Please contact the creator if you want to make this change.'
+            );
         });
 
         it('should require authentication', async () => {
@@ -242,7 +246,9 @@ describe('Tasks Routes', () => {
             );
 
             expect(response.status).toBe(403);
-            expect(response.body.error).toBe('Forbidden');
+            expect(response.body.error).toBe(
+                'You are not allowed to delete this task. Please contact the creator if you want to make this change.'
+            );
         });
 
         it("should not allow deleting other user's tasks", async () => {
@@ -260,7 +266,9 @@ describe('Tasks Routes', () => {
             const response = await agent.delete(`/api/task/${otherTask.uid}`);
 
             expect(response.status).toBe(403);
-            expect(response.body.error).toBe('Forbidden');
+            expect(response.body.error).toBe(
+                'You are not allowed to delete this task. Please contact the creator if you want to make this change.'
+            );
         }, 10000); // 10 second timeout for this specific test
 
         it('should require authentication', async () => {

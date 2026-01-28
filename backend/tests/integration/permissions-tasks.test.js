@@ -53,7 +53,9 @@ describe('Tasks Permissions', () => {
             .patch(`/api/task/${otherTask.uid}`)
             .send({ status: 2 });
         expect(res.status).toBe(403);
-        expect(res.body.error).toBe('Forbidden');
+        expect(res.body.error).toBe(
+            'You are not allowed to edit this task. Please contact the creator if you want to make this change.'
+        );
     });
 
     it("PATCH /api/task/:id (today) should return 403 for other user's task", async () => {
@@ -67,7 +69,9 @@ describe('Tasks Permissions', () => {
             .patch(`/api/task/${otherTask.uid}`)
             .send({ today: true });
         expect(res.status).toBe(403);
-        expect(res.body.error).toBe('Forbidden');
+        expect(res.body.error).toBe(
+            'You are not allowed to edit this task. Please contact the creator if you want to make this change.'
+        );
     });
 
     it("POST /api/task should return 403 when assigning to other user's project", async () => {
