@@ -825,7 +825,54 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                               );
                           }
                       )
-                    : standaloneTask.map((task) => (
+                    : groupBy === 'involvement' && groupedByInvolvement
+                      ? groupedByInvolvement.map(
+                            ({ key, label, tasks: involvementTasks }, index) => {
+                                return (
+                                    <div
+                                        key={key}
+                                        className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
+                                    >
+                                        <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                                            <span className="truncate">
+                                                {label}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {involvementTasks.length}{' '}
+                                                {t('tasks.tasks', 'tasks')}
+                                            </span>
+                                        </div>
+                                        {involvementTasks.length > 0 ? (
+                                            involvementTasks.map((task) => (
+                                                <div
+                                                    key={task.id}
+                                                    className="task-item-wrapper transition-all duration-200 ease-in-out"
+                                                >
+                                                    <TaskItem
+                                                        task={task}
+                                                        onTaskUpdate={onTaskUpdate}
+                                                        onTaskCompletionToggle={
+                                                            onTaskCompletionToggle
+                                                        }
+                                                        onTaskDelete={onTaskDelete}
+                                                        projects={projects}
+                                                        hideProjectName={
+                                                            hideProjectName
+                                                        }
+                                                        onToggleToday={onToggleToday}
+                                                    />
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+                                                {t('tasks.noTasksInGroup', 'No tasks in this group')}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            }
+                        )
+                      : standaloneTask.map((task) => (
                           <div
                               key={task.id}
                               className="task-item-wrapper transition-all duration-200 ease-in-out"
@@ -966,7 +1013,8 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             {standaloneTask.length === 0 &&
                 recurringGroups.length === 0 &&
                 (!groupedByAssignee || groupedByAssignee.length === 0) &&
-                (!groupedByStatus || groupedByStatus.length === 0) && (
+                (!groupedByStatus || groupedByStatus.length === 0) &&
+                (!groupedByInvolvement || groupedByInvolvement.every(g => g.tasks.length === 0)) && (
                     <div className="flex justify-center items-center mt-4">
                         <div className="w-full max-w bg-black/2 dark:bg-gray-900/25 rounded-l px-10 py-24 flex flex-col items-center opacity-95">
                             <svg

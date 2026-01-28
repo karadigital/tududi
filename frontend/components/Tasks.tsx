@@ -390,7 +390,7 @@ const Tasks: React.FC = () => {
         setIsLoadingMore(true);
         const shouldDisablePagination =
             !isUpcomingView &&
-            (groupBy === 'project' || groupBy === 'assignee');
+            (groupBy === 'project' || groupBy === 'assignee' || groupBy === 'involvement');
         if (all || shouldDisablePagination) {
             const newLimit = totalCount > 0 ? totalCount : 10000;
             await fetchData(true, {
@@ -411,7 +411,7 @@ const Tasks: React.FC = () => {
 
     useEffect(() => {
         const shouldDisablePagination =
-            isUpcomingView || groupBy === 'project' || groupBy === 'assignee';
+            isUpcomingView || groupBy === 'project' || groupBy === 'assignee' || groupBy === 'involvement';
         fetchData(
             true,
             shouldDisablePagination
@@ -866,6 +866,7 @@ const Tasks: React.FC = () => {
                                                     'none',
                                                     'project',
                                                     'assignee',
+                                                    'involvement',
                                                 ].map((val) => (
                                                     <button
                                                         key={val}
@@ -875,6 +876,7 @@ const Tasks: React.FC = () => {
                                                                     | 'none'
                                                                     | 'project'
                                                                     | 'assignee'
+                                                                    | 'involvement'
                                                             );
                                                             localStorage.setItem(
                                                                 'tasks_group_by',
@@ -899,10 +901,16 @@ const Tasks: React.FC = () => {
                                                                         'tasks.groupByAssignee',
                                                                         'Assignee'
                                                                     )
-                                                                  : t(
-                                                                        'tasks.grouping.none',
-                                                                        'None'
-                                                                    )}
+                                                                  : val ===
+                                                                      'involvement'
+                                                                    ? t(
+                                                                          'tasks.groupByInvolvement',
+                                                                          'My Involvement'
+                                                                      )
+                                                                    : t(
+                                                                          'tasks.grouping.none',
+                                                                          'None'
+                                                                      )}
                                                         </span>
                                                         {groupBy === val && (
                                                             <CheckIcon className="h-4 w-4" />
