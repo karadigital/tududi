@@ -47,9 +47,13 @@ describe('Department Admin Auto-Subscription', () => {
         // Add admin to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
+             VALUES (:areaId, :userId, 'admin', :now, :now)`,
             {
-                replacements: { areaId: area.id, userId: deptAdmin.id },
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin.id,
+                    now: new Date(),
+                },
                 type: QueryTypes.INSERT,
             }
         );
@@ -57,9 +61,13 @@ describe('Department Admin Auto-Subscription', () => {
         // Add member to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'member', datetime('now'), datetime('now'))`,
+             VALUES (:areaId, :userId, 'member', :now, :now)`,
             {
-                replacements: { areaId: area.id, userId: deptMember.id },
+                replacements: {
+                    areaId: area.id,
+                    userId: deptMember.id,
+                    now: new Date(),
+                },
                 type: QueryTypes.INSERT,
             }
         );
@@ -232,9 +240,13 @@ describe('Department Admin Auto-Subscription', () => {
         // Add second admin to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
-             VALUES (:areaId, :userId, 'admin', datetime('now'), datetime('now'))`,
+             VALUES (:areaId, :userId, 'admin', :now, :now)`,
             {
-                replacements: { areaId: area.id, userId: deptAdmin2.id },
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin2.id,
+                    now: new Date(),
+                },
                 type: QueryTypes.INSERT,
             }
         );
@@ -256,6 +268,52 @@ describe('Department Admin Auto-Subscription', () => {
         );
         expect(subscribersRes.body.subscribers).toContainEqual(
             expect.objectContaining({ id: deptAdmin2.id })
+        );
+    });
+
+    it('should subscribe other admin when one admin creates a task', async () => {
+        // Create a second admin
+        const deptAdmin2 = await createTestUser({
+            email: `dept-admin2-${Date.now()}@test.com`,
+            name: 'Dept',
+            surname: 'Admin2',
+        });
+        extraUserIds.push(deptAdmin2.id);
+
+        // Add second admin to department
+        await sequelize.query(
+            `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
+             VALUES (:areaId, :userId, 'admin', :now, :now)`,
+            {
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin2.id,
+                    now: new Date(),
+                },
+                type: QueryTypes.INSERT,
+            }
+        );
+
+        // Admin 1 creates a task
+        const taskRes = await adminAgent
+            .post('/api/task')
+            .send({ name: 'Task from admin 1' });
+
+        expect(taskRes.status).toBe(201);
+
+        // Check subscribers
+        const subscribersRes = await adminAgent.get(
+            `/api/task/${taskRes.body.uid}/subscribers`
+        );
+
+        // Admin 2 SHOULD be subscribed (other admin in same dept)
+        expect(subscribersRes.body.subscribers).toContainEqual(
+            expect.objectContaining({ id: deptAdmin2.id })
+        );
+
+        // Admin 1 should NOT be subscribed (they are the owner)
+        expect(subscribersRes.body.subscribers).not.toContainEqual(
+            expect.objectContaining({ id: deptAdmin.id })
         );
     });
 

@@ -102,11 +102,12 @@ module.exports = {
                     // Add subscription
                     await sequelize.query(
                         `INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at)
-                         VALUES (:taskId, :userId, datetime('now'), datetime('now'))`,
+                         VALUES (:taskId, :userId, :now, :now)`,
                         {
                             replacements: {
                                 taskId: task.id,
                                 userId: adminUserId,
+                                now: new Date(),
                             },
                             type: QueryTypes.INSERT,
                             transaction,
@@ -140,6 +141,7 @@ module.exports = {
                                     userId: adminUserId,
                                     resourceUid: task.uid,
                                     grantedBy: task.user_id,
+                                    now: new Date(),
                                 },
                                 type: QueryTypes.INSERT,
                                 transaction,
