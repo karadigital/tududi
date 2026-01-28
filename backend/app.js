@@ -237,6 +237,11 @@ app.use((err, req, res, next) => {
 // Initialize database and start server
 async function startServer() {
     try {
+        // Wait for SQLite pragmas to be set in test environment
+        if (sequelize.pragmasInitialized) {
+            await sequelize.pragmasInitialized;
+        }
+
         // Create session store table
         await sessionStore.sync();
 
