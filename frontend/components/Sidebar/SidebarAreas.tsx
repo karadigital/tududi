@@ -35,7 +35,7 @@ const SidebarAreas: React.FC<SidebarAreasProps> = ({
                     onClick={() =>
                         handleNavClick(
                             '/departments',
-                            'Areas',
+                            t('sidebar.areas'),
                             <Squares2X2Icon className="h-5 w-5 mr-2" />
                         )
                     }

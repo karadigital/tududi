@@ -473,39 +473,64 @@ router.get('/', async (req, res) => {
 
         // Search Areas
         if (filterTypes.includes('Area')) {
-            const areaConditions = {};
+            const areaConditions = { [Op.and]: [] };
 
-            // Non-admin users can only see their own areas
+            // Non-admin users can only see their own areas or areas they are members of
             if (!userIsAdmin) {
-                areaConditions.user_id = userId;
+                const { QueryTypes } = require('sequelize');
+
+                // Get area IDs where user is a member
+                const memberAreaIds = await sequelize.query(
+                    `SELECT area_id FROM areas_members WHERE user_id = :userId`,
+                    {
+                        replacements: { userId },
+                        type: QueryTypes.SELECT,
+                        raw: true,
+                    }
+                );
+
+                const areaIds = memberAreaIds.map((row) => row.area_id);
+
+                areaConditions[Op.and].push({
+                    [Op.or]: [
+                        { user_id: userId }, // Owned areas
+                        { id: { [Op.in]: areaIds } }, // Member areas
+                    ],
+                });
             }
 
             if (searchQuery) {
                 const lowerQuery = searchQuery.toLowerCase();
-                areaConditions[Op.or] = [
-                    sequelize.where(
-                        sequelize.fn('LOWER', sequelize.col('Area.name')),
-                        { [Op.like]: `%${lowerQuery}%` }
-                    ),
-                    sequelize.where(
-                        sequelize.fn(
-                            'LOWER',
-                            sequelize.col('Area.description')
+                areaConditions[Op.and].push({
+                    [Op.or]: [
+                        sequelize.where(
+                            sequelize.fn('LOWER', sequelize.col('Area.name')),
+                            { [Op.like]: `%${lowerQuery}%` }
                         ),
-                        { [Op.like]: `%${lowerQuery}%` }
-                    ),
-                ];
+                        sequelize.where(
+                            sequelize.fn(
+                                'LOWER',
+                                sequelize.col('Area.description')
+                            ),
+                            { [Op.like]: `%${lowerQuery}%` }
+                        ),
+                    ],
+                });
             }
+
+            // Use empty object if no conditions were added
+            const finalAreaConditions =
+                areaConditions[Op.and].length > 0 ? areaConditions : {};
 
             // Count total areas if pagination is requested
             if (hasPagination) {
                 totalCount += await Area.count({
-                    where: areaConditions,
+                    where: finalAreaConditions,
                 });
             }
 
             const areas = await Area.findAll({
-                where: areaConditions,
+                where: finalAreaConditions,
                 limit: limit,
                 offset: offset,
                 order: [['updated_at', 'DESC']],
