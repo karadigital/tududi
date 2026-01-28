@@ -76,6 +76,7 @@ const { getSubtasks } = require('./operations/subtasks');
 const {
     requireTaskReadAccess,
     requireTaskWriteAccess,
+    requireTaskDeleteAccess,
 } = require('./middleware/access');
 
 const { sortTasksByOrder } = require('./operations/sorting');
@@ -853,7 +854,7 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
     }
 });
 
-router.delete('/task/:uid', requireTaskWriteAccess, async (req, res) => {
+router.delete('/task/:uid', requireTaskDeleteAccess, async (req, res) => {
     try {
         const task = await taskRepository.findByUid(req.params.uid);
 
