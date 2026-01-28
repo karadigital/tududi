@@ -11,6 +11,9 @@ describe('Admin Permissions - Resource Visibility', () => {
             where: { user_id: userId },
             defaults: { user_id: userId, is_admin: true },
         });
+        // Explicit update required because createTestUser already creates a Role
+        // with is_admin: false, and findOrCreate won't update existing records
+        await Role.update({ is_admin: true }, { where: { user_id: userId } });
     }
 
     async function loginAgent(email) {
