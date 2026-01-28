@@ -90,32 +90,6 @@ describe('Department Admin Auto-Subscription', () => {
     });
 
     afterEach(async () => {
-        // Collect all user IDs for cleanup (main users + dynamically created)
-        const allUserIds = [
-            deptOwner.id,
-            deptMember.id,
-            deptAdmin.id,
-            ...additionalUsers.map((u) => u.id),
-        ];
-
-        // Clean up tasks_subscribers for all users (including subscriptions)
-        await sequelize.query(
-            `DELETE FROM tasks_subscribers WHERE user_id IN (:userIds)`,
-            {
-                replacements: { userIds: allUserIds },
-                type: QueryTypes.DELETE,
-            }
-        );
-
-        // Clean up permissions for all users
-        await sequelize.query(
-            `DELETE FROM permissions WHERE user_id IN (:userIds)`,
-            {
-                replacements: { userIds: allUserIds },
-                type: QueryTypes.DELETE,
-            }
-        );
-
         // Clean up in reverse order of dependencies
         const allUserIds = [
             deptOwner.id,
@@ -294,6 +268,52 @@ describe('Department Admin Auto-Subscription', () => {
         );
         expect(subscribersRes.body.subscribers).toContainEqual(
             expect.objectContaining({ id: deptAdmin2.id })
+        );
+    });
+
+    it('should subscribe other admin when one admin creates a task', async () => {
+        // Create a second admin
+        const deptAdmin2 = await createTestUser({
+            email: `dept-admin2-${Date.now()}@test.com`,
+            name: 'Dept',
+            surname: 'Admin2',
+        });
+        extraUserIds.push(deptAdmin2.id);
+
+        // Add second admin to department
+        await sequelize.query(
+            `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
+             VALUES (:areaId, :userId, 'admin', :now, :now)`,
+            {
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin2.id,
+                    now: new Date(),
+                },
+                type: QueryTypes.INSERT,
+            }
+        );
+
+        // Admin 1 creates a task
+        const taskRes = await adminAgent
+            .post('/api/task')
+            .send({ name: 'Task from admin 1' });
+
+        expect(taskRes.status).toBe(201);
+
+        // Check subscribers
+        const subscribersRes = await adminAgent.get(
+            `/api/task/${taskRes.body.uid}/subscribers`
+        );
+
+        // Admin 2 SHOULD be subscribed (other admin in same dept)
+        expect(subscribersRes.body.subscribers).toContainEqual(
+            expect.objectContaining({ id: deptAdmin2.id })
+        );
+
+        // Admin 1 should NOT be subscribed (they are the owner)
+        expect(subscribersRes.body.subscribers).not.toContainEqual(
+            expect.objectContaining({ id: deptAdmin.id })
         );
     });
 
