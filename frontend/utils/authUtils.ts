@@ -36,11 +36,9 @@ export const handleAuthResponse = async (
                 throw new Error(data.error);
             }
         } catch (parseError) {
-            // If parsing fails, fall back to default message
-            if (
-                parseError instanceof Error &&
-                parseError.message !== errorMessage
-            ) {
+            // Only rethrow if it's not a SyntaxError (JSON parse failure)
+            // SyntaxErrors should fall through to the default errorMessage
+            if (!(parseError instanceof SyntaxError)) {
                 throw parseError;
             }
         }

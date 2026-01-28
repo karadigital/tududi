@@ -99,7 +99,7 @@ describe('canDeleteTask', () => {
 
         // Subscribe testUser to the task
         await sequelize.query(
-            'INSERT INTO tasks_subscribers (task_id, user_id, createdAt, updatedAt) VALUES (?, ?, datetime("now"), datetime("now"))',
+            'INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at) VALUES (?, ?, datetime("now"), datetime("now"))',
             { replacements: [task.id, testUser.id] }
         );
 
@@ -475,7 +475,7 @@ describe('DELETE /api/v1/task/:uid permissions', () => {
 
         // Subscribe subscriber to the task
         await sequelize.query(
-            'INSERT INTO tasks_subscribers (task_id, user_id, createdAt, updatedAt) VALUES (?, ?, datetime("now"), datetime("now"))',
+            'INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at) VALUES (?, ?, datetime("now"), datetime("now"))',
             { replacements: [task.id, subscriber.id] }
         );
 
@@ -609,7 +609,7 @@ describe('PATCH /api/v1/task/:uid permissions', () => {
 
         // Subscribe subscriber to the task
         await sequelize.query(
-            'INSERT INTO tasks_subscribers (task_id, user_id, createdAt, updatedAt) VALUES (?, ?, datetime("now"), datetime("now"))',
+            'INSERT INTO tasks_subscribers (task_id, user_id, created_at, updated_at) VALUES (?, ?, datetime("now"), datetime("now"))',
             { replacements: [task.id, subscriber.id] }
         );
 

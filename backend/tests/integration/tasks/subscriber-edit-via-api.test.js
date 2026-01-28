@@ -66,7 +66,7 @@ describe('Subscriber edit permissions via subscribeToTask', () => {
     });
 
     it('should NOT allow subscriber to edit task even when subscribed via API', async () => {
-        // Check permission was created with 'rw'
+        // Check permission was created with 'ro' (read-only for subscribers)
         const perm = await Permission.findOne({
             where: {
                 user_id: subscriber.id,
@@ -75,14 +75,10 @@ describe('Subscriber edit permissions via subscribeToTask', () => {
             },
             raw: true,
         });
-        console.log('Permission record:', perm);
 
         const res = await subscriberAgent
             .patch(`/api/task/${task.uid}`)
             .send({ name: 'Subscriber Updated' });
-
-        console.log('Response status:', res.status);
-        console.log('Response body:', res.body);
 
         expect(res.status).toBe(403);
         expect(res.body.error).toBe(

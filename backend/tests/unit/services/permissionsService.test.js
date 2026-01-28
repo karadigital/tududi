@@ -28,9 +28,11 @@ async function createUserWithRole(email, isAdmin = false) {
 }
 
 describe('permissionsService', () => {
-    // Clean up roles table before each test in this describe block
+    // Clean up tables before each test to avoid unique email collisions
     beforeEach(async () => {
+        await Task.destroy({ where: {}, force: true });
         await Role.destroy({ where: {} });
+        await User.destroy({ where: {}, force: true });
     });
 
     describe('canDeleteTask', () => {
