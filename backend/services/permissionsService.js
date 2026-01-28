@@ -371,6 +371,34 @@ async function actionableTasksWhere(userId) {
     return { [Op.or]: conditions };
 }
 
+/**
+ * Check if a user can delete a task.
+ * Only the task owner or super admin can delete tasks.
+ *
+ * @param {number} userId - The user ID
+ * @param {string} taskUid - The task UID
+ * @returns {Promise<boolean>} True if user can delete the task
+ */
+async function canDeleteTask(userId, taskUid) {
+    // Get user UID for admin check
+    const { User } = require('../models');
+    const user = await User.findByPk(userId, { attributes: ['uid'] });
+    if (!user) return false;
+
+    // Super admin can delete any task
+    if (await isAdmin(user.uid)) return true;
+
+    // Check if user is the task owner
+    const task = await Task.findOne({
+        where: { uid: taskUid },
+        attributes: ['user_id'],
+        raw: true,
+    });
+
+    if (!task) return false;
+    return task.user_id === userId;
+}
+
 module.exports = {
     ACCESS,
     getAccess,
@@ -378,4 +406,5 @@ module.exports = {
     getSharedUidsForUser,
     ownedOrAssignedTasksWhere,
     actionableTasksWhere,
+    canDeleteTask,
 };
