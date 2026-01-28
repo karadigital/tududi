@@ -5,6 +5,7 @@ const permissionsService = require('../services/permissionsService');
 // getResourceUid: function(req) => string | Promise<string>
 function hasAccess(requiredAccess, resourceType, getResourceUid, options = {}) {
     const notFoundMessage = options.notFoundMessage || 'Not found';
+    const forbiddenMessage = options.forbiddenMessage || 'Forbidden';
     const forbiddenStatus = options.forbiddenStatus || 403; // 403 by default; can be 404 for legacy routes
     const LEVELS = { none: 0, ro: 1, rw: 2, admin: 3 };
     return async function (req, res, next) {
@@ -23,7 +24,7 @@ function hasAccess(requiredAccess, resourceType, getResourceUid, options = {}) {
             if (forbiddenStatus === 404) {
                 return res.status(404).json({ error: notFoundMessage });
             }
-            return res.status(403).json({ error: 'Forbidden' });
+            return res.status(403).json({ error: forbiddenMessage });
         } catch (err) {
             next(err);
         }
