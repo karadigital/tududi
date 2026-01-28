@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import ConfirmDialog from './Shared/ConfirmDialog';
 import AreaModal from './Area/AreaModal';
+import { useToast } from './Shared/ToastContext';
 import { useStore } from '../store/useStore';
 import {
     fetchAreas,
@@ -18,6 +19,7 @@ import { getCurrentUser, canEditArea } from '../utils/userUtils';
 
 const Areas: React.FC = () => {
     const { t } = useTranslation();
+    const { showSuccessToast, showErrorToast } = useToast();
 
     // Use global store for consistency
     const {
@@ -170,9 +172,19 @@ const Areas: React.FC = () => {
             setIsConfirmDialogOpen(false);
             setAreaToDelete(null);
             useStore.getState().areasStore.setError(false);
+            showSuccessToast(
+                t('success.areaDeleted', 'Department deleted successfully')
+            );
         } catch (error) {
             console.error('Error deleting area:', error);
             useStore.getState().areasStore.setError(true);
+            showErrorToast(
+                t(
+                    'errors.failedToDeleteArea',
+                    'Failed to delete department. You may not have permission.'
+                )
+            );
+            setIsConfirmDialogOpen(false);
         } finally {
             useStore.getState().areasStore.setLoading(false);
         }

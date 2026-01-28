@@ -324,7 +324,7 @@ describe('Department Admin Task Visibility', () => {
         it('adding user to second department fails', async () => {
             // Attempt to add user (who is already in dept1) to dept2
             const res = await dept2AdminAgent
-                .post(`/api/v1/areas/${dept2.uid}/members`)
+                .post(`/api/v1/departments/${dept2.uid}/members`)
                 .send({ user_id: user.id, role: 'member' });
 
             expect(res.status).toBe(400);

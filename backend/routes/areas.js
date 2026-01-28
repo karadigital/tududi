@@ -1,3 +1,4 @@
+// Note: Uses /departments URL paths (renamed from /areas for user-facing consistency)
 const express = require('express');
 const { Area, User, sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
@@ -22,7 +23,7 @@ const validateUid =
         next();
     };
 
-router.get('/areas', async (req, res) => {
+router.get('/departments', async (req, res) => {
     try {
         const userId = getAuthenticatedUserId(req);
         if (!userId)
@@ -114,7 +115,7 @@ router.get('/areas', async (req, res) => {
 });
 
 router.get(
-    '/areas/:uid',
+    '/departments/:uid',
     validateUid('uid'),
     hasAccess('ro', 'area', (req) => req.params.uid, {
         forbiddenStatus: 404,
@@ -157,7 +158,7 @@ router.get(
     }
 );
 
-router.post('/areas', async (req, res) => {
+router.post('/departments', async (req, res) => {
     let transaction;
     try {
         const userId = getAuthenticatedUserId(req);
@@ -220,7 +221,7 @@ router.post('/areas', async (req, res) => {
 });
 
 router.patch(
-    '/areas/:uid',
+    '/departments/:uid',
     validateUid('uid'),
     hasAccess('admin', 'area', (req) => req.params.uid, {
         forbiddenStatus: 404,
@@ -257,7 +258,7 @@ router.patch(
 );
 
 router.delete(
-    '/areas/:uid',
+    '/departments/:uid',
     validateUid('uid'),
     hasAccess('admin', 'area', (req) => req.params.uid, {
         forbiddenStatus: 404,
@@ -286,7 +287,7 @@ router.delete(
 
 // Get area members
 router.get(
-    '/areas/:uid/members',
+    '/departments/:uid/members',
     hasAccess('ro', 'area', (req) => req.params.uid),
     async (req, res) => {
         try {
@@ -303,7 +304,7 @@ router.get(
 
 // Add area member
 router.post(
-    '/areas/:uid/members',
+    '/departments/:uid/members',
     hasAccess('admin', 'area', (req) => req.params.uid),
     async (req, res) => {
         try {
@@ -356,7 +357,7 @@ router.post(
 
 // Remove area member
 router.delete(
-    '/areas/:uid/members/:userId',
+    '/departments/:uid/members/:userId',
     hasAccess('admin', 'area', (req) => req.params.uid),
     async (req, res) => {
         try {
@@ -395,7 +396,7 @@ router.delete(
 
 // Update member role
 router.patch(
-    '/areas/:uid/members/:userId/role',
+    '/departments/:uid/members/:userId/role',
     hasAccess('admin', 'area', (req) => req.params.uid),
     async (req, res) => {
         try {

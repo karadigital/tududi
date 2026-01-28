@@ -235,8 +235,11 @@ const App: React.FC = () => {
                                 path="/project/:uidSlug"
                                 element={<ProjectDetails />}
                             />
-                            <Route path="/areas" element={<Areas />} />
-                            <Route path="/area/:id" element={<AreaDetails />} />
+                            <Route path="/departments" element={<Areas />} />
+                            <Route
+                                path="/department/:id"
+                                element={<AreaDetails />}
+                            />
                             <Route path="/tags" element={<Tags />} />
                             <Route
                                 path="/tag/:uidSlug"
