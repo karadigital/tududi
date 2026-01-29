@@ -51,8 +51,8 @@ describe('Admin task assignment permissions', () => {
         });
 
         await sequelize.query(
-            `DELETE FROM tasks_subscribers WHERE user_id IN (?)`,
-            { replacements: [userIds] }
+            `DELETE FROM tasks_subscribers WHERE user_id IN (:userIds)`,
+            { replacements: { userIds } }
         );
 
         await Task.destroy({
