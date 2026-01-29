@@ -27,12 +27,15 @@
  *           description: Filter criteria
  *         priority:
  *           type: string
+ *           enum: [low, medium, high]
  *           description: Priority filter
  *         due:
  *           type: string
+ *           enum: [today, tomorrow, next_week, next_month]
  *           description: Due date filter
  *         defer:
  *           type: string
+ *           enum: [today, tomorrow, next_week, next_month]
  *           description: Defer until filter
  *         tags:
  *           type: array
@@ -46,6 +49,7 @@
  *           description: Extra filters (recurring, overdue, has_content, etc.)
  *         recurring:
  *           type: string
+ *           enum: [recurring, non_recurring, instances]
  *           description: Recurring filter
  *         is_pinned:
  *           type: boolean
@@ -247,12 +251,15 @@
  *                 description: Entity type filters
  *               priority:
  *                 type: string
+ *                 enum: [low, medium, high]
  *                 description: Priority filter
  *               due:
  *                 type: string
+ *                 enum: [today, tomorrow, next_week, next_month]
  *                 description: Due date filter
  *               defer:
  *                 type: string
+ *                 enum: [today, tomorrow, next_week, next_month]
  *                 description: Defer until filter
  *               tags:
  *                 type: array
@@ -266,6 +273,7 @@
  *                 description: Extra filters
  *               recurring:
  *                 type: string
+ *                 enum: [recurring, non_recurring, instances]
  *                 description: Recurring filter
  *               is_pinned:
  *                 type: boolean
