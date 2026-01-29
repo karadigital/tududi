@@ -26,9 +26,6 @@
  *         mime_type:
  *           type: string
  *           description: MIME type of the file
- *         file_path:
- *           type: string
- *           description: Relative path to the file
  *         file_url:
  *           type: string
  *           description: URL to access the file

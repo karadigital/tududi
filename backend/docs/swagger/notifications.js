@@ -31,10 +31,12 @@
  *         read_at:
  *           type: string
  *           format: date-time
+ *           nullable: true
  *           description: When the notification was read
  *         dismissed_at:
  *           type: string
  *           format: date-time
+ *           nullable: true
  *           description: When the notification was dismissed
  *         created_at:
  *           type: string

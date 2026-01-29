@@ -261,21 +261,29 @@
  *             schema:
  *               type: object
  *               properties:
- *                 title:
- *                   type: string
- *                   description: Extracted title
- *                 due_date:
- *                   type: string
- *                   format: date-time
- *                   description: Extracted due date
- *                 priority:
- *                   type: integer
- *                   description: Extracted priority level
- *                 tags:
+ *                 parsed_tags:
  *                   type: array
  *                   items:
  *                     type: string
- *                   description: Extracted tags
+ *                   description: Extracted hashtags from the text
+ *                 parsed_projects:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Extracted project references from the text
+ *                 cleaned_content:
+ *                   type: string
+ *                   description: Text with tags and project references removed
+ *                 suggested_type:
+ *                   type: string
+ *                   nullable: true
+ *                   enum: [task, note]
+ *                   description: Suggested item type based on content analysis
+ *                 suggested_reason:
+ *                   type: string
+ *                   nullable: true
+ *                   enum: [bookmark_tag, url_detected, verb_detected]
+ *                   description: Reason for the suggestion
  *       400:
  *         description: Content is required
  *       500:
