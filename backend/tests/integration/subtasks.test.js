@@ -318,8 +318,8 @@ describe('Subtasks API', () => {
         });
     });
 
-    describe('Task Completion Logic', () => {
-        it('should complete all subtasks when parent is completed', async () => {
+    describe('Task Completion Logic (Independent Behavior)', () => {
+        it('should NOT complete subtasks when parent is completed (independent behavior)', async () => {
             const parentTask = await Task.create({
                 name: 'Parent Task',
                 user_id: testUser.id,
@@ -347,19 +347,23 @@ describe('Subtasks API', () => {
             let res = await toggleTaskCompletion(parentTask.id);
             expect(res.status).toBe(200);
 
-            // Check that all subtasks are completed
+            // Verify parent is completed
+            const updatedParent = await Task.findByPk(parentTask.id);
+            expect(updatedParent.status).toBe(Task.STATUS.DONE);
+
+            // Check that subtasks are UNCHANGED (independent behavior)
             const updatedSubtasks = await Task.findAll({
                 where: { parent_task_id: parentTask.id },
             });
 
             expect(updatedSubtasks).toHaveLength(2);
             updatedSubtasks.forEach((subtask) => {
-                expect(subtask.status).toBe(Task.STATUS.DONE);
-                expect(subtask.completed_at).not.toBeNull();
+                expect(subtask.status).toBe(Task.STATUS.NOT_STARTED);
+                expect(subtask.completed_at).toBeNull();
             });
         });
 
-        it('should undone all subtasks when parent is undone', async () => {
+        it('should NOT undone subtasks when parent is undone (independent behavior)', async () => {
             const parentTask = await Task.create({
                 name: 'Parent Task',
                 user_id: testUser.id,
@@ -390,19 +394,23 @@ describe('Subtasks API', () => {
             let res = await toggleTaskCompletion(parentTask.id);
             expect(res.status).toBe(200);
 
-            // Check that all subtasks are undone
+            // Verify parent is undone
+            const updatedParent = await Task.findByPk(parentTask.id);
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
+
+            // Check that subtasks remain DONE (independent behavior)
             const updatedSubtasks = await Task.findAll({
                 where: { parent_task_id: parentTask.id },
             });
 
             expect(updatedSubtasks).toHaveLength(2);
             updatedSubtasks.forEach((subtask) => {
-                expect(subtask.status).toBe(Task.STATUS.NOT_STARTED);
-                expect(subtask.completed_at).toBeNull();
+                expect(subtask.status).toBe(Task.STATUS.DONE);
+                expect(subtask.completed_at).not.toBeNull();
             });
         });
 
-        it('should complete parent when all subtasks are done', async () => {
+        it('should NOT auto-complete parent when all subtasks are done', async () => {
             const parentTask = await Task.create({
                 name: 'Parent Task',
                 user_id: testUser.id,
@@ -438,13 +446,13 @@ describe('Subtasks API', () => {
             const res2 = await toggleTaskCompletion(subtask2.id);
             expect(res2.status).toBe(200);
 
-            // Parent should now be completed
+            // Parent should still be not started (user must manually complete it)
             updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.DONE);
-            expect(updatedParent.completed_at).not.toBeNull();
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
+            expect(updatedParent.completed_at).toBeNull();
         });
 
-        it('should undone parent when subtask is undone', async () => {
+        it('should NOT undone parent when subtask is undone (independent behavior)', async () => {
             const parentTask = await Task.create({
                 name: 'Parent Task',
                 user_id: testUser.id,
@@ -475,10 +483,18 @@ describe('Subtasks API', () => {
             let res = await toggleTaskCompletion(subtask1.id);
             expect(res.status).toBe(200);
 
-            // Parent should be undone
+            // Parent should remain DONE (independent behavior)
             const updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
-            expect(updatedParent.completed_at).toBeNull();
+            expect(updatedParent.status).toBe(Task.STATUS.DONE);
+            expect(updatedParent.completed_at).not.toBeNull();
+
+            // The undone subtask should be undone
+            const updatedSubtask1 = await Task.findByPk(subtask1.id);
+            expect(updatedSubtask1.status).toBe(Task.STATUS.NOT_STARTED);
+
+            // Other subtask should remain done
+            const updatedSubtask2 = await Task.findByPk(subtask2.id);
+            expect(updatedSubtask2.status).toBe(Task.STATUS.DONE);
         });
     });
 

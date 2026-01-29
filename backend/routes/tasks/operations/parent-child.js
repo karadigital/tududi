@@ -113,54 +113,11 @@ async function handleParentChildOnStatusChange(
     newStatus,
     userId
 ) {
-    let parentChildLogicExecuted = false;
-
-    const directSubtasksQuery = await taskRepository.findChildren(
-        task.id,
-        userId,
-        { attributes: ['id', 'name', 'status', 'parent_task_id'] }
-    );
-
-    if (
-        directSubtasksQuery.length > 0 &&
-        (!task.Subtasks || task.Subtasks.length === 0)
-    ) {
-        task.Subtasks = directSubtasksQuery;
-    }
-
-    if (task.parent_task_id) {
-        if (newStatus === Task.STATUS.DONE || newStatus === 'done') {
-            const parentUpdated = await checkAndUpdateParentTaskCompletion(
-                task.parent_task_id,
-                userId
-            );
-            if (parentUpdated) {
-                parentChildLogicExecuted = true;
-            }
-        } else if (oldStatus === Task.STATUS.DONE || oldStatus === 'done') {
-            const parentUpdated = await undoneParentTaskIfNeeded(
-                task.parent_task_id,
-                userId
-            );
-            if (parentUpdated) {
-                parentChildLogicExecuted = true;
-            }
-        }
-    } else if (task.Subtasks && task.Subtasks.length > 0) {
-        if (newStatus === Task.STATUS.DONE) {
-            const subtasksUpdated = await completeAllSubtasks(task.id, userId);
-            if (subtasksUpdated) {
-                parentChildLogicExecuted = true;
-            }
-        } else if (oldStatus === Task.STATUS.DONE || oldStatus === 'done') {
-            const subtasksUpdated = await undoneAllSubtasks(task.id, userId);
-            if (subtasksUpdated) {
-                parentChildLogicExecuted = true;
-            }
-        }
-    }
-
-    return parentChildLogicExecuted;
+    // Parent and subtask completion status are independent.
+    // No automatic status synchronization is performed.
+    // - Marking parent done/undone does NOT affect subtasks
+    // - Marking subtasks done/undone does NOT affect parent
+    return false;
 }
 
 module.exports = {
