@@ -66,9 +66,9 @@ const Tasks: React.FC = () => {
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
     const [showCompleted, setShowCompleted] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const [groupBy, setGroupBy] = useState<'none' | 'project' | 'assignee'>(
-        'none'
-    );
+    const [groupBy, setGroupBy] = useState<
+        'none' | 'project' | 'assignee' | 'involvement'
+    >('none');
     const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
         []
@@ -208,7 +208,8 @@ const Tasks: React.FC = () => {
             (localStorage.getItem('tasks_group_by') as
                 | 'none'
                 | 'project'
-                | 'assignee') || 'none';
+                | 'assignee'
+                | 'involvement') || 'none';
         setGroupBy(savedGroupBy);
 
         const params = new URLSearchParams(location.search);
@@ -388,7 +389,9 @@ const Tasks: React.FC = () => {
         setIsLoadingMore(true);
         const shouldDisablePagination =
             !isUpcomingView &&
-            (groupBy === 'project' || groupBy === 'assignee');
+            (groupBy === 'project' ||
+                groupBy === 'assignee' ||
+                groupBy === 'involvement');
         if (all || shouldDisablePagination) {
             const newLimit = totalCount > 0 ? totalCount : 10000;
             await fetchData(true, {
@@ -409,7 +412,10 @@ const Tasks: React.FC = () => {
 
     useEffect(() => {
         const shouldDisablePagination =
-            isUpcomingView || groupBy === 'project' || groupBy === 'assignee';
+            isUpcomingView ||
+            groupBy === 'project' ||
+            groupBy === 'assignee' ||
+            groupBy === 'involvement';
         fetchData(
             true,
             shouldDisablePagination
@@ -859,6 +865,7 @@ const Tasks: React.FC = () => {
                                                     'none',
                                                     'project',
                                                     'assignee',
+                                                    'involvement',
                                                 ].map((val) => (
                                                     <button
                                                         key={val}
@@ -868,6 +875,7 @@ const Tasks: React.FC = () => {
                                                                     | 'none'
                                                                     | 'project'
                                                                     | 'assignee'
+                                                                    | 'involvement'
                                                             );
                                                             localStorage.setItem(
                                                                 'tasks_group_by',
@@ -892,10 +900,16 @@ const Tasks: React.FC = () => {
                                                                         'tasks.groupByAssignee',
                                                                         'Assignee'
                                                                     )
-                                                                  : t(
-                                                                        'tasks.grouping.none',
-                                                                        'None'
-                                                                    )}
+                                                                  : val ===
+                                                                      'involvement'
+                                                                    ? t(
+                                                                          'tasks.groupByInvolvement',
+                                                                          'Involvement'
+                                                                      )
+                                                                    : t(
+                                                                          'tasks.grouping.none',
+                                                                          'None'
+                                                                      )}
                                                         </span>
                                                         {groupBy === val && (
                                                             <CheckIcon className="h-4 w-4" />
@@ -1219,6 +1233,24 @@ const Tasks: React.FC = () => {
                                         tasks={displayTasks}
                                         groupedTasks={null}
                                         groupBy="assignee"
+                                        currentUserUid={currentUserUid}
+                                        onTaskCreate={handleTaskCreate}
+                                        onTaskUpdate={handleTaskUpdate}
+                                        onTaskCompletionToggle={
+                                            handleTaskCompletionToggle
+                                        }
+                                        onTaskDelete={handleTaskDelete}
+                                        projects={projects}
+                                        hideProjectName={false}
+                                        onToggleToday={handleToggleToday}
+                                        showCompletedTasks={showCompleted}
+                                        searchQuery={taskSearchQuery}
+                                    />
+                                ) : groupBy === 'involvement' ? (
+                                    <GroupedTaskList
+                                        tasks={displayTasks}
+                                        groupedTasks={null}
+                                        groupBy="involvement"
                                         currentUserUid={currentUserUid}
                                         onTaskCreate={handleTaskCreate}
                                         onTaskUpdate={handleTaskUpdate}
