@@ -83,3 +83,209 @@
  *       401:
  *         description: Unauthorized
  */
+
+/**
+ * @swagger
+ * /api/inbox/{uid}:
+ *   get:
+ *     summary: Get inbox item by UID
+ *     description: Retrieves a specific inbox item by its UID
+ *     tags: [Inbox]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Inbox item UID
+ *     responses:
+ *       200:
+ *         description: Inbox item details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InboxItem'
+ *       400:
+ *         description: Invalid UID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Inbox item not found
+ */
+
+/**
+ * @swagger
+ * /api/inbox/{uid}:
+ *   patch:
+ *     summary: Update inbox item
+ *     description: Updates the content or status of an inbox item
+ *     tags: [Inbox]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Inbox item UID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: Updated content
+ *               status:
+ *                 type: string
+ *                 enum: [added, processed, deleted]
+ *                 description: Updated status
+ *     responses:
+ *       200:
+ *         description: Inbox item updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InboxItem'
+ *       400:
+ *         description: Invalid request or UID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Inbox item not found
+ */
+
+/**
+ * @swagger
+ * /api/inbox/{uid}:
+ *   delete:
+ *     summary: Delete inbox item
+ *     description: Soft-deletes an inbox item by marking it as deleted
+ *     tags: [Inbox]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Inbox item UID
+ *     responses:
+ *       200:
+ *         description: Inbox item deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Inbox item successfully deleted"
+ *       400:
+ *         description: Invalid UID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Inbox item not found
+ */
+
+/**
+ * @swagger
+ * /api/inbox/{uid}/process:
+ *   patch:
+ *     summary: Process inbox item
+ *     description: Marks an inbox item as processed
+ *     tags: [Inbox]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: uid
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Inbox item UID
+ *     responses:
+ *       200:
+ *         description: Inbox item processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/InboxItem'
+ *       400:
+ *         description: Invalid UID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Inbox item not found
+ */
+
+/**
+ * @swagger
+ * /api/inbox/analyze-text:
+ *   post:
+ *     summary: Analyze text
+ *     description: Processes text using the inbox processing service to extract structured data like dates, priorities, and tags
+ *     tags: [Inbox]
+ *     security:
+ *       - cookieAuth: []
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - content
+ *             properties:
+ *               content:
+ *                 type: string
+ *                 description: Text to analyze
+ *                 example: "Call John tomorrow at 3pm #work !high"
+ *     responses:
+ *       200:
+ *         description: Analysis result
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 parsed_tags:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Extracted hashtags from the text
+ *                 parsed_projects:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   description: Extracted project references from the text
+ *                 cleaned_content:
+ *                   type: string
+ *                   description: Text with tags and project references removed
+ *                 suggested_type:
+ *                   type: string
+ *                   nullable: true
+ *                   enum: [task, note]
+ *                   description: Suggested item type based on content analysis
+ *                 suggested_reason:
+ *                   type: string
+ *                   nullable: true
+ *                   enum: [bookmark_tag, url_detected, verb_detected]
+ *                   description: Reason for the suggestion
+ *       400:
+ *         description: Content is required
+ *       500:
+ *         description: Internal server error
+ */
