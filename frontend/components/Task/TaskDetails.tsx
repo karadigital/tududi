@@ -289,9 +289,14 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating recurrence:', error);
-            showErrorToast(
-                t('task.recurrenceUpdateError', 'Failed to update recurrence')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t(
+                          'task.recurrenceUpdateError',
+                          'Failed to update recurrence'
+                      );
+            showErrorToast(errorMessage);
             setIsEditingRecurrence(false);
         }
     };
@@ -387,9 +392,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating due date:', error);
-            showErrorToast(
-                t('task.dueDateUpdateError', 'Failed to update due date')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.dueDateUpdateError', 'Failed to update due date');
+            showErrorToast(errorMessage);
             setEditedDueDate(task.due_date || '');
             setIsEditingDueDate(false);
         }
@@ -653,9 +660,14 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating subtasks:', error);
-            showErrorToast(
-                t('task.subtasksUpdateError', 'Failed to update subtasks')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t(
+                          'task.subtasksUpdateError',
+                          'Failed to update subtasks'
+                      );
+            showErrorToast(errorMessage);
             setEditedSubtasks([...subtasks]);
             setIsEditingSubtasks(false);
         }
@@ -684,6 +696,14 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error toggling subtask completion:', error);
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t(
+                          'task.subtaskToggleError',
+                          'Failed to update subtask status'
+                      );
+            showErrorToast(errorMessage);
         }
     };
 
@@ -727,10 +747,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error creating subtask:', error);
-            showErrorToast(
-                t('task.subtaskCreateError', 'Failed to create subtask')
-            );
-            throw error;
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.subtaskCreateError', 'Failed to create subtask');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -759,9 +780,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating project:', error);
-            showErrorToast(
-                t('task.projectUpdateError', 'Failed to update project')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.projectUpdateError', 'Failed to update project');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -790,9 +813,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error clearing project:', error);
-            showErrorToast(
-                t('task.projectClearError', 'Failed to clear project')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.projectClearError', 'Failed to clear project');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -807,7 +832,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error assigning task:', error);
-            showErrorToast(t('task.assignedError', 'Failed to assign task'));
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.assignedError', 'Failed to assign task');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -822,9 +851,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error unassigning task:', error);
-            showErrorToast(
-                t('task.unassignedError', 'Failed to unassign task')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.unassignedError', 'Failed to unassign task');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -946,9 +977,11 @@ const TaskDetails: React.FC = () => {
             );
         } catch (error) {
             console.error('Error toggling today plan:', error);
-            showErrorToast(
-                t('task.statusUpdateError', 'Failed to update status')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.statusUpdateError', 'Failed to update status');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1006,9 +1039,11 @@ const TaskDetails: React.FC = () => {
             );
         } catch (error) {
             console.error('Error toggling in-progress status:', error);
-            showErrorToast(
-                t('task.statusUpdateError', 'Failed to update status')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.statusUpdateError', 'Failed to update status');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1041,9 +1076,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating status:', error);
-            showErrorToast(
-                t('task.statusUpdateError', 'Failed to update status')
-            );
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.statusUpdateError', 'Failed to update status');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1068,7 +1105,11 @@ const TaskDetails: React.FC = () => {
             setIsTaskModalOpen(false);
         } catch (error) {
             console.error('Error updating task:', error);
-            showErrorToast(t('task.updateError', 'Failed to update task'));
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.updateError', 'Failed to update task');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1089,7 +1130,11 @@ const TaskDetails: React.FC = () => {
                 navigate('/today');
             } catch (error) {
                 console.error('Error deleting task:', error);
-                showErrorToast(t('task.deleteError', 'Failed to delete task'));
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : t('task.deleteError', 'Failed to delete task');
+                showErrorToast(errorMessage);
             }
         }
         setIsConfirmDialogOpen(false);
@@ -1158,10 +1203,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating task title:', error);
-            showErrorToast(
-                t('task.titleUpdateError', 'Failed to update task title')
-            );
-            throw error;
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.titleUpdateError', 'Failed to update task title');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1198,10 +1244,14 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating task content:', error);
-            showErrorToast(
-                t('task.contentUpdateError', 'Failed to update task content')
-            );
-            throw error;
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t(
+                          'task.contentUpdateError',
+                          'Failed to update task content'
+                      );
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1234,10 +1284,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error creating project:', error);
-            showErrorToast(
-                t('project.createError', 'Failed to create project')
-            );
-            throw error;
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('project.createError', 'Failed to create project');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1279,8 +1330,11 @@ const TaskDetails: React.FC = () => {
             setTimelineRefreshKey((prev) => prev + 1);
         } catch (error) {
             console.error('Error updating tags:', error);
-            showErrorToast(t('task.tagsUpdateError', 'Failed to update tags'));
-            throw error;
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t('task.tagsUpdateError', 'Failed to update tags');
+            showErrorToast(errorMessage);
         }
     };
 
@@ -1313,10 +1367,14 @@ const TaskDetails: React.FC = () => {
             );
         } catch (error) {
             console.error('Error updating priority:', error);
-            showErrorToast(
-                t('task.priorityUpdateError', 'Failed to update priority')
-            );
-            throw error;
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : t(
+                          'task.priorityUpdateError',
+                          'Failed to update priority'
+                      );
+            showErrorToast(errorMessage);
         }
     };
 

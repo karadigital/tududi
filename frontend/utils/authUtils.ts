@@ -29,6 +29,19 @@ export const handleAuthResponse = async (
             }
             throw new Error('Authentication required');
         }
+        // Try to extract error message from response body
+        try {
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+        } catch (parseError) {
+            // Only rethrow if it's not a SyntaxError (JSON parse failure)
+            // SyntaxErrors should fall through to the default errorMessage
+            if (!(parseError instanceof SyntaxError)) {
+                throw parseError;
+            }
+        }
         throw new Error(errorMessage);
     }
     return response;

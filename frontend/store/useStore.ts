@@ -620,7 +620,8 @@ export const useStore = create<StoreState>((set: any) => ({
                 );
 
                 if (!response.ok) {
-                    throw new Error('Failed to assign task');
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to assign task');
                 }
 
                 const updatedTask = await response.json();
@@ -651,7 +652,8 @@ export const useStore = create<StoreState>((set: any) => ({
                 );
 
                 if (!response.ok) {
-                    throw new Error('Failed to unassign task');
+                    const data = await response.json().catch(() => ({}));
+                    throw new Error(data.error || 'Failed to unassign task');
                 }
 
                 const updatedTask = await response.json();

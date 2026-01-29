@@ -84,7 +84,7 @@ async function subscribeToTask(taskId, subscriberUserId, subscribedByUserId) {
             user_id: subscriberUserId,
             resource_type: 'task',
             resource_uid: task.uid,
-            access_level: 'rw', // Subscribers have read-write access
+            access_level: 'ro', // Subscribers have read-only access
             propagation: 'subscription',
             granted_by_user_id: subscribedByUserId,
         });
