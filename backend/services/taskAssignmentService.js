@@ -4,6 +4,7 @@ const {
     shouldSendInAppNotification,
     shouldSendTelegramNotification,
 } = require('../utils/notificationPreferences');
+const { getAccess } = require('./permissionsService');
 
 /**
  * Assign a task to a user
@@ -31,9 +32,9 @@ async function assignTask(taskId, assignedToUserId, assignedByUserId) {
             throw new Error('Task not found');
         }
 
-        // Verify assigner has permission (must be owner or already have write access)
-        if (task.user_id !== assignedByUserId) {
-            // TODO: Check if assigner has write permission via Permission model
+        // Verify assigner has write permission (owner, admin, dept admin, or shared with rw)
+        const access = await getAccess(assignedByUserId, 'task', task.uid);
+        if (access !== 'rw' && access !== 'admin') {
             throw new Error('Not authorized to assign this task');
         }
 
@@ -157,11 +158,10 @@ async function unassignTask(taskId, unassignedByUserId) {
             throw new Error('Task not found');
         }
 
-        // Verify unassigner has permission (must be owner or assignee)
-        if (
-            task.user_id !== unassignedByUserId &&
-            task.assigned_to_user_id !== unassignedByUserId
-        ) {
+        // Verify unassigner has permission (must have write access OR be the assignee)
+        const access = await getAccess(unassignedByUserId, 'task', task.uid);
+        const isAssignee = task.assigned_to_user_id === unassignedByUserId;
+        if (access !== 'rw' && access !== 'admin' && !isAssignee) {
             throw new Error('Not authorized to unassign this task');
         }
 

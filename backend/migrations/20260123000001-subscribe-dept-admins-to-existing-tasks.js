@@ -132,10 +132,11 @@ module.exports = {
                     );
 
                     if (!existingPerm || existingPerm.length === 0) {
-                        // Create permission
+                        // Create permission - subscribers get read-only access
+                        // Department admins get rw through getDepartmentMemberUserIds() in getAccess()
                         await sequelize.query(
                             `INSERT INTO permissions (user_id, resource_type, resource_uid, access_level, propagation, granted_by_user_id, created_at, updated_at)
-                             VALUES (:userId, 'task', :resourceUid, 'rw', 'subscription', :grantedBy, datetime('now'), datetime('now'))`,
+                             VALUES (:userId, 'task', :resourceUid, 'ro', 'subscription', :grantedBy, datetime('now'), datetime('now'))`,
                             {
                                 replacements: {
                                     userId: adminUserId,
