@@ -12,8 +12,9 @@ module.exports = {
     },
 
     async down(queryInterface, Sequelize) {
-        // Note: Cannot reliably rollback since we don't know
-        // which tasks were originally unassigned vs intentionally
-        // assigned to creator. This is a one-way data migration.
+        console.warn(
+            'Migration rollback skipped: Cannot reliably rollback since we cannot distinguish ' +
+                'tasks that were originally unassigned vs intentionally assigned to creator.'
+        );
     },
 };

@@ -49,5 +49,15 @@ describe('buildTaskAttributes', () => {
 
             expect(attrs.user_id).toBe(userId);
         });
+
+        it('should not auto-assign when updating a task', () => {
+            const body = {
+                name: 'Updated task',
+            };
+
+            const attrs = buildTaskAttributes(body, userId, timezone, true); // isUpdate = true
+
+            expect(attrs.assigned_to_user_id).toBeUndefined();
+        });
     });
 });
