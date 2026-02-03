@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { EllipsisVerticalIcon } from '@heroicons/react/24/solid';
+import { EllipsisVerticalIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import {
     PencilSquareIcon,
     TrashIcon,
@@ -11,6 +11,7 @@ import {
     CheckCircleIcon,
     ShareIcon,
     ExclamationTriangleIcon,
+    StarIcon as StarOutline,
 } from '@heroicons/react/24/outline';
 import { Project, ProjectState } from '../../entities/Project';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +21,8 @@ import Tooltip from '../Shared/Tooltip';
 import { differenceInCalendarDays } from 'date-fns';
 import { listShares, ListSharesResponseRow } from '../../utils/sharesService';
 import { getApiPath } from '../../config/paths';
+import { toggleProjectPin } from '../../utils/projectsService';
+import { useStore } from '../../store/useStore';
 
 interface ProjectItemProps {
     project: Project;
@@ -115,6 +118,28 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
     const isOwner =
         currentUser && (project as any).user_uid === currentUser.uid;
     const descriptionText = project.description?.trim();
+    const { updateProjectInStore } = useStore((s) => s.projectsStore);
+    const pinnedCount = useStore(
+        (s) => s.projectsStore.projects.filter((p) => p.pin_to_sidebar).length
+    );
+
+    const handleTogglePin = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const newPinned = !project.pin_to_sidebar;
+        if (newPinned && pinnedCount >= 5) {
+            showErrorToast(t('sidebar.maxPinnedProjects', 'You can pin up to 5 projects. Unpin one to make room.'));
+            return;
+        }
+        updateProjectInStore({ ...project, pin_to_sidebar: newPinned });
+        try {
+            await toggleProjectPin(project.uid!, newPinned);
+        } catch {
+            updateProjectInStore({ ...project, pin_to_sidebar: !newPinned });
+            showErrorToast(t('errors.generic', 'Something went wrong'));
+        }
+    };
+
     const listTitleClasses =
         'block w-full text-md font-semibold text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-200 transition-colors truncate';
     const listTitleLink = (
@@ -289,6 +314,25 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                                 <div className="w-full h-full bg-gray-200 dark:bg-gray-700"></div>
                             )}
                             <div className="absolute top-2 right-2 z-20 flex items-center space-x-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleTogglePin(e);
+                                    }}
+                                    className={`p-1.5 rounded-full backdrop-blur-sm focus:outline-none ${
+                                        project.pin_to_sidebar
+                                            ? 'text-yellow-400 bg-black/30 hover:bg-black/60'
+                                            : 'text-white/80 bg-black/30 hover:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity'
+                                    }`}
+                                    aria-label={project.pin_to_sidebar ? 'Unpin project' : 'Pin project'}
+                                >
+                                    {project.pin_to_sidebar ? (
+                                        <StarSolid className="h-4 w-4" />
+                                    ) : (
+                                        <StarOutline className="h-4 w-4" />
+                                    )}
+                                </button>
                                 {project.is_shared && (
                                     <ShareIcon
                                         className="h-4 w-4 text-green-400 drop-shadow-sm"
@@ -597,6 +641,25 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                     </div>
                     <div className="relative dropdown-container">
                         <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleTogglePin(e);
+                                }}
+                                className={`transition-colors duration-200 ${
+                                    project.pin_to_sidebar
+                                        ? 'text-yellow-500 hover:text-yellow-600 !opacity-100'
+                                        : 'text-gray-500 hover:text-yellow-500'
+                                }`}
+                                aria-label={project.pin_to_sidebar ? 'Unpin project' : 'Pin project'}
+                            >
+                                {project.pin_to_sidebar ? (
+                                    <StarSolid className="h-5 w-5" />
+                                ) : (
+                                    <StarOutline className="h-5 w-5" />
+                                )}
+                            </button>
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();

@@ -262,7 +262,9 @@ export const useStore = create<StoreState>((set: any) => ({
                 projectsStore: {
                     ...state.projectsStore,
                     projects: state.projectsStore.projects.map((p) =>
-                        p.uid === updatedProject.uid ? { ...p, ...updatedProject } : p
+                        p.uid === updatedProject.uid
+                            ? { ...p, ...updatedProject }
+                            : p
                     ),
                 },
             })),
