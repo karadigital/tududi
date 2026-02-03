@@ -185,9 +185,7 @@ describe('Department Admin Task Visibility', () => {
             });
 
             // Department admin can GET task details
-            const res = await deptAdminAgent.get(
-                `/api/task/${memberTask.uid}`
-            );
+            const res = await deptAdminAgent.get(`/api/task/${memberTask.uid}`);
 
             expect(res.status).toBe(200);
             expect(res.body.name).toBe('Dept Member Task');
