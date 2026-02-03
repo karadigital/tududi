@@ -38,6 +38,7 @@ interface ProjectsStore {
     setCurrentProject: (project: Project | null) => void;
     setLoading: (isLoading: boolean) => void;
     setError: (isError: boolean) => void;
+    updateProjectInStore: (updatedProject: Project) => void;
 }
 
 interface TagsStore {
@@ -255,6 +256,15 @@ export const useStore = create<StoreState>((set: any) => ({
         setError: (isError) =>
             set((state) => ({
                 projectsStore: { ...state.projectsStore, isError },
+            })),
+        updateProjectInStore: (updatedProject) =>
+            set((state) => ({
+                projectsStore: {
+                    ...state.projectsStore,
+                    projects: state.projectsStore.projects.map((p) =>
+                        p.uid === updatedProject.uid ? { ...p, ...updatedProject } : p
+                    ),
+                },
             })),
     },
     tagsStore: {
