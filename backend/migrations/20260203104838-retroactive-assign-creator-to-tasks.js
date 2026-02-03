@@ -8,6 +8,7 @@ module.exports = {
             UPDATE tasks
             SET assigned_to_user_id = user_id
             WHERE assigned_to_user_id IS NULL
+              AND user_id IN (SELECT id FROM users)
         `);
     },
 
