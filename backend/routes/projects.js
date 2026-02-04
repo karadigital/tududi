@@ -12,6 +12,7 @@ const {
     Note,
     User,
     Permission,
+    Workspace,
     sequelize,
 } = require('../models');
 const permissionsService = require('../services/permissionsService');
@@ -214,6 +215,17 @@ router.get('/projects', async (req, res) => {
             whereClause = { [Op.and]: [whereClause, { area_id }] };
         }
 
+        // Filter by workspace
+        if (req.query.workspace) {
+            const workspaceUid = req.query.workspace.split('-')[0];
+            const workspace = await Workspace.findOne({ where: { uid: workspaceUid } });
+            if (workspace) {
+                whereClause = {
+                    [Op.and]: [whereClause, { workspace_id: workspace.id }],
+                };
+            }
+        }
+
         const projects = await Project.findAll({
             where: whereClause,
             include: [
@@ -228,6 +240,11 @@ router.get('/projects', async (req, res) => {
                 },
                 {
                     model: Area,
+                    required: false,
+                    attributes: ['id', 'uid', 'name'],
+                },
+                {
+                    model: Workspace,
                     required: false,
                     attributes: ['id', 'uid', 'name'],
                 },
@@ -423,6 +440,11 @@ router.get(
                         attributes: ['id', 'uid', 'name'],
                     },
                     {
+                        model: Workspace,
+                        required: false,
+                        attributes: ['id', 'uid', 'name'],
+                    },
+                    {
                         model: Tag,
                         attributes: ['id', 'name', 'uid'],
                         through: { attributes: [] },
@@ -500,6 +522,7 @@ router.post('/project', async (req, res) => {
             name,
             description,
             area_id,
+            workspace_id,
             priority,
             due_date_at,
             image_url,
@@ -523,6 +546,7 @@ router.post('/project', async (req, res) => {
             name: name.trim(),
             description: description || '',
             area_id: area_id || null,
+            workspace_id: workspace_id || null,
             pin_to_sidebar: false,
             priority: priority || null,
             due_date_at: due_date_at || null,
@@ -587,6 +611,7 @@ router.patch(
                 name,
                 description,
                 area_id,
+                workspace_id,
                 pin_to_sidebar,
                 priority,
                 due_date_at,
@@ -603,6 +628,7 @@ router.patch(
             if (name !== undefined) updateData.name = name;
             if (description !== undefined) updateData.description = description;
             if (area_id !== undefined) updateData.area_id = area_id;
+            if (workspace_id !== undefined) updateData.workspace_id = workspace_id;
             if (pin_to_sidebar !== undefined)
                 updateData.pin_to_sidebar = pin_to_sidebar;
             if (priority !== undefined) updateData.priority = priority;
@@ -623,6 +649,11 @@ router.patch(
                     },
                     {
                         model: Area,
+                        required: false,
+                        attributes: ['id', 'uid', 'name'],
+                    },
+                    {
+                        model: Workspace,
                         required: false,
                         attributes: ['id', 'uid', 'name'],
                     },
