@@ -9,6 +9,7 @@ import Projects from './components/Projects';
 import AreaDetails from './components/Area/AreaDetails';
 import Areas from './components/Areas';
 import Workspaces from './components/Workspaces';
+import WorkspaceDetail from './components/Workspace/WorkspaceDetail';
 import TagDetails from './components/Tag/TagDetails';
 import Tags from './components/Tags';
 import Views from './components/Views';
@@ -239,6 +240,10 @@ const App: React.FC = () => {
                             <Route
                                 path="/workspaces"
                                 element={<Workspaces />}
+                            />
+                            <Route
+                                path="/workspaces/:uid"
+                                element={<WorkspaceDetail />}
                             />
                             <Route path="/departments" element={<Areas />} />
                             <Route
