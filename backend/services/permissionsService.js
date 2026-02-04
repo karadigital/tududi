@@ -107,8 +107,9 @@ async function getAccess(userId, resourceType, resourceUid) {
         if (t.assigned_to_user_id === userId) return ACCESS.RW;
 
         // Check if user is a department admin and the task owner is in their department
+        // Department admins have read-only access to tasks in their department
         const memberUserIds = await getDepartmentMemberUserIds(userId);
-        if (memberUserIds.includes(t.user_id)) return ACCESS.RW;
+        if (memberUserIds.includes(t.user_id)) return ACCESS.RO;
 
         // Check if user has access through the parent project
         if (t.project_id) {
