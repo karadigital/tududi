@@ -13,7 +13,14 @@ import { GroupedTasks } from '../../utils/tasksService';
 interface GroupedTaskListProps {
     tasks: Task[];
     groupedTasks?: GroupedTasks | null;
-    groupBy?: 'none' | 'project' | 'assignee' | 'status' | 'involvement' | 'workspace' | 'workspace_project';
+    groupBy?:
+        | 'none'
+        | 'project'
+        | 'assignee'
+        | 'status'
+        | 'involvement'
+        | 'workspace'
+        | 'workspace_project';
     currentUserUid?: string | null;
     onTaskUpdate: (task: Partial<Task>) => Promise<void>;
     onTaskCompletionToggle?: (task: Task) => void;
@@ -94,13 +101,14 @@ const getFilteredTasks = (
               return !isCompleted;
           });
 
-    return searchQuery.trim()
-        ? filtered.filter((task) =>
-              (task.name || '')
-                  .toLowerCase()
-                  .includes(searchQuery.toLowerCase())
-          )
-        : filtered;
+    if (!searchQuery.trim()) return filtered;
+
+    const query = searchQuery.toLowerCase();
+    return filtered.filter(
+        (task) =>
+            (task.name || '').toLowerCase().includes(query) ||
+            (task.note || '').toLowerCase().includes(query)
+    );
 };
 
 const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
@@ -134,18 +142,11 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             return { recurringGroups: [], standaloneTask: [] };
         }
 
-        // Filter tasks based on completion status
-        const filteredTasks = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  // Show only non-completed tasks
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
+        const filteredTasks = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
         const groups = new Map<number, TaskGroup>();
         const standalone: Task[] = [];
@@ -200,7 +201,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             recurringGroups: Array.from(groups.values()),
             standaloneTask: standalone,
         };
-    }, [tasks, showCompletedTasks, shouldUseDayGrouping]);
+    }, [tasks, showCompletedTasks, searchQuery, shouldUseDayGrouping]);
 
     // Filter grouped tasks for completed status and search query
     const filteredGroupedTasks = useMemo(() => {
@@ -208,31 +209,13 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
 
         const filtered: GroupedTasks = {};
         Object.entries(groupedTasks).forEach(([groupName, groupTasks]) => {
-            // Filter by completion status
-            let filteredTasks = showCompletedTasks
-                ? groupTasks
-                : groupTasks.filter((task) => {
-                      // Show only non-completed tasks
-                      const isCompleted =
-                          task.status === 'done' ||
-                          task.status === 'archived' ||
-                          task.status === 2 ||
-                          task.status === 3;
-                      return !isCompleted;
-                  });
-
-            // Apply search filter if search query provided
-            if (searchQuery.trim()) {
-                const query = searchQuery.toLowerCase();
-                filteredTasks = filteredTasks.filter(
-                    (task) =>
-                        task.name.toLowerCase().includes(query) ||
-                        task.note?.toLowerCase().includes(query)
-                );
-            }
-
-            if (filteredTasks.length > 0) {
-                filtered[groupName] = filteredTasks;
+            const result = getFilteredTasks(
+                groupTasks,
+                showCompletedTasks,
+                searchQuery
+            );
+            if (result.length > 0) {
+                filtered[groupName] = result;
             }
         });
         return filtered;
@@ -253,26 +236,11 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             return undefined;
         };
 
-        // Apply completion filter
-        const filtered = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
-
-        // Apply search
-        const filteredBySearch = searchQuery.trim()
-            ? filtered.filter((task) =>
-                  (task.name || '')
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase())
-              )
-            : filtered;
+        const filteredBySearch = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
         const getGroupKey = (
             projectId?: number,
@@ -327,30 +295,11 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByAssignee = useMemo(() => {
         if (groupBy !== 'assignee') return null;
 
-        // Apply completion filter
-        const filtered = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
-
-        // Apply search
-        const filteredBySearch = searchQuery.trim()
-            ? filtered.filter(
-                  (task) =>
-                      (task.name || '')
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase()) ||
-                      (task.note || '')
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-              )
-            : filtered;
+        const filteredBySearch = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
         // Categorize tasks into 3 groups
         const unassignedTasks: Task[] = [];
@@ -407,30 +356,11 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByStatus = useMemo(() => {
         if (groupBy !== 'status') return null;
 
-        // Apply completion filter
-        const filtered = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
-
-        // Apply search filter
-        const filteredBySearch = searchQuery?.trim()
-            ? filtered.filter(
-                  (task) =>
-                      (task.name || '')
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase()) ||
-                      (task.note || '')
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-              )
-            : filtered;
+        const filteredBySearch = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
         // Categorize tasks into 5 status groups
         const notStartedTasks: Task[] = [];
@@ -509,30 +439,11 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByInvolvement = useMemo(() => {
         if (groupBy !== 'involvement') return null;
 
-        // Apply completion filter
-        const filtered = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
-
-        // Apply search filter
-        const filteredBySearch = searchQuery?.trim()
-            ? filtered.filter(
-                  (task) =>
-                      (task.name || '')
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase()) ||
-                      (task.note || '')
-                          .toLowerCase()
-                          .includes(searchQuery.toLowerCase())
-              )
-            : filtered;
+        const filteredBySearch = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
         // Categorize tasks into 3 involvement groups
         // Note: A task CAN appear in multiple groups (intentional per design)
@@ -592,7 +503,11 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByWorkspace = useMemo(() => {
         if (groupBy !== 'workspace') return null;
 
-        const filteredBySearch = getFilteredTasks(tasks, showCompletedTasks, searchQuery);
+        const filteredBySearch = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
         const byWorkspace = new Map<string, WorkspaceGroup>();
         filteredBySearch.forEach((task) => {
@@ -625,14 +540,24 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByWorkspaceProject = useMemo(() => {
         if (groupBy !== 'workspace_project') return null;
 
-        const filteredBySearch = getFilteredTasks(tasks, showCompletedTasks, searchQuery);
+        const filteredBySearch = getFilteredTasks(
+            tasks,
+            showCompletedTasks,
+            searchQuery
+        );
 
-        const byWorkspace = new Map<string, {
-            key: string;
-            workspaceName: string;
-            projectMap: Map<string, { key: string; projectName: string; tasks: Task[] }>;
-            order: number;
-        }>();
+        const byWorkspace = new Map<
+            string,
+            {
+                key: string;
+                workspaceName: string;
+                projectMap: Map<
+                    string,
+                    { key: string; projectName: string; tasks: Task[] }
+                >;
+                order: number;
+            }
+        >();
 
         filteredBySearch.forEach((task) => {
             const workspace = task.Project?.Workspace;
@@ -649,7 +574,10 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             }
 
             const wsGroup = byWorkspace.get(wsKey)!;
-            const projectKey = task.Project?.uid || task.Project?.id?.toString() || 'no_project';
+            const projectKey =
+                task.Project?.uid ||
+                task.Project?.id?.toString() ||
+                'no_project';
             const projectName = task.Project?.name || '';
 
             if (!wsGroup.projectMap.has(projectKey)) {
@@ -664,8 +592,10 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
 
         const groups: WorkspaceProjectGroup[] = Array.from(byWorkspace.values())
             .sort((a, b) => {
-                if (a.key === 'no_workspace' && b.key !== 'no_workspace') return -1;
-                if (b.key === 'no_workspace' && a.key !== 'no_workspace') return 1;
+                if (a.key === 'no_workspace' && b.key !== 'no_workspace')
+                    return -1;
+                if (b.key === 'no_workspace' && a.key !== 'no_workspace')
+                    return 1;
                 return a.order - b.order;
             })
             .map((ws) => ({
@@ -701,6 +631,177 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             default:
                 return t('recurrence.recurring', 'Recurring');
         }
+    };
+
+    const renderTaskItem = (task: Task) => (
+        <div
+            key={task.id}
+            className="task-item-wrapper transition-all duration-200 ease-in-out"
+        >
+            <TaskItem
+                task={task}
+                onTaskUpdate={onTaskUpdate}
+                onTaskCompletionToggle={onTaskCompletionToggle}
+                onTaskDelete={onTaskDelete}
+                projects={projects}
+                hideProjectName={hideProjectName}
+                onToggleToday={onToggleToday}
+            />
+        </div>
+    );
+
+    const renderGroupSection = (
+        key: string,
+        label: string,
+        groupTasks: Task[],
+        index: number,
+        options?: { showEmptyState?: boolean }
+    ) => (
+        <div
+            key={key}
+            className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
+        >
+            <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                <span className="truncate">{label}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {groupTasks.length} {t('tasks.tasks', 'tasks')}
+                </span>
+            </div>
+            {groupTasks.length > 0
+                ? groupTasks.map(renderTaskItem)
+                : options?.showEmptyState && (
+                      <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
+                          {t('tasks.noTasksInGroup', 'No tasks in this group')}
+                      </div>
+                  )}
+        </div>
+    );
+
+    const renderGroupedContent = () => {
+        if (groupBy === 'project' && groupedByProject) {
+            return groupedByProject.map(
+                (
+                    { key, projectId, projectUid, tasks: projectTasks },
+                    index
+                ) => {
+                    const matchingProject = projects.find((p) => {
+                        if (
+                            projectId !== undefined &&
+                            projectId !== null &&
+                            p.id === projectId
+                        )
+                            return true;
+                        if (projectUid && p.uid === projectUid) return true;
+                        return false;
+                    });
+                    const projectName =
+                        matchingProject?.name ||
+                        projectTasks[0]?.Project?.name ||
+                        (key === 'no_project'
+                            ? t('tasks.noProject', 'No project')
+                            : t('tasks.unknownProject', 'Unknown project'));
+                    return renderGroupSection(
+                        key,
+                        projectName,
+                        projectTasks,
+                        index
+                    );
+                }
+            );
+        }
+
+        if (groupBy === 'status' && groupedByStatus) {
+            return groupedByStatus.map(
+                ({ key, label, tasks: statusTasks }, index) =>
+                    renderGroupSection(key, label, statusTasks, index)
+            );
+        }
+
+        if (groupBy === 'assignee' && groupedByAssignee) {
+            return groupedByAssignee.map(
+                ({ key, label, tasks: assigneeTasks }, index) =>
+                    renderGroupSection(key, label, assigneeTasks, index)
+            );
+        }
+
+        if (groupBy === 'involvement' && groupedByInvolvement) {
+            return groupedByInvolvement.map(
+                ({ key, label, tasks: involvementTasks }, index) =>
+                    renderGroupSection(key, label, involvementTasks, index, {
+                        showEmptyState: true,
+                    })
+            );
+        }
+
+        if (groupBy === 'workspace' && groupedByWorkspace) {
+            return groupedByWorkspace.map(
+                ({ key, workspaceName, tasks: workspaceTasks }, index) => {
+                    const displayName =
+                        key === 'no_workspace'
+                            ? t('tasks.noWorkspace', 'No workspace')
+                            : workspaceName;
+                    return renderGroupSection(
+                        key,
+                        displayName,
+                        workspaceTasks,
+                        index
+                    );
+                }
+            );
+        }
+
+        if (groupBy === 'workspace_project' && groupedByWorkspaceProject) {
+            return groupedByWorkspaceProject.map(
+                ({ key, workspaceName, projects: wsProjects }, index) => {
+                    const displayName =
+                        key === 'no_workspace'
+                            ? t('tasks.noWorkspace', 'No workspace')
+                            : workspaceName;
+                    return (
+                        <div
+                            key={key}
+                            className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
+                        >
+                            <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
+                                <span className="truncate">{displayName}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {wsProjects.reduce(
+                                        (sum, p) => sum + p.tasks.length,
+                                        0
+                                    )}{' '}
+                                    {t('tasks.tasks', 'tasks')}
+                                </span>
+                            </div>
+                            {wsProjects.map(
+                                ({
+                                    key: pKey,
+                                    projectName,
+                                    tasks: projectTasks,
+                                }) => (
+                                    <div key={pKey} className="space-y-1.5">
+                                        <div className="flex items-center justify-between px-1 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                            <span className="truncate pl-4">
+                                                {projectName ||
+                                                    t(
+                                                        'tasks.noProject',
+                                                        'No project'
+                                                    )}
+                                            </span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                {projectTasks.length}
+                                            </span>
+                                        </div>
+                                        {projectTasks.map(renderTaskItem)}
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    );
+                }
+            );
+        }
+
+        return standaloneTask.map(renderTaskItem);
     };
 
     // Render day-based grouping if available
@@ -811,325 +912,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     // Legacy: Render recurring task grouping
     return (
         <div className="task-list-container space-y-1.5">
-            {/* Standalone tasks */}
-            {groupBy === 'project' && groupedByProject
-                ? groupedByProject.map(
-                      (
-                          { key, projectId, projectUid, tasks: projectTasks },
-                          index
-                      ) => {
-                          const matchingProject = projects.find((p) => {
-                              if (
-                                  projectId !== undefined &&
-                                  projectId !== null &&
-                                  p.id === projectId
-                              ) {
-                                  return true;
-                              }
-                              if (projectUid && p.uid === projectUid) {
-                                  return true;
-                              }
-                              return false;
-                          });
-
-                          const projectName =
-                              matchingProject?.name ||
-                              projectTasks[0]?.Project?.name ||
-                              (key === 'no_project'
-                                  ? t('tasks.noProject', 'No project')
-                                  : t(
-                                        'tasks.unknownProject',
-                                        'Unknown project'
-                                    ));
-                          return (
-                              <div
-                                  key={key}
-                                  className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                              >
-                                  <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                      <span className="truncate">
-                                          {projectName}
-                                      </span>
-                                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                                          {projectTasks.length}{' '}
-                                          {t('tasks.tasks', 'tasks')}
-                                      </span>
-                                  </div>
-                                  {projectTasks.map((task) => (
-                                      <div
-                                          key={task.id}
-                                          className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                      >
-                                          <TaskItem
-                                              task={task}
-                                              onTaskUpdate={onTaskUpdate}
-                                              onTaskCompletionToggle={
-                                                  onTaskCompletionToggle
-                                              }
-                                              onTaskDelete={onTaskDelete}
-                                              projects={projects}
-                                              hideProjectName={hideProjectName}
-                                              onToggleToday={onToggleToday}
-                                          />
-                                      </div>
-                                  ))}
-                              </div>
-                          );
-                      }
-                  )
-                : groupBy === 'status' && groupedByStatus
-                  ? groupedByStatus.map(
-                        ({ key, label, tasks: statusTasks }, index) => {
-                            return (
-                                <div
-                                    key={key}
-                                    className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                                >
-                                    <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                        <span className="truncate">
-                                            {label}
-                                        </span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            {statusTasks.length}{' '}
-                                            {t('tasks.tasks', 'tasks')}
-                                        </span>
-                                    </div>
-                                    {statusTasks.map((task) => (
-                                        <div
-                                            key={task.id}
-                                            className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                        >
-                                            <TaskItem
-                                                task={task}
-                                                onTaskUpdate={onTaskUpdate}
-                                                onTaskCompletionToggle={
-                                                    onTaskCompletionToggle
-                                                }
-                                                onTaskDelete={onTaskDelete}
-                                                projects={projects}
-                                                hideProjectName={
-                                                    hideProjectName
-                                                }
-                                                onToggleToday={onToggleToday}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        }
-                    )
-                  : groupBy === 'assignee' && groupedByAssignee
-                    ? groupedByAssignee.map(
-                          ({ key, label, tasks: assigneeTasks }, index) => {
-                              return (
-                                  <div
-                                      key={key}
-                                      className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                                  >
-                                      <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                          <span className="truncate">
-                                              {label}
-                                          </span>
-                                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                                              {assigneeTasks.length}{' '}
-                                              {t('tasks.tasks', 'tasks')}
-                                          </span>
-                                      </div>
-                                      {assigneeTasks.map((task) => (
-                                          <div
-                                              key={task.id}
-                                              className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                          >
-                                              <TaskItem
-                                                  task={task}
-                                                  onTaskUpdate={onTaskUpdate}
-                                                  onTaskCompletionToggle={
-                                                      onTaskCompletionToggle
-                                                  }
-                                                  onTaskDelete={onTaskDelete}
-                                                  projects={projects}
-                                                  hideProjectName={
-                                                      hideProjectName
-                                                  }
-                                                  onToggleToday={onToggleToday}
-                                              />
-                                          </div>
-                                      ))}
-                                  </div>
-                              );
-                          }
-                      )
-                    : groupBy === 'involvement' && groupedByInvolvement
-                      ? groupedByInvolvement.map(
-                            (
-                                { key, label, tasks: involvementTasks },
-                                index
-                            ) => {
-                                return (
-                                    <div
-                                        key={key}
-                                        className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                                    >
-                                        <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                            <span className="truncate">
-                                                {label}
-                                            </span>
-                                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                {involvementTasks.length}{' '}
-                                                {t('tasks.tasks', 'tasks')}
-                                            </span>
-                                        </div>
-                                        {involvementTasks.length > 0 ? (
-                                            involvementTasks.map((task) => (
-                                                <div
-                                                    key={task.id}
-                                                    className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                                >
-                                                    <TaskItem
-                                                        task={task}
-                                                        onTaskUpdate={
-                                                            onTaskUpdate
-                                                        }
-                                                        onTaskCompletionToggle={
-                                                            onTaskCompletionToggle
-                                                        }
-                                                        onTaskDelete={
-                                                            onTaskDelete
-                                                        }
-                                                        projects={projects}
-                                                        hideProjectName={
-                                                            hideProjectName
-                                                        }
-                                                        onToggleToday={
-                                                            onToggleToday
-                                                        }
-                                                    />
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-sm">
-                                                {t(
-                                                    'tasks.noTasksInGroup',
-                                                    'No tasks in this group'
-                                                )}
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            }
-                        )
-                      : groupBy === 'workspace' && groupedByWorkspace
-                        ? groupedByWorkspace.map(
-                              ({ key, workspaceName, tasks: workspaceTasks }, index) => {
-                                  const displayName =
-                                      key === 'no_workspace'
-                                          ? t('tasks.noWorkspace', 'No workspace')
-                                          : workspaceName;
-                                  return (
-                                      <div
-                                          key={key}
-                                          className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                                      >
-                                          <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                              <span className="truncate">
-                                                  {displayName}
-                                              </span>
-                                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                  {workspaceTasks.length}{' '}
-                                                  {t('tasks.tasks', 'tasks')}
-                                              </span>
-                                          </div>
-                                          {workspaceTasks.map((task) => (
-                                              <div
-                                                  key={task.id}
-                                                  className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                              >
-                                                  <TaskItem
-                                                      task={task}
-                                                      onTaskUpdate={onTaskUpdate}
-                                                      onTaskCompletionToggle={onTaskCompletionToggle}
-                                                      onTaskDelete={onTaskDelete}
-                                                      projects={projects}
-                                                      hideProjectName={hideProjectName}
-                                                      onToggleToday={onToggleToday}
-                                                  />
-                                              </div>
-                                          ))}
-                                      </div>
-                                  );
-                              }
-                          )
-                        : groupBy === 'workspace_project' && groupedByWorkspaceProject
-                          ? groupedByWorkspaceProject.map(
-                                ({ key, workspaceName, projects: wsProjects }, index) => {
-                                    const displayName =
-                                        key === 'no_workspace'
-                                            ? t('tasks.noWorkspace', 'No workspace')
-                                            : workspaceName;
-                                    return (
-                                        <div
-                                            key={key}
-                                            className={`space-y-1.5 pb-4 mb-2 border-b border-gray-200/50 dark:border-gray-800/60 last:border-b-0 ${index > 0 ? 'pt-4' : ''}`}
-                                        >
-                                            <div className="flex items-center justify-between px-1 text-base font-semibold text-gray-900 dark:text-gray-100">
-                                                <span className="truncate">
-                                                    {displayName}
-                                                </span>
-                                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {wsProjects.reduce((sum, p) => sum + p.tasks.length, 0)}{' '}
-                                                    {t('tasks.tasks', 'tasks')}
-                                                </span>
-                                            </div>
-                                            {wsProjects.map(({ key: pKey, projectName, tasks: projectTasks }) => (
-                                                <div key={pKey} className="space-y-1.5">
-                                                    <div className="flex items-center justify-between px-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        <span className="truncate pl-4">
-                                                            {projectName || t('tasks.noProject', 'No project')}
-                                                        </span>
-                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {projectTasks.length}
-                                                        </span>
-                                                    </div>
-                                                    {projectTasks.map((task) => (
-                                                        <div
-                                                            key={task.id}
-                                                            className="task-item-wrapper transition-all duration-200 ease-in-out"
-                                                        >
-                                                            <TaskItem
-                                                                task={task}
-                                                                onTaskUpdate={onTaskUpdate}
-                                                                onTaskCompletionToggle={onTaskCompletionToggle}
-                                                                onTaskDelete={onTaskDelete}
-                                                                projects={projects}
-                                                                hideProjectName={hideProjectName}
-                                                                onToggleToday={onToggleToday}
-                                                            />
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                }
-                            )
-                          : standaloneTask.map((task) => (
-                            <div
-                                key={task.id}
-                                className="task-item-wrapper transition-all duration-200 ease-in-out"
-                            >
-                                <TaskItem
-                                    task={task}
-                                    onTaskUpdate={onTaskUpdate}
-                                    onTaskCompletionToggle={
-                                        onTaskCompletionToggle
-                                    }
-                                    onTaskDelete={onTaskDelete}
-                                    projects={projects}
-                                    hideProjectName={hideProjectName}
-                                    onToggleToday={onToggleToday}
-                                />
-                            </div>
-                        ))}
+            {renderGroupedContent()}
 
             {/* Grouped recurring tasks */}
             {recurringGroups.map((group) => {
@@ -1252,14 +1035,14 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
 
             {standaloneTask.length === 0 &&
                 recurringGroups.length === 0 &&
+                (!groupedByProject || groupedByProject.length === 0) &&
                 (!groupedByAssignee || groupedByAssignee.length === 0) &&
                 (!groupedByStatus || groupedByStatus.length === 0) &&
                 (!groupedByInvolvement ||
-                    groupedByInvolvement.every(
-                        (g) => g.tasks.length === 0
-                    )) &&
+                    groupedByInvolvement.every((g) => g.tasks.length === 0)) &&
                 (!groupedByWorkspace || groupedByWorkspace.length === 0) &&
-                (!groupedByWorkspaceProject || groupedByWorkspaceProject.length === 0) && (
+                (!groupedByWorkspaceProject ||
+                    groupedByWorkspaceProject.length === 0) && (
                     <div className="flex justify-center items-center mt-4">
                         <div className="w-full max-w bg-black/2 dark:bg-gray-900/25 rounded-l px-10 py-24 flex flex-col items-center opacity-95">
                             <svg

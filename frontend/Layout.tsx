@@ -23,10 +23,7 @@ import { useStore } from './store/useStore';
 import { createNote, updateNote } from './utils/notesService';
 import { createArea, updateArea } from './utils/areasService';
 import { createTag, updateTag } from './utils/tagsService';
-import {
-    createWorkspace,
-    updateWorkspace,
-} from './utils/workspacesService';
+import { saveWorkspace } from './utils/workspacesService';
 import {
     fetchProjects,
     createProject,
@@ -192,19 +189,11 @@ const Layout: React.FC<LayoutProps> = ({
         setSelectedWorkspace(null);
     };
 
-    const handleSaveWorkspace = async (
-        workspaceData: Partial<Workspace>
-    ) => {
+    const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
         try {
-            if (workspaceData.uid) {
-                await updateWorkspace(workspaceData.uid, {
-                    name: workspaceData.name,
-                });
-            } else {
-                await createWorkspace({ name: workspaceData.name });
-            }
-            // Reload workspaces in global store
-            await useStore.getState().workspacesStore.loadWorkspaces();
+            await saveWorkspace(workspaceData, () =>
+                useStore.getState().workspacesStore.loadWorkspaces()
+            );
             closeWorkspaceModal();
         } catch (error: any) {
             console.error('Error saving workspace:', error);

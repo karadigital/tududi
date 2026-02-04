@@ -1,9 +1,12 @@
 const express = require('express');
-const { Workspace, Project, sequelize } = require('../models');
-const { Sequelize, QueryTypes } = require('sequelize');
+const { Workspace, Project } = require('../models');
+const { Sequelize } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
-const { hasWorkspaceAccess } = require('../services/permissionsService');
+const {
+    hasWorkspaceAccess,
+    getAccessibleWorkspaceIds,
+} = require('../services/permissionsService');
 const _ = require('lodash');
 const router = express.Router();
 const { getAuthenticatedUserId } = require('../utils/request-utils');
@@ -32,22 +35,7 @@ router.get('/workspaces', async (req, res) => {
         }
 
         // Find workspace IDs where user created the workspace OR user owns a project in the workspace
-        const rows = await sequelize.query(
-            `SELECT DISTINCT w.id
-             FROM workspaces w
-             WHERE w.creator = :userId
-             UNION
-             SELECT DISTINCT p.workspace_id
-             FROM projects p
-             WHERE p.user_id = :userId AND p.workspace_id IS NOT NULL`,
-            {
-                replacements: { userId: safeUserId },
-                type: QueryTypes.SELECT,
-                raw: true,
-            }
-        );
-
-        const workspaceIds = rows.map((r) => r.id).filter(Boolean);
+        const workspaceIds = await getAccessibleWorkspaceIds(safeUserId);
 
         if (workspaceIds.length === 0) {
             return res.json([]);
@@ -64,13 +52,19 @@ router.get('/workspaces', async (req, res) => {
                     Sequelize.literal(
                         `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${safeUserId})`
                     ),
-                    'project_count',
+                    'my_project_count',
                 ],
             ],
             order: [['name', 'ASC']],
         });
 
-        res.json(workspaces);
+        const result = workspaces.map((ws) => {
+            const plain = ws.toJSON();
+            const { creator, ...rest } = plain;
+            return { ...rest, is_creator: creator === safeUserId };
+        });
+
+        res.json(result);
     } catch (error) {
         logError('Error fetching workspaces:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -105,9 +99,9 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
             return res.status(404).json({ error: 'Workspace not found' });
         }
 
-        // Remove internal id from response
-        const { id, ...workspaceData } = workspace.toJSON();
-        res.json(workspaceData);
+        // Remove internal id and replace creator with is_creator
+        const { id, creator, ...workspaceData } = workspace.toJSON();
+        res.json({ ...workspaceData, is_creator: creator === userId });
     } catch (error) {
         logError('Error fetching workspace:', error);
         res.status(500).json({ error: 'Internal server error' });

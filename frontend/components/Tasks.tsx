@@ -67,7 +67,12 @@ const Tasks: React.FC = () => {
     const [showCompleted, setShowCompleted] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [groupBy, setGroupBy] = useState<
-        'none' | 'project' | 'assignee' | 'involvement' | 'workspace' | 'workspace_project'
+        | 'none'
+        | 'project'
+        | 'assignee'
+        | 'involvement'
+        | 'workspace'
+        | 'workspace_project'
     >('none');
     const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(

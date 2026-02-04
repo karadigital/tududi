@@ -257,18 +257,28 @@ export const useStore = create<StoreState>((set: any) => ({
         isError: false,
         hasLoaded: false,
         setWorkspaces: (workspaces) =>
-            set((state) => ({ workspacesStore: { ...state.workspacesStore, workspaces } })),
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, workspaces },
+            })),
         setCurrentWorkspace: (currentWorkspace) =>
-            set((state) => ({ workspacesStore: { ...state.workspacesStore, currentWorkspace } })),
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, currentWorkspace },
+            })),
         setLoading: (isLoading) =>
-            set((state) => ({ workspacesStore: { ...state.workspacesStore, isLoading } })),
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, isLoading },
+            })),
         setError: (isError) =>
-            set((state) => ({ workspacesStore: { ...state.workspacesStore, isError } })),
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, isError },
+            })),
         loadWorkspaces: async () => {
             const state = useStore.getState();
             if (state.workspacesStore.isLoading) return;
 
-            const { fetchWorkspaces } = await import('../utils/workspacesService');
+            const { fetchWorkspaces } = await import(
+                '../utils/workspacesService'
+            );
 
             set((state) => ({
                 workspacesStore: {
@@ -289,7 +299,10 @@ export const useStore = create<StoreState>((set: any) => ({
                     },
                 }));
             } catch (error) {
-                console.error('loadWorkspaces: Failed to load workspaces:', error);
+                console.error(
+                    'loadWorkspaces: Failed to load workspaces:',
+                    error
+                );
                 set((state) => ({
                     workspacesStore: {
                         ...state.workspacesStore,

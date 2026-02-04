@@ -121,7 +121,7 @@ describe('/api workspaces', () => {
             expect(wsUids).not.toContain(ws.uid);
         });
 
-        it('should include project_count for each workspace', async () => {
+        it('should include my_project_count for each workspace', async () => {
             const ws = await Workspace.create({
                 name: 'Workspace With Projects',
                 creator: user.id,
@@ -144,7 +144,7 @@ describe('/api workspaces', () => {
             expect(response.status).toBe(200);
             const found = response.body.find((w) => w.uid === ws.uid);
             expect(found).toBeDefined();
-            expect(Number(found.project_count)).toBe(2);
+            expect(Number(found.my_project_count)).toBe(2);
         });
 
         it('should return empty array when user has no workspaces', async () => {
@@ -211,7 +211,7 @@ describe('/api workspaces', () => {
             expect(response.status).toBe(200);
             expect(response.body.uid).toBe(ws.uid);
             expect(response.body.name).toBe('Detail Workspace');
-            expect(response.body.creator).toBe(user.id);
+            expect(response.body.is_creator).toBe(true);
             expect(response.body.created_at).toBeDefined();
             expect(response.body.updated_at).toBeDefined();
         });

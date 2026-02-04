@@ -20,7 +20,9 @@ export const fetchWorkspace = async (uid: string): Promise<Workspace> => {
     return await response.json();
 };
 
-export const createWorkspace = async (data: Partial<Workspace>): Promise<Workspace> => {
+export const createWorkspace = async (
+    data: Partial<Workspace>
+): Promise<Workspace> => {
     const response = await fetch(getApiPath('workspace'), {
         method: 'POST',
         credentials: 'include',
@@ -34,7 +36,10 @@ export const createWorkspace = async (data: Partial<Workspace>): Promise<Workspa
     return await response.json();
 };
 
-export const updateWorkspace = async (uid: string, data: Partial<Workspace>): Promise<Workspace> => {
+export const updateWorkspace = async (
+    uid: string,
+    data: Partial<Workspace>
+): Promise<Workspace> => {
     const response = await fetch(getApiPath(`workspace/${uid}`), {
         method: 'PATCH',
         credentials: 'include',
@@ -55,4 +60,16 @@ export const deleteWorkspace = async (uid: string): Promise<void> => {
         headers: { Accept: 'application/json' },
     });
     await handleAuthResponse(response, 'Failed to delete workspace.');
+};
+
+export const saveWorkspace = async (
+    workspaceData: Partial<Workspace>,
+    reloadFn: () => Promise<void>
+): Promise<void> => {
+    if (workspaceData.uid) {
+        await updateWorkspace(workspaceData.uid, { name: workspaceData.name });
+    } else {
+        await createWorkspace({ name: workspaceData.name });
+    }
+    await reloadFn();
 };

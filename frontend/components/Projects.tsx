@@ -87,18 +87,6 @@ const Projects: React.FC<ProjectsProps> = ({ workspaceUid }) => {
         return '';
     };
 
-    // Get workspace UID from prop or URL parameters
-    const getWorkspaceUidFromParams = () => {
-        if (workspaceUid) return workspaceUid;
-
-        const workspaceParam = searchParams.get('workspace');
-        if (workspaceParam) {
-            return workspaceParam.split('-')[0];
-        }
-
-        return '';
-    };
-
     // Sort options for the filter button
     const sortOptions: SortOption[] = [
         { value: 'created_at:desc', label: t('sort.created_at', 'Created At') },
@@ -287,7 +275,14 @@ const Projects: React.FC<ProjectsProps> = ({ workspaceUid }) => {
 
     // Workspace filter from prop or URL params
     const actualWorkspaceFilter = useMemo(() => {
-        return getWorkspaceUidFromParams();
+        if (workspaceUid) return workspaceUid;
+
+        const workspaceParam = searchParams.get('workspace');
+        if (workspaceParam) {
+            return workspaceParam.split('-')[0];
+        }
+
+        return '';
     }, [searchParams, workspaceUid]);
 
     // Filter, sort and search projects
@@ -375,7 +370,14 @@ const Projects: React.FC<ProjectsProps> = ({ workspaceUid }) => {
         });
 
         return filteredProjects;
-    }, [projects, stateFilter, actualAreaFilter, actualWorkspaceFilter, searchQuery, orderBy]);
+    }, [
+        projects,
+        stateFilter,
+        actualAreaFilter,
+        actualWorkspaceFilter,
+        searchQuery,
+        orderBy,
+    ]);
 
     if (isLoading) {
         return (

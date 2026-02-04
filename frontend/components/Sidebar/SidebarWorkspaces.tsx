@@ -1,6 +1,9 @@
 import React from 'react';
 import { Location } from 'react-router-dom';
-import { RectangleStackIcon, PlusCircleIcon } from '@heroicons/react/24/outline';
+import {
+    RectangleStackIcon,
+    PlusCircleIcon,
+} from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 
 interface SidebarWorkspacesProps {
@@ -16,8 +19,8 @@ const SidebarWorkspaces: React.FC<SidebarWorkspacesProps> = ({
     openWorkspaceModal,
 }) => {
     const { t } = useTranslation();
-    const isActiveWorkspace = (path: string) => {
-        return location.pathname === path || location.pathname.startsWith('/workspaces/')
+    const isActiveWorkspace = () => {
+        return location.pathname.startsWith('/workspaces')
             ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
             : 'text-gray-700 dark:text-gray-300';
     };
@@ -26,9 +29,7 @@ const SidebarWorkspaces: React.FC<SidebarWorkspacesProps> = ({
         <>
             <ul className="flex flex-col space-y-1 mt-4">
                 <li
-                    className={`flex justify-between items-center px-4 py-2 uppercase rounded-md text-xs tracking-wider cursor-pointer hover:text-black dark:hover:text-white ${isActiveWorkspace(
-                        '/workspaces'
-                    )}`}
+                    className={`flex justify-between items-center px-4 py-2 uppercase rounded-md text-xs tracking-wider cursor-pointer hover:text-black dark:hover:text-white ${isActiveWorkspace()}`}
                     onClick={() =>
                         handleNavClick(
                             '/workspaces',

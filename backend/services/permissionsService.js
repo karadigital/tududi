@@ -400,16 +400,27 @@ async function canDeleteTask(userId, taskUid) {
     return task.user_id === userId;
 }
 
-async function hasWorkspaceAccess(workspaceId, userId) {
-    const { Workspace } = require('../models');
-    const workspace = await Workspace.findByPk(workspaceId);
-    if (!workspace) return false;
-    return (
-        workspace.creator === userId ||
-        (await Project.count({
-            where: { workspace_id: workspace.id, user_id: userId },
-        })) > 0
+async function getAccessibleWorkspaceIds(userId) {
+    const rows = await sequelize.query(
+        `SELECT DISTINCT w.id
+         FROM workspaces w
+         WHERE w.creator = :userId
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         WHERE p.user_id = :userId AND p.workspace_id IS NOT NULL`,
+        {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+            raw: true,
+        }
     );
+    return rows.map((r) => r.id).filter(Boolean);
+}
+
+async function hasWorkspaceAccess(workspaceId, userId) {
+    const accessibleIds = await getAccessibleWorkspaceIds(userId);
+    return accessibleIds.includes(workspaceId);
 }
 
 module.exports = {
@@ -421,4 +432,5 @@ module.exports = {
     actionableTasksWhere,
     canDeleteTask,
     hasWorkspaceAccess,
+    getAccessibleWorkspaceIds,
 };

@@ -6,11 +6,7 @@ import ConfirmDialog from './Shared/ConfirmDialog';
 import WorkspaceModal from './Workspace/WorkspaceModal';
 import { useToast } from './Shared/ToastContext';
 import { useStore } from '../store/useStore';
-import {
-    createWorkspace,
-    updateWorkspace,
-    deleteWorkspace,
-} from '../utils/workspacesService';
+import { deleteWorkspace, saveWorkspace } from '../utils/workspacesService';
 import { Workspace } from '../entities/Workspace';
 
 const Workspaces: React.FC = () => {
@@ -72,19 +68,14 @@ const Workspaces: React.FC = () => {
 
     const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
         try {
-            if (workspaceData.uid) {
-                await updateWorkspace(workspaceData.uid, {
-                    name: workspaceData.name,
-                });
-            } else {
-                await createWorkspace({ name: workspaceData.name });
-            }
-            await loadWorkspaces();
+            await saveWorkspace(workspaceData, loadWorkspaces);
             setIsWorkspaceModalOpen(false);
             setSelectedWorkspace(null);
         } catch (error) {
             console.error('Error saving workspace:', error);
-            showErrorToast(t('workspaces.errorSaving', 'Error saving workspace'));
+            showErrorToast(
+                t('workspaces.errorSaving', 'Error saving workspace')
+            );
         }
     };
 
@@ -126,10 +117,7 @@ const Workspaces: React.FC = () => {
             console.error('Error deleting workspace:', error);
             useStore.getState().workspacesStore.setError(true);
             showErrorToast(
-                t(
-                    'workspaces.failedToDelete',
-                    'Failed to delete workspace.'
-                )
+                t('workspaces.failedToDelete', 'Failed to delete workspace.')
             );
             setIsConfirmDialogOpen(false);
         } finally {
@@ -181,9 +169,7 @@ const Workspaces: React.FC = () => {
                                 key={workspace.uid}
                                 to={`/workspaces/${workspace.uid}`}
                                 className={`bg-gray-50 dark:bg-gray-900 rounded-lg shadow-md relative flex flex-col group hover:opacity-90 transition-opacity cursor-pointer ${
-                                    dropdownOpen === workspace.uid
-                                        ? 'z-50'
-                                        : ''
+                                    dropdownOpen === workspace.uid ? 'z-50' : ''
                                 }`}
                                 style={{
                                     minHeight: '120px',
@@ -242,10 +228,7 @@ const Workspaces: React.FC = () => {
                                                 className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 w-full text-left rounded-t-md"
                                                 data-testid={`workspace-edit-${workspace.uid}`}
                                             >
-                                                {t(
-                                                    'workspaces.edit',
-                                                    'Edit'
-                                                )}
+                                                {t('workspaces.edit', 'Edit')}
                                             </button>
                                             <button
                                                 onClick={(e) => {
