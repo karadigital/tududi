@@ -162,6 +162,44 @@ describe('/api workspaces', () => {
     });
 
     describe('GET /api/workspaces/:uid', () => {
+        it('should return 404 when user has no access to workspace', async () => {
+            const otherUser = await createTestUser({
+                email: 'other@example.com',
+            });
+
+            const ws = await Workspace.create({
+                name: 'Private Workspace',
+                creator: otherUser.id,
+            });
+
+            const response = await agent.get(`/api/workspaces/${ws.uid}`);
+
+            expect(response.status).toBe(404);
+            expect(response.body.error).toBe('Workspace not found');
+        });
+
+        it('should allow access when user has a project in the workspace', async () => {
+            const otherUser = await createTestUser({
+                email: 'other@example.com',
+            });
+
+            const ws = await Workspace.create({
+                name: 'Shared Workspace',
+                creator: otherUser.id,
+            });
+
+            await Project.create({
+                name: 'My Project',
+                user_id: user.id,
+                workspace_id: ws.id,
+            });
+
+            const response = await agent.get(`/api/workspaces/${ws.uid}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.uid).toBe(ws.uid);
+        });
+
         it('should return workspace detail', async () => {
             const ws = await Workspace.create({
                 name: 'Detail Workspace',
@@ -228,6 +266,46 @@ describe('/api workspaces', () => {
             expect(updated.name).toBe('New Name');
         });
 
+        it('should return 403 when non-creator tries to update', async () => {
+            const otherUser = await createTestUser({
+                email: 'other@example.com',
+            });
+
+            const ws = await Workspace.create({
+                name: 'Other Workspace',
+                creator: otherUser.id,
+            });
+
+            const response = await agent
+                .patch(`/api/workspace/${ws.uid}`)
+                .send({ name: 'Hijacked' });
+
+            expect(response.status).toBe(403);
+            expect(response.body.error).toBe(
+                'Not authorized to modify this workspace.'
+            );
+
+            // Verify name was not changed
+            const unchanged = await Workspace.findOne({
+                where: { uid: ws.uid },
+            });
+            expect(unchanged.name).toBe('Other Workspace');
+        });
+
+        it('should return 400 for empty name', async () => {
+            const ws = await Workspace.create({
+                name: 'Valid Name',
+                creator: user.id,
+            });
+
+            const response = await agent
+                .patch(`/api/workspace/${ws.uid}`)
+                .send({ name: '   ' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe('Workspace name is required.');
+        });
+
         it('should return 404 for non-existent workspace', async () => {
             const response = await agent
                 .patch('/api/workspace/abcd1234efghijk')
@@ -289,6 +367,30 @@ describe('/api workspaces', () => {
             const orphanedProject = await Project.findByPk(project.id);
             expect(orphanedProject).not.toBeNull();
             expect(orphanedProject.workspace_id).toBeNull();
+        });
+
+        it('should return 403 when non-creator tries to delete', async () => {
+            const otherUser = await createTestUser({
+                email: 'other@example.com',
+            });
+
+            const ws = await Workspace.create({
+                name: 'Other Workspace',
+                creator: otherUser.id,
+            });
+
+            const response = await agent.delete(`/api/workspace/${ws.uid}`);
+
+            expect(response.status).toBe(403);
+            expect(response.body.error).toBe(
+                'Not authorized to modify this workspace.'
+            );
+
+            // Verify workspace was not deleted
+            const stillExists = await Workspace.findOne({
+                where: { uid: ws.uid },
+            });
+            expect(stillExists).not.toBeNull();
         });
 
         it('should return 404 for non-existent workspace', async () => {

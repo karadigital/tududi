@@ -35,8 +35,6 @@ const Workspaces: React.FC = () => {
     const [dropdownOpen, setDropdownOpen] = useState<string | null>(null);
     const justOpenedRef = useRef<boolean>(false);
 
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
     useEffect(() => {
         if (!hasLoaded && !loading) {
             loadWorkspaces();
@@ -50,11 +48,8 @@ const Workspaces: React.FC = () => {
                 return;
             }
 
-            const clickedElement = event.target as Node;
-            if (
-                dropdownRef.current &&
-                !dropdownRef.current.contains(clickedElement)
-            ) {
+            const target = event.target as HTMLElement;
+            if (!target.closest('[data-workspace-dropdown]')) {
                 setDropdownOpen(null);
             }
         };
@@ -230,7 +225,7 @@ const Workspaces: React.FC = () => {
                                 {/* Three Dots Dropdown - Bottom Right */}
                                 <div
                                     className="absolute bottom-2 right-2"
-                                    ref={dropdownRef}
+                                    data-workspace-dropdown="true"
                                 >
                                     <button
                                         onClick={(e) => {

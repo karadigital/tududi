@@ -25,6 +25,11 @@ router.get('/workspaces', async (req, res) => {
         if (!userId)
             return res.status(401).json({ error: 'Authentication required' });
 
+        const safeUserId = parseInt(userId, 10);
+        if (!Number.isInteger(safeUserId) || safeUserId <= 0) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
         // Find workspace IDs where user created the workspace OR user owns a project in the workspace
         const rows = await sequelize.query(
             `SELECT DISTINCT w.id
@@ -35,7 +40,7 @@ router.get('/workspaces', async (req, res) => {
              FROM projects p
              WHERE p.user_id = :userId AND p.workspace_id IS NOT NULL`,
             {
-                replacements: { userId },
+                replacements: { userId: safeUserId },
                 type: QueryTypes.SELECT,
                 raw: true,
             }
@@ -56,7 +61,7 @@ router.get('/workspaces', async (req, res) => {
                 'created_at',
                 [
                     Sequelize.literal(
-                        `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${Number(userId)})`
+                        `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${safeUserId})`
                     ),
                     'project_count',
                 ],
@@ -74,16 +79,40 @@ router.get('/workspaces', async (req, res) => {
 // GET /workspaces/:uid — Get single workspace by uid
 router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
     try {
+        const userId = getAuthenticatedUserId(req);
+        if (!userId)
+            return res.status(401).json({ error: 'Authentication required' });
+
         const workspace = await Workspace.findOne({
             where: { uid: req.params.uid },
-            attributes: ['uid', 'name', 'creator', 'created_at', 'updated_at'],
+            attributes: [
+                'id',
+                'uid',
+                'name',
+                'creator',
+                'created_at',
+                'updated_at',
+            ],
         });
 
         if (!workspace) {
             return res.status(404).json({ error: 'Workspace not found' });
         }
 
-        res.json(workspace);
+        // Check visibility: user must be creator or have a project in the workspace
+        const hasAccess =
+            workspace.creator === userId ||
+            (await Project.count({
+                where: { workspace_id: workspace.id, user_id: userId },
+            })) > 0;
+
+        if (!hasAccess) {
+            return res.status(404).json({ error: 'Workspace not found' });
+        }
+
+        // Remove internal id from response
+        const { id, ...workspaceData } = workspace.toJSON();
+        res.json(workspaceData);
     } catch (error) {
         logError('Error fetching workspace:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -126,6 +155,10 @@ router.post('/workspace', async (req, res) => {
 // PATCH /workspace/:uid — Update workspace
 router.patch('/workspace/:uid', validateUid('uid'), async (req, res) => {
     try {
+        const userId = getAuthenticatedUserId(req);
+        if (!userId)
+            return res.status(401).json({ error: 'Authentication required' });
+
         const workspace = await Workspace.findOne({
             where: { uid: req.params.uid },
         });
@@ -134,10 +167,23 @@ router.patch('/workspace/:uid', validateUid('uid'), async (req, res) => {
             return res.status(404).json({ error: 'Workspace not found.' });
         }
 
+        if (workspace.creator !== userId) {
+            return res
+                .status(403)
+                .json({ error: 'Not authorized to modify this workspace.' });
+        }
+
         const { name } = req.body;
         const updateData = {};
 
-        if (name !== undefined) updateData.name = name;
+        if (name !== undefined) {
+            if (_.isEmpty(name.trim())) {
+                return res
+                    .status(400)
+                    .json({ error: 'Workspace name is required.' });
+            }
+            updateData.name = name.trim();
+        }
 
         await workspace.update(updateData);
         res.json(_.pick(workspace, ['uid', 'name']));
@@ -155,12 +201,22 @@ router.patch('/workspace/:uid', validateUid('uid'), async (req, res) => {
 // DELETE /workspace/:uid — Delete workspace
 router.delete('/workspace/:uid', validateUid('uid'), async (req, res) => {
     try {
+        const userId = getAuthenticatedUserId(req);
+        if (!userId)
+            return res.status(401).json({ error: 'Authentication required' });
+
         const workspace = await Workspace.findOne({
             where: { uid: req.params.uid },
         });
 
         if (!workspace) {
             return res.status(404).json({ error: 'Workspace not found.' });
+        }
+
+        if (workspace.creator !== userId) {
+            return res
+                .status(403)
+                .json({ error: 'Not authorized to modify this workspace.' });
         }
 
         await workspace.destroy();
