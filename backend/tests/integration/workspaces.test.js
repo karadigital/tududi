@@ -179,9 +179,7 @@ describe('/api workspaces', () => {
         });
 
         it('should return 404 for non-existent uid', async () => {
-            const response = await agent.get(
-                '/api/workspaces/abcd1234efghijk'
-            );
+            const response = await agent.get('/api/workspaces/abcd1234efghijk');
 
             expect(response.status).toBe(404);
             expect(response.body.error).toBe('Workspace not found');

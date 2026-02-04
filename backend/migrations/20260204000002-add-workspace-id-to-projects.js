@@ -20,7 +20,10 @@ module.exports = {
     },
 
     async down(queryInterface) {
-        await queryInterface.removeIndex('projects', 'projects_workspace_id_index');
+        await queryInterface.removeIndex(
+            'projects',
+            'projects_workspace_id_index'
+        );
         await queryInterface.removeColumn('projects', 'workspace_id');
     },
 };

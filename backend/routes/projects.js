@@ -218,7 +218,9 @@ router.get('/projects', async (req, res) => {
         // Filter by workspace
         if (req.query.workspace) {
             const workspaceUid = req.query.workspace.split('-')[0];
-            const workspace = await Workspace.findOne({ where: { uid: workspaceUid } });
+            const workspace = await Workspace.findOne({
+                where: { uid: workspaceUid },
+            });
             if (workspace) {
                 whereClause = {
                     [Op.and]: [whereClause, { workspace_id: workspace.id }],
@@ -628,7 +630,8 @@ router.patch(
             if (name !== undefined) updateData.name = name;
             if (description !== undefined) updateData.description = description;
             if (area_id !== undefined) updateData.area_id = area_id;
-            if (workspace_id !== undefined) updateData.workspace_id = workspace_id;
+            if (workspace_id !== undefined)
+                updateData.workspace_id = workspace_id;
             if (pin_to_sidebar !== undefined)
                 updateData.pin_to_sidebar = pin_to_sidebar;
             if (priority !== undefined) updateData.priority = priority;
