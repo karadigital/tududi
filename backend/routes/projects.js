@@ -16,6 +16,7 @@ const {
     sequelize,
 } = require('../models');
 const permissionsService = require('../services/permissionsService');
+const { hasWorkspaceAccess } = require('../services/permissionsService');
 const { Op } = require('sequelize');
 const { extractUidFromSlug } = require('../utils/slug-utils');
 const { validateTagName } = require('../services/tagsService');
@@ -221,7 +222,10 @@ router.get('/projects', async (req, res) => {
             const workspace = await Workspace.findOne({
                 where: { uid: workspaceUid },
             });
-            if (workspace) {
+            if (
+                workspace &&
+                (await hasWorkspaceAccess(workspace.id, req.authUserId))
+            ) {
                 whereClause = {
                     [Op.and]: [whereClause, { workspace_id: workspace.id }],
                 };
@@ -540,6 +544,12 @@ router.post('/project', async (req, res) => {
             return res.status(400).json({ error: 'Project name is required' });
         }
 
+        if (workspace_id) {
+            if (!(await hasWorkspaceAccess(workspace_id, req.authUserId))) {
+                return res.status(400).json({ error: 'Invalid workspace.' });
+            }
+        }
+
         // Generate UID explicitly to avoid Sequelize caching issues
         const projectUid = uid();
 
@@ -630,8 +640,17 @@ router.patch(
             if (name !== undefined) updateData.name = name;
             if (description !== undefined) updateData.description = description;
             if (area_id !== undefined) updateData.area_id = area_id;
-            if (workspace_id !== undefined)
+            if (workspace_id !== undefined) {
+                if (
+                    workspace_id &&
+                    !(await hasWorkspaceAccess(workspace_id, req.authUserId))
+                ) {
+                    return res
+                        .status(400)
+                        .json({ error: 'Invalid workspace.' });
+                }
                 updateData.workspace_id = workspace_id;
+            }
             if (pin_to_sidebar !== undefined)
                 updateData.pin_to_sidebar = pin_to_sidebar;
             if (priority !== undefined) updateData.priority = priority;

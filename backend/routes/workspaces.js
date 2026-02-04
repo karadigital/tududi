@@ -3,6 +3,7 @@ const { Workspace, Project, sequelize } = require('../models');
 const { Sequelize, QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
+const { hasWorkspaceAccess } = require('../services/permissionsService');
 const _ = require('lodash');
 const router = express.Router();
 const { getAuthenticatedUserId } = require('../utils/request-utils');
@@ -100,13 +101,7 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
         }
 
         // Check visibility: user must be creator or have a project in the workspace
-        const hasAccess =
-            workspace.creator === userId ||
-            (await Project.count({
-                where: { workspace_id: workspace.id, user_id: userId },
-            })) > 0;
-
-        if (!hasAccess) {
+        if (!(await hasWorkspaceAccess(workspace.id, userId))) {
             return res.status(404).json({ error: 'Workspace not found' });
         }
 

@@ -22,7 +22,7 @@ const Workspaces: React.FC = () => {
         isLoading: loading,
         hasLoaded,
         loadWorkspaces,
-    } = useStore((state: any) => state.workspacesStore);
+    } = useStore((state) => state.workspacesStore);
 
     const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] =
         useState<boolean>(false);
@@ -72,42 +72,19 @@ const Workspaces: React.FC = () => {
 
     const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
         try {
-            useStore.getState().workspacesStore.setLoading(true);
             if (workspaceData.uid) {
-                const result = await updateWorkspace(workspaceData.uid, {
+                await updateWorkspace(workspaceData.uid, {
                     name: workspaceData.name,
                 });
-                const currentWorkspaces =
-                    useStore.getState().workspacesStore.workspaces;
-                useStore
-                    .getState()
-                    .workspacesStore.setWorkspaces(
-                        currentWorkspaces.map((ws: Workspace) =>
-                            ws.uid === result.uid ? result : ws
-                        )
-                    );
             } else {
-                const result = await createWorkspace({
-                    name: workspaceData.name,
-                });
-                const currentWorkspaces =
-                    useStore.getState().workspacesStore.workspaces;
-                useStore
-                    .getState()
-                    .workspacesStore.setWorkspaces([
-                        ...currentWorkspaces,
-                        result,
-                    ]);
+                await createWorkspace({ name: workspaceData.name });
             }
-
+            await loadWorkspaces();
             setIsWorkspaceModalOpen(false);
             setSelectedWorkspace(null);
-            useStore.getState().workspacesStore.setError(false);
         } catch (error) {
             console.error('Error saving workspace:', error);
-            useStore.getState().workspacesStore.setError(true);
-        } finally {
-            useStore.getState().workspacesStore.setLoading(false);
+            showErrorToast(t('workspaces.errorSaving', 'Error saving workspace'));
         }
     };
 

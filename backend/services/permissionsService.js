@@ -400,6 +400,18 @@ async function canDeleteTask(userId, taskUid) {
     return task.user_id === userId;
 }
 
+async function hasWorkspaceAccess(workspaceId, userId) {
+    const { Workspace } = require('../models');
+    const workspace = await Workspace.findByPk(workspaceId);
+    if (!workspace) return false;
+    return (
+        workspace.creator === userId ||
+        (await Project.count({
+            where: { workspace_id: workspace.id, user_id: userId },
+        })) > 0
+    );
+}
+
 module.exports = {
     ACCESS,
     getAccess,
@@ -408,4 +420,5 @@ module.exports = {
     ownedOrAssignedTasksWhere,
     actionableTasksWhere,
     canDeleteTask,
+    hasWorkspaceAccess,
 };

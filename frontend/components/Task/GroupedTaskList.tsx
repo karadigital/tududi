@@ -78,6 +78,31 @@ interface WorkspaceProjectGroup {
     order: number;
 }
 
+const getFilteredTasks = (
+    tasks: Task[],
+    showCompletedTasks: boolean,
+    searchQuery: string
+): Task[] => {
+    const filtered = showCompletedTasks
+        ? tasks
+        : tasks.filter((task) => {
+              const isCompleted =
+                  task.status === 'done' ||
+                  task.status === 'archived' ||
+                  task.status === 2 ||
+                  task.status === 3;
+              return !isCompleted;
+          });
+
+    return searchQuery.trim()
+        ? filtered.filter((task) =>
+              (task.name || '')
+                  .toLowerCase()
+                  .includes(searchQuery.toLowerCase())
+          )
+        : filtered;
+};
+
 const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     tasks,
     groupedTasks,
@@ -567,24 +592,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByWorkspace = useMemo(() => {
         if (groupBy !== 'workspace') return null;
 
-        const filtered = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
-
-        const filteredBySearch = searchQuery.trim()
-            ? filtered.filter((task) =>
-                  (task.name || '')
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase())
-              )
-            : filtered;
+        const filteredBySearch = getFilteredTasks(tasks, showCompletedTasks, searchQuery);
 
         const byWorkspace = new Map<string, WorkspaceGroup>();
         filteredBySearch.forEach((task) => {
@@ -617,24 +625,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
     const groupedByWorkspaceProject = useMemo(() => {
         if (groupBy !== 'workspace_project') return null;
 
-        const filtered = showCompletedTasks
-            ? tasks
-            : tasks.filter((task) => {
-                  const isCompleted =
-                      task.status === 'done' ||
-                      task.status === 'archived' ||
-                      task.status === 2 ||
-                      task.status === 3;
-                  return !isCompleted;
-              });
-
-        const filteredBySearch = searchQuery.trim()
-            ? filtered.filter((task) =>
-                  (task.name || '')
-                      .toLowerCase()
-                      .includes(searchQuery.toLowerCase())
-              )
-            : filtered;
+        const filteredBySearch = getFilteredTasks(tasks, showCompletedTasks, searchQuery);
 
         const byWorkspace = new Map<string, {
             key: string;
@@ -1092,8 +1083,8 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                             {wsProjects.map(({ key: pKey, projectName, tasks: projectTasks }) => (
                                                 <div key={pKey} className="space-y-1.5">
                                                     <div className="flex items-center justify-between px-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        <span className="truncate">
-                                                            {'    '}{projectName || t('tasks.noProject', 'No project')}
+                                                        <span className="truncate pl-4">
+                                                            {projectName || t('tasks.noProject', 'No project')}
                                                         </span>
                                                         <span className="text-xs text-gray-500 dark:text-gray-400">
                                                             {projectTasks.length}
