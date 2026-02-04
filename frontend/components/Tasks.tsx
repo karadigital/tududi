@@ -67,7 +67,7 @@ const Tasks: React.FC = () => {
     const [showCompleted, setShowCompleted] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [groupBy, setGroupBy] = useState<
-        'none' | 'project' | 'assignee' | 'involvement'
+        'none' | 'project' | 'assignee' | 'involvement' | 'workspace' | 'workspace_project'
     >('none');
     const [currentUserUid, setCurrentUserUid] = useState<string | null>(null);
     const [selectedAssigneeIds, setSelectedAssigneeIds] = useState<number[]>(
@@ -209,7 +209,9 @@ const Tasks: React.FC = () => {
                 | 'none'
                 | 'project'
                 | 'assignee'
-                | 'involvement') || 'none';
+                | 'involvement'
+                | 'workspace'
+                | 'workspace_project') || 'none';
         setGroupBy(savedGroupBy);
 
         const params = new URLSearchParams(location.search);
@@ -391,7 +393,9 @@ const Tasks: React.FC = () => {
             !isUpcomingView &&
             (groupBy === 'project' ||
                 groupBy === 'assignee' ||
-                groupBy === 'involvement');
+                groupBy === 'involvement' ||
+                groupBy === 'workspace' ||
+                groupBy === 'workspace_project');
         if (all || shouldDisablePagination) {
             const newLimit = totalCount > 0 ? totalCount : 10000;
             await fetchData(true, {
@@ -415,7 +419,9 @@ const Tasks: React.FC = () => {
             isUpcomingView ||
             groupBy === 'project' ||
             groupBy === 'assignee' ||
-            groupBy === 'involvement';
+            groupBy === 'involvement' ||
+            groupBy === 'workspace' ||
+            groupBy === 'workspace_project';
         fetchData(
             true,
             shouldDisablePagination
@@ -866,6 +872,8 @@ const Tasks: React.FC = () => {
                                                     'project',
                                                     'assignee',
                                                     'involvement',
+                                                    'workspace',
+                                                    'workspace_project',
                                                 ].map((val) => (
                                                     <button
                                                         key={val}
@@ -876,6 +884,8 @@ const Tasks: React.FC = () => {
                                                                     | 'project'
                                                                     | 'assignee'
                                                                     | 'involvement'
+                                                                    | 'workspace'
+                                                                    | 'workspace_project'
                                                             );
                                                             localStorage.setItem(
                                                                 'tasks_group_by',
@@ -906,10 +916,22 @@ const Tasks: React.FC = () => {
                                                                           'tasks.groupByInvolvement',
                                                                           'Involvement'
                                                                       )
-                                                                    : t(
-                                                                          'tasks.grouping.none',
-                                                                          'None'
-                                                                      )}
+                                                                    : val ===
+                                                                        'workspace'
+                                                                      ? t(
+                                                                            'tasks.groupByWorkspace',
+                                                                            'Workspace'
+                                                                        )
+                                                                      : val ===
+                                                                          'workspace_project'
+                                                                        ? t(
+                                                                              'tasks.groupByWorkspaceProject',
+                                                                              'Workspace & Project'
+                                                                          )
+                                                                        : t(
+                                                                              'tasks.grouping.none',
+                                                                              'None'
+                                                                          )}
                                                         </span>
                                                         {groupBy === val && (
                                                             <CheckIcon className="h-4 w-4" />
@@ -1252,6 +1274,40 @@ const Tasks: React.FC = () => {
                                         groupedTasks={null}
                                         groupBy="involvement"
                                         currentUserUid={currentUserUid}
+                                        onTaskCreate={handleTaskCreate}
+                                        onTaskUpdate={handleTaskUpdate}
+                                        onTaskCompletionToggle={
+                                            handleTaskCompletionToggle
+                                        }
+                                        onTaskDelete={handleTaskDelete}
+                                        projects={projects}
+                                        hideProjectName={false}
+                                        onToggleToday={handleToggleToday}
+                                        showCompletedTasks={showCompleted}
+                                        searchQuery={taskSearchQuery}
+                                    />
+                                ) : groupBy === 'workspace' ? (
+                                    <GroupedTaskList
+                                        tasks={displayTasks}
+                                        groupedTasks={null}
+                                        groupBy="workspace"
+                                        onTaskCreate={handleTaskCreate}
+                                        onTaskUpdate={handleTaskUpdate}
+                                        onTaskCompletionToggle={
+                                            handleTaskCompletionToggle
+                                        }
+                                        onTaskDelete={handleTaskDelete}
+                                        projects={projects}
+                                        hideProjectName={false}
+                                        onToggleToday={handleToggleToday}
+                                        showCompletedTasks={showCompleted}
+                                        searchQuery={taskSearchQuery}
+                                    />
+                                ) : groupBy === 'workspace_project' ? (
+                                    <GroupedTaskList
+                                        tasks={displayTasks}
+                                        groupedTasks={null}
+                                        groupBy="workspace_project"
                                         onTaskCreate={handleTaskCreate}
                                         onTaskUpdate={handleTaskUpdate}
                                         onTaskCompletionToggle={
