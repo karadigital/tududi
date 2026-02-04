@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Location } from 'react-router-dom';
 import {
     FolderIcon,
@@ -9,12 +9,11 @@ import {
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../../store/useStore';
-import { useToast } from '../Shared/ToastContext';
-import { toggleProjectPin } from '../../utils/projectsService';
 import { Project } from '../../entities/Project';
+import { createProjectUrl } from '../../utils/slugUtils';
+import { useToggleProjectPin } from '../../hooks/useToggleProjectPin';
 
 const STORAGE_KEY = 'sidebar_projects_expanded';
-const MAX_PINNED = 5;
 const MAX_RECENT = 10;
 
 interface SidebarProjectsProps {
@@ -24,25 +23,14 @@ interface SidebarProjectsProps {
     openProjectModal: () => void;
 }
 
-const getProjectSlug = (project: Project): string => {
-    if (!project.uid) return `/project/${project.id}`;
-    const slug = project.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-    return `/project/${project.uid}-${slug}`;
-};
-
 const SidebarProjects: React.FC<SidebarProjectsProps> = ({
     handleNavClick,
     location,
     openProjectModal,
 }) => {
     const { t } = useTranslation();
-    const { showSuccessToast, showErrorToast } = useToast();
-    const { projects, updateProjectInStore } = useStore(
-        (s) => s.projectsStore
-    );
+    const { togglePin } = useToggleProjectPin();
+    const { projects } = useStore((s) => s.projectsStore);
 
     const [isExpanded, setIsExpanded] = useState(() => {
         try {
@@ -77,49 +65,14 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
         )
         .slice(0, MAX_RECENT);
 
-    const handleTogglePin = useCallback(
-        async (e: React.MouseEvent, project: Project) => {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const newPinned = !project.pin_to_sidebar;
-
-            if (newPinned && starred.length >= MAX_PINNED) {
-                showErrorToast(t('sidebar.maxPinnedProjects'));
-                return;
-            }
-
-            // Optimistic update
-            updateProjectInStore({ ...project, pin_to_sidebar: newPinned });
-
-            try {
-                await toggleProjectPin(project.uid!, newPinned);
-                showSuccessToast(
-                    t(
-                        newPinned
-                            ? 'sidebar.projectPinned'
-                            : 'sidebar.projectUnpinned'
-                    )
-                );
-            } catch {
-                // Revert on failure
-                updateProjectInStore({
-                    ...project,
-                    pin_to_sidebar: !newPinned,
-                });
-                showErrorToast(t('errors.generic', 'Something went wrong'));
-            }
-        },
-        [starred.length, updateProjectInStore, showSuccessToast, showErrorToast, t]
-    );
-
     const isActiveRoute = (path: string) =>
-        location.pathname.startsWith(path)
+        location.pathname === path || location.pathname.startsWith(path + '/')
             ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
             : 'text-gray-700 dark:text-gray-300';
 
     const renderProjectItem = (project: Project) => {
-        const slug = getProjectSlug(project);
+        if (!project.uid) return null;
+        const slug = createProjectUrl(project);
         const isActive = location.pathname === slug;
         const isPinned = project.pin_to_sidebar;
 
@@ -142,15 +95,13 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
                 >
                     <span className="truncate">{project.name}</span>
                     <button
-                        onClick={(e) => handleTogglePin(e, project)}
+                        onClick={(e) => togglePin(e, project)}
                         className={`flex-shrink-0 ml-1 ${
                             isPinned
                                 ? 'text-yellow-500'
                                 : 'text-gray-400 opacity-0 group-hover/item:opacity-100'
                         } hover:text-yellow-500 transition-opacity`}
-                        aria-label={
-                            isPinned ? 'Unpin project' : 'Pin project'
-                        }
+                        aria-label={isPinned ? 'Unpin project' : 'Pin project'}
                     >
                         {isPinned ? (
                             <StarSolid className="h-3.5 w-3.5" />
@@ -209,7 +160,7 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
                     {/* Empty state */}
                     {starred.length === 0 && recent.length === 0 && (
                         <li className="pl-8 pr-4 py-1.5 text-xs text-gray-400 dark:text-gray-500 italic">
-                            No projects yet
+                            {t('sidebar.noProjects', 'No projects yet')}
                         </li>
                     )}
 
@@ -227,7 +178,8 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
                                 }
                                 className="block pl-8 pr-4 py-1.5 text-xs text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                             >
-                                {t('sidebar.viewAllProjects', 'View all')} &rarr;
+                                {t('sidebar.viewAllProjects', 'View all')}{' '}
+                                &rarr;
                             </Link>
                         </li>
                     )}

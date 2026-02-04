@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { EllipsisVerticalIcon, StarIcon as StarSolid } from '@heroicons/react/24/solid';
+import {
+    EllipsisVerticalIcon,
+    StarIcon as StarSolid,
+} from '@heroicons/react/24/solid';
 import {
     PencilSquareIcon,
     TrashIcon,
@@ -21,8 +24,7 @@ import Tooltip from '../Shared/Tooltip';
 import { differenceInCalendarDays } from 'date-fns';
 import { listShares, ListSharesResponseRow } from '../../utils/sharesService';
 import { getApiPath } from '../../config/paths';
-import { toggleProjectPin } from '../../utils/projectsService';
-import { useStore } from '../../store/useStore';
+import { useToggleProjectPin } from '../../hooks/useToggleProjectPin';
 
 interface ProjectItemProps {
     project: Project;
@@ -118,27 +120,7 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
     const isOwner =
         currentUser && (project as any).user_uid === currentUser.uid;
     const descriptionText = project.description?.trim();
-    const { updateProjectInStore } = useStore((s) => s.projectsStore);
-    const pinnedCount = useStore(
-        (s) => s.projectsStore.projects.filter((p) => p.pin_to_sidebar).length
-    );
-
-    const handleTogglePin = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const newPinned = !project.pin_to_sidebar;
-        if (newPinned && pinnedCount >= 5) {
-            showErrorToast(t('sidebar.maxPinnedProjects', 'You can pin up to 5 projects. Unpin one to make room.'));
-            return;
-        }
-        updateProjectInStore({ ...project, pin_to_sidebar: newPinned });
-        try {
-            await toggleProjectPin(project.uid!, newPinned);
-        } catch {
-            updateProjectInStore({ ...project, pin_to_sidebar: !newPinned });
-            showErrorToast(t('errors.generic', 'Something went wrong'));
-        }
-    };
+    const { togglePin } = useToggleProjectPin();
 
     const listTitleClasses =
         'block w-full text-md font-semibold text-gray-900 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-200 transition-colors truncate';
@@ -318,14 +300,18 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                                     onClick={(e) => {
                                         e.preventDefault();
                                         e.stopPropagation();
-                                        handleTogglePin(e);
+                                        togglePin(e, project);
                                     }}
                                     className={`p-1.5 rounded-full backdrop-blur-sm focus:outline-none ${
                                         project.pin_to_sidebar
                                             ? 'text-yellow-400 bg-black/30 hover:bg-black/60'
                                             : 'text-white/80 bg-black/30 hover:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity'
                                     }`}
-                                    aria-label={project.pin_to_sidebar ? 'Unpin project' : 'Pin project'}
+                                    aria-label={
+                                        project.pin_to_sidebar
+                                            ? 'Unpin project'
+                                            : 'Pin project'
+                                    }
                                 >
                                     {project.pin_to_sidebar ? (
                                         <StarSolid className="h-4 w-4" />
@@ -645,14 +631,18 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    handleTogglePin(e);
+                                    togglePin(e, project);
                                 }}
                                 className={`transition-colors duration-200 ${
                                     project.pin_to_sidebar
                                         ? 'text-yellow-500 hover:text-yellow-600 !opacity-100'
                                         : 'text-gray-500 hover:text-yellow-500'
                                 }`}
-                                aria-label={project.pin_to_sidebar ? 'Unpin project' : 'Pin project'}
+                                aria-label={
+                                    project.pin_to_sidebar
+                                        ? 'Unpin project'
+                                        : 'Pin project'
+                                }
                             >
                                 {project.pin_to_sidebar ? (
                                     <StarSolid className="h-5 w-5" />

@@ -59,7 +59,8 @@
     "viewAllProjects": "View all",
     "maxPinnedProjects": "You can pin up to 5 projects. Unpin one to make room.",
     "projectPinned": "Project pinned to sidebar",
-    "projectUnpinned": "Project unpinned from sidebar"
+    "projectUnpinned": "Project unpinned from sidebar",
+    "noProjects": "No projects yet"
   },
   "navigation": {
     "home": "Home",
