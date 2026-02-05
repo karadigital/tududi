@@ -601,7 +601,14 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             .map((ws) => ({
                 key: ws.key,
                 workspaceName: ws.workspaceName,
-                projects: Array.from(ws.projectMap.values()),
+                projects: Array.from(ws.projectMap.values()).sort((a, b) => {
+                    // "No project" always comes first within each workspace
+                    if (a.key === 'no_project' && b.key !== 'no_project')
+                        return -1;
+                    if (b.key === 'no_project' && a.key !== 'no_project')
+                        return 1;
+                    return 0;
+                }),
                 order: ws.order,
             }));
 
@@ -756,7 +763,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                     const displayName =
                         key === 'no_workspace'
                             ? t('tasks.noWorkspace', 'No workspace')
-                            : workspaceName;
+                            : `${t('tasks.workspacePrefix', 'Workspace')}: ${workspaceName}`;
                     return (
                         <div
                             key={key}
@@ -779,13 +786,14 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                     tasks: projectTasks,
                                 }) => (
                                     <div key={pKey} className="space-y-1.5">
-                                        <div className="flex items-center justify-between px-1 text-sm font-medium text-gray-700 dark:text-gray-300">
-                                            <span className="truncate pl-4">
-                                                {projectName ||
-                                                    t(
-                                                        'tasks.noProject',
-                                                        'No project'
-                                                    )}
+                                        <div className="flex items-center justify-between px-1 text-sm font-medium text-gray-700 dark:text-gray-300 mt-4">
+                                            <span className="truncate">
+                                                {projectName
+                                                    ? `${t('tasks.projectPrefix', 'Project')}: ${projectName}`
+                                                    : t(
+                                                          'tasks.noProject',
+                                                          'No project'
+                                                      )}
                                             </span>
                                             <span className="text-xs text-gray-500 dark:text-gray-400">
                                                 {projectTasks.length}
