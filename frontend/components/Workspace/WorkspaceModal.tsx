@@ -222,9 +222,7 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                                         {workspace?.uid && onDelete && (
                                             <button
                                                 type="button"
-                                                onClick={
-                                                    handleDeleteWorkspace
-                                                }
+                                                onClick={handleDeleteWorkspace}
                                                 className="p-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none transition duration-150 ease-in-out"
                                                 title={t(
                                                     'common.delete',

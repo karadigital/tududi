@@ -7,10 +7,7 @@ import { useTranslation } from 'react-i18next';
 import Projects from '../Projects';
 import ProjectModal from '../Project/ProjectModal';
 import { ArrowLeftIcon } from '@heroicons/react/24/solid';
-import {
-    PlusIcon,
-    FolderPlusIcon,
-} from '@heroicons/react/24/outline';
+import { PlusIcon, FolderPlusIcon } from '@heroicons/react/24/outline';
 import { useStore } from '../../store/useStore';
 import {
     createProject,
@@ -155,9 +152,7 @@ const WorkspaceDetail: React.FC = () => {
 
                     <div className="relative" ref={dropdownRef}>
                         <button
-                            onClick={() =>
-                                setIsDropdownOpen(!isDropdownOpen)
-                            }
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                             <FolderPlusIcon className="h-4 w-4" />
