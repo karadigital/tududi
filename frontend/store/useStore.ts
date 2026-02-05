@@ -276,9 +276,8 @@ export const useStore = create<StoreState>((set: any) => ({
             const state = useStore.getState();
             if (state.workspacesStore.isLoading) return;
 
-            const { fetchWorkspaces } = await import(
-                '../utils/workspacesService'
-            );
+            const { fetchWorkspaces } =
+                await import('../utils/workspacesService');
 
             set((state) => ({
                 workspacesStore: {
@@ -519,9 +518,8 @@ export const useStore = create<StoreState>((set: any) => ({
             }
         },
         toggleTaskCompletion: async (taskUid) => {
-            const { toggleTaskCompletion } = await import(
-                '../utils/tasksService'
-            );
+            const { toggleTaskCompletion } =
+                await import('../utils/tasksService');
             try {
                 const updatedTask = await toggleTaskCompletion(taskUid);
                 set((state) => ({
@@ -913,9 +911,8 @@ export const useStore = create<StoreState>((set: any) => ({
             }
         },
         logCompletion: async (habitUid, completedAt) => {
-            const { logHabitCompletion } = await import(
-                '../utils/habitsService'
-            );
+            const { logHabitCompletion } =
+                await import('../utils/habitsService');
             try {
                 const updated = await logHabitCompletion(habitUid, completedAt);
                 set((state) => ({

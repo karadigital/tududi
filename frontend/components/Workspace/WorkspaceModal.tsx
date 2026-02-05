@@ -41,13 +41,21 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         }
     }, [isOpen, workspace]);
 
+    const handleCloseWithCheck = () => {
+        if (hasUnsavedChangesRef.current()) {
+            setShowDiscardDialog(true);
+        } else {
+            handleClose();
+        }
+    };
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 modalRef.current &&
                 !modalRef.current.contains(event.target as Node)
             ) {
-                handleClose();
+                handleCloseWithCheck();
             }
         };
 
@@ -69,11 +77,7 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 event.preventDefault();
                 event.stopPropagation();
 
-                if (hasUnsavedChangesRef.current()) {
-                    setShowDiscardDialog(true);
-                } else {
-                    handleClose();
-                }
+                handleCloseWithCheck();
             }
         };
 
@@ -234,7 +238,7 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                                         )}
                                         <button
                                             type="button"
-                                            onClick={handleClose}
+                                            onClick={handleCloseWithCheck}
                                             className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 focus:outline-none transition duration-150 ease-in-out text-sm"
                                         >
                                             {t('common.cancel')}

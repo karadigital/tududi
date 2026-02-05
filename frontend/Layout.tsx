@@ -190,14 +190,40 @@ const Layout: React.FC<LayoutProps> = ({
     };
 
     const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
-        await saveWorkspace(workspaceData, () =>
-            useStore.getState().workspacesStore.loadWorkspaces()
-        );
+        try {
+            await saveWorkspace(workspaceData, () =>
+                useStore.getState().workspacesStore.loadWorkspaces()
+            );
+            closeWorkspaceModal();
+        } catch (error: any) {
+            console.error('Error saving workspace:', error);
+            if (isAuthError(error)) {
+                return;
+            }
+            throw error;
+        }
     };
 
     const handleDeleteWorkspace = async (workspaceUid: string) => {
-        await deleteWorkspace(workspaceUid);
-        await useStore.getState().workspacesStore.loadWorkspaces();
+        try {
+            await deleteWorkspace(workspaceUid);
+            await useStore.getState().workspacesStore.loadWorkspaces();
+            showSuccessToast(
+                t('success.workspaceDeleted', 'Workspace deleted')
+            );
+            closeWorkspaceModal();
+        } catch (error: any) {
+            console.error('Error deleting workspace:', error);
+            if (isAuthError(error)) {
+                return;
+            }
+            showErrorToast(
+                t(
+                    'errors.failedToDeleteWorkspace',
+                    'Failed to delete workspace'
+                )
+            );
+        }
     };
 
     const handleSaveNote = async (noteData: Note) => {
@@ -562,9 +588,8 @@ const Layout: React.FC<LayoutProps> = ({
                         onSave={handleSaveProject}
                         onDelete={async (projectUid) => {
                             try {
-                                const { deleteProject } = await import(
-                                    './utils/projectsService'
-                                );
+                                const { deleteProject } =
+                                    await import('./utils/projectsService');
                                 await deleteProject(projectUid);
 
                                 // Update global projects store
