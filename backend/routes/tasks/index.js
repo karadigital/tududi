@@ -84,10 +84,15 @@ const { sortTasksByOrder } = require('./operations/sorting');
 
 async function touchProjectTimestamp(projectId) {
     if (projectId) {
-        const project = await Project.findByPk(projectId);
-        if (project) {
-            project.changed('updated_at', true);
-            await project.save();
+        try {
+            const project = await Project.findByPk(projectId);
+            if (project) {
+                project.changed('updated_at', true);
+                await project.save();
+            }
+        } catch (error) {
+            logError('Error touching project timestamp:', error);
+            // Don't fail the parent operation if timestamp update fails
         }
     }
 }

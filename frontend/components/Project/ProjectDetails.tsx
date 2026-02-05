@@ -455,12 +455,8 @@ const ProjectDetails: React.FC = () => {
         if (!taskUid) return;
         await deleteTask(taskUid);
         setTasks(tasks.filter((task) => task.uid !== taskUid));
-        if (project?.uid) {
-            useStore.getState().projectsStore.updateProjectInStore({
-                ...project,
-                updated_at: new Date().toISOString(),
-            });
-        }
+        // Note: deleteTask in useStore already refetches projects,
+        // which includes the server-updated timestamp from touchProjectTimestamp
     };
 
     const handleTaskCompletionToggle = (updatedTask: Task) => {

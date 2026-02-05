@@ -16,6 +16,13 @@ export function useToggleProjectPin() {
         e.preventDefault();
         e.stopPropagation();
 
+        if (!project.uid) {
+            showErrorToast(
+                t('errors.somethingWentWrong', 'Something went wrong')
+            );
+            return;
+        }
+
         const newPinned = !project.pin_to_sidebar;
 
         if (newPinned) {
@@ -36,10 +43,12 @@ export function useToggleProjectPin() {
         updateProjectInStore({ ...project, pin_to_sidebar: newPinned });
 
         try {
-            await toggleProjectPin(project.uid!, newPinned);
+            await toggleProjectPin(project.uid, newPinned);
         } catch {
             updateProjectInStore({ ...project, pin_to_sidebar: !newPinned });
-            showErrorToast(t('errors.generic', 'Something went wrong'));
+            showErrorToast(
+                t('errors.somethingWentWrong', 'Something went wrong')
+            );
         }
     };
 

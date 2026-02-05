@@ -309,8 +309,14 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                                     }`}
                                     aria-label={
                                         project.pin_to_sidebar
-                                            ? 'Unpin project'
-                                            : 'Pin project'
+                                            ? t(
+                                                  'projectItem.unpinProject',
+                                                  'Unpin project'
+                                              )
+                                            : t(
+                                                  'projectItem.pinProject',
+                                                  'Pin project'
+                                              )
                                     }
                                 >
                                     {project.pin_to_sidebar ? (
@@ -640,8 +646,14 @@ const ProjectItem: React.FC<ProjectItemProps> = ({
                                 }`}
                                 aria-label={
                                     project.pin_to_sidebar
-                                        ? 'Unpin project'
-                                        : 'Pin project'
+                                        ? t(
+                                              'projectItem.unpinProject',
+                                              'Unpin project'
+                                          )
+                                        : t(
+                                              'projectItem.pinProject',
+                                              'Pin project'
+                                          )
                                 }
                             >
                                 {project.pin_to_sidebar ? (

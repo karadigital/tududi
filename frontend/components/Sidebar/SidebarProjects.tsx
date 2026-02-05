@@ -19,7 +19,6 @@ const MAX_RECENT = 10;
 interface SidebarProjectsProps {
     handleNavClick: (path: string, title: string, icon: JSX.Element) => void;
     location: Location;
-    isDarkMode: boolean;
     openProjectModal: () => void;
 }
 
@@ -101,7 +100,11 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
                                 ? 'text-yellow-500'
                                 : 'text-gray-400 opacity-0 group-hover/item:opacity-100'
                         } hover:text-yellow-500 transition-opacity`}
-                        aria-label={isPinned ? 'Unpin project' : 'Pin project'}
+                        aria-label={
+                            isPinned
+                                ? t('sidebar.unpinProject', 'Unpin project')
+                                : t('sidebar.pinProject', 'Pin project')
+                        }
                     >
                         {isPinned ? (
                             <StarSolid className="h-3.5 w-3.5" />
@@ -177,7 +180,7 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
                                 onClick={() =>
                                     handleNavClick(
                                         '/projects',
-                                        'Projects',
+                                        t('sidebar.projects'),
                                         <FolderIcon className="h-5 w-5" />
                                     )
                                 }

@@ -403,14 +403,18 @@ export const useStore = create<StoreState>((set: any) => ({
                         },
                     };
                     if (newTask.Project) {
-                        newState.projectsStore = {
-                            ...state.projectsStore,
-                            projects: state.projectsStore.projects.map((p) =>
-                                p.uid === newTask.Project.uid
-                                    ? { ...p, ...newTask.Project }
-                                    : p
-                            ),
-                        };
+                        const projectUid = newTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...newTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
                     }
                     return newState;
                 });
@@ -437,14 +441,18 @@ export const useStore = create<StoreState>((set: any) => ({
                         },
                     };
                     if (updatedTask.Project) {
-                        newState.projectsStore = {
-                            ...state.projectsStore,
-                            projects: state.projectsStore.projects.map((p) =>
-                                p.uid === updatedTask.Project.uid
-                                    ? { ...p, ...updatedTask.Project }
-                                    : p
-                            ),
-                        };
+                        const projectUid = updatedTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...updatedTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
                     }
                     return newState;
                 });
@@ -505,14 +513,18 @@ export const useStore = create<StoreState>((set: any) => ({
                         },
                     };
                     if (updatedTask.Project) {
-                        newState.projectsStore = {
-                            ...state.projectsStore,
-                            projects: state.projectsStore.projects.map((p) =>
-                                p.uid === updatedTask.Project.uid
-                                    ? { ...p, ...updatedTask.Project }
-                                    : p
-                            ),
-                        };
+                        const projectUid = updatedTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...updatedTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
                     }
                     return newState;
                 });
