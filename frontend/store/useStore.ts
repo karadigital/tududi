@@ -258,16 +258,19 @@ export const useStore = create<StoreState>((set: any) => ({
                 projectsStore: { ...state.projectsStore, isError },
             })),
         updateProjectInStore: (updatedProject) =>
-            set((state) => ({
-                projectsStore: {
-                    ...state.projectsStore,
-                    projects: state.projectsStore.projects.map((p) =>
-                        p.uid === updatedProject.uid
-                            ? { ...p, ...updatedProject }
-                            : p
-                    ),
-                },
-            })),
+            set((state) => {
+                if (!updatedProject.uid) return state;
+                return {
+                    projectsStore: {
+                        ...state.projectsStore,
+                        projects: state.projectsStore.projects.map((p) =>
+                            p.uid === updatedProject.uid
+                                ? { ...p, ...updatedProject }
+                                : p
+                        ),
+                    },
+                };
+            }),
     },
     tagsStore: {
         tags: [],
@@ -557,14 +560,18 @@ export const useStore = create<StoreState>((set: any) => ({
                         },
                     };
                     if (updatedTask.Project) {
-                        newState.projectsStore = {
-                            ...state.projectsStore,
-                            projects: state.projectsStore.projects.map((p) =>
-                                p.uid === updatedTask.Project.uid
-                                    ? { ...p, ...updatedTask.Project }
-                                    : p
-                            ),
-                        };
+                        const projectUid = updatedTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...updatedTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
                     }
                     return newState;
                 });
