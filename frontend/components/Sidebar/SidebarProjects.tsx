@@ -3,7 +3,7 @@ import { Link, Location } from 'react-router-dom';
 import {
     FolderIcon,
     PlusCircleIcon,
-    ChevronRightIcon,
+    ChevronDownIcon,
     StarIcon as StarOutline,
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarSolid } from '@heroicons/react/24/solid';
@@ -122,25 +122,30 @@ const SidebarProjects: React.FC<SidebarProjectsProps> = ({
                 onClick={() => setIsExpanded((prev) => !prev)}
             >
                 <span className="flex items-center">
-                    <ChevronRightIcon
-                        className={`h-3.5 w-3.5 mr-1.5 transition-transform duration-200 ${
-                            isExpanded ? 'rotate-90' : ''
-                        }`}
-                    />
                     <FolderIcon className="h-5 w-5 mr-2" />
                     {t('sidebar.projects')}
                 </span>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        openProjectModal();
-                    }}
-                    className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white focus:outline-none"
-                    aria-label={t('sidebar.addProjectAriaLabel', 'Add Project')}
-                    title={t('sidebar.addProjectTitle', 'Add Project')}
-                >
-                    <PlusCircleIcon className="h-5 w-5" />
-                </button>
+                <span className="flex items-center">
+                    <ChevronDownIcon
+                        className={`h-3.5 w-3.5 mr-1.5 transition-transform duration-200 ${
+                            isExpanded ? 'rotate-180' : ''
+                        }`}
+                    />
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openProjectModal();
+                        }}
+                        className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white focus:outline-none"
+                        aria-label={t(
+                            'sidebar.addProjectAriaLabel',
+                            'Add Project'
+                        )}
+                        title={t('sidebar.addProjectTitle', 'Add Project')}
+                    >
+                        <PlusCircleIcon className="h-5 w-5" />
+                    </button>
+                </span>
             </li>
 
             {/* Expanded project list */}
