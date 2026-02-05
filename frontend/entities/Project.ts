@@ -22,6 +22,7 @@ export interface Project {
     area_id?: number | null;
     area_uid?: string | null;
     workspace_id?: number | null;
+    workspace_uid?: string;
     Workspace?: Workspace | null;
     tags?: Tag[];
     priority?: PriorityType;

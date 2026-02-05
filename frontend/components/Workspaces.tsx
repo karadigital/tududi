@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import ConfirmDialog from './Shared/ConfirmDialog';
 import WorkspaceModal from './Workspace/WorkspaceModal';
 import { useToast } from './Shared/ToastContext';
@@ -67,16 +67,7 @@ const Workspaces: React.FC = () => {
     }, [dropdownOpen]);
 
     const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
-        try {
-            await saveWorkspace(workspaceData, loadWorkspaces);
-            setIsWorkspaceModalOpen(false);
-            setSelectedWorkspace(null);
-        } catch (error) {
-            console.error('Error saving workspace:', error);
-            showErrorToast(
-                t('workspaces.errorSaving', 'Error saving workspace')
-            );
-        }
+        await saveWorkspace(workspaceData, loadWorkspaces);
     };
 
     const handleEditWorkspace = (workspace: Workspace) => {
@@ -138,20 +129,6 @@ const Workspaces: React.FC = () => {
                     <h2 className="text-2xl font-light">
                         {t('workspaces.title', 'Workspaces')}
                     </h2>
-                    <button
-                        onClick={() => {
-                            setSelectedWorkspace(null);
-                            setIsWorkspaceModalOpen(true);
-                        }}
-                        className="ml-3 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-400 focus:outline-none"
-                        aria-label={t(
-                            'workspaces.createWorkspace',
-                            'Create workspace'
-                        )}
-                        data-testid="create-workspace-button"
-                    >
-                        <PlusIcon className="h-5 w-5" />
-                    </button>
                 </div>
 
                 {/* Workspaces Grid */}
@@ -264,6 +241,18 @@ const Workspaces: React.FC = () => {
                             setSelectedWorkspace(null);
                         }}
                         onSave={handleSaveWorkspace}
+                        onDelete={async (uid: string) => {
+                            await deleteWorkspace(uid);
+                            const currentWorkspaces =
+                                useStore.getState().workspacesStore.workspaces;
+                            useStore
+                                .getState()
+                                .workspacesStore.setWorkspaces(
+                                    currentWorkspaces.filter(
+                                        (ws: Workspace) => ws.uid !== uid
+                                    )
+                                );
+                        }}
                         workspace={selectedWorkspace}
                     />
                 )}

@@ -23,7 +23,7 @@ import { useStore } from './store/useStore';
 import { createNote, updateNote } from './utils/notesService';
 import { createArea, updateArea } from './utils/areasService';
 import { createTag, updateTag } from './utils/tagsService';
-import { saveWorkspace } from './utils/workspacesService';
+import { saveWorkspace, deleteWorkspace } from './utils/workspacesService';
 import {
     fetchProjects,
     createProject,
@@ -190,18 +190,14 @@ const Layout: React.FC<LayoutProps> = ({
     };
 
     const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
-        try {
-            await saveWorkspace(workspaceData, () =>
-                useStore.getState().workspacesStore.loadWorkspaces()
-            );
-            closeWorkspaceModal();
-        } catch (error: any) {
-            console.error('Error saving workspace:', error);
-            if (isAuthError(error)) {
-                return;
-            }
-            closeWorkspaceModal();
-        }
+        await saveWorkspace(workspaceData, () =>
+            useStore.getState().workspacesStore.loadWorkspaces()
+        );
+    };
+
+    const handleDeleteWorkspace = async (workspaceUid: string) => {
+        await deleteWorkspace(workspaceUid);
+        await useStore.getState().workspacesStore.loadWorkspaces();
     };
 
     const handleSaveNote = async (noteData: Note) => {
@@ -639,6 +635,7 @@ const Layout: React.FC<LayoutProps> = ({
                         isOpen={isWorkspaceModalOpen}
                         onClose={closeWorkspaceModal}
                         onSave={handleSaveWorkspace}
+                        onDelete={handleDeleteWorkspace}
                         workspace={selectedWorkspace}
                     />
                 )}

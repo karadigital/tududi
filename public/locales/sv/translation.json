@@ -55,7 +55,10 @@
     "allTasks": "Alla uppgifter",
     "views": "Vy",
     "unpinView": "Ta bort fästning av vy",
-    "pinView": "Fäst vy"
+    "pinView": "Fäst vy",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Hem",
@@ -421,7 +424,9 @@
     "deleteProject": {
       "title": "Ta bort projekt",
       "message": "Tar du bort detta projekt kommer endast projektet att tas bort. Alla objekt inuti kommer att finnas kvar men inte längre tillhöra något projekt. Fortsätt?"
-    }
+    },
+    "createWorkspace": "Create Workspace",
+    "updateWorkspace": "Update Workspace"
   },
   "forms": {
     "title": "Titel",
@@ -492,7 +497,8 @@
     "tagInputPlaceholder": "Skriv för att lägga till en tagg",
     "createTagOption": "+ Skapa \"{{tagName}}\"",
     "removeTagAriaLabel": "Ta bort tagg {{tagName}}",
-    "projectDescriptionPlaceholder": "Ange projektbeskrivning"
+    "projectDescriptionPlaceholder": "Ange projektbeskrivning",
+    "workspaceNamePlaceholder": "Enter workspace name"
   },
   "auth": {
     "login": "Logga in",
@@ -590,7 +596,9 @@
     "projectImageTooLarge": "Bilden är för stor. Vänligen välj en fil under 10MB.",
     "projectImageUpload": "Misslyckades med att ladda upp bilden. Vänligen försök med en mindre fil eller ett annat format.",
     "bannerSaveFailed": "Misslyckades med att spara banner",
-    "critical_requires_fields": "Kritiska uppgifter måste ha ett förfallodatum och en tilldelad person"
+    "critical_requires_fields": "Kritiska uppgifter måste ha ett förfallodatum och en tilldelad person",
+    "workspaceNameRequired": "Workspace name is required.",
+    "failedToSaveWorkspace": "Failed to save workspace."
   },
   "inbox": {
     "title": "Inkorg",
@@ -670,7 +678,30 @@
     "taskUpdated": "Uppgift uppdaterad!",
     "taskDeleted": "Uppgift borttagen!",
     "noteDeleted": "Anteckning borttagen!",
-    "bannerUpdated": "Banner uppdaterad framgångsrikt!"
+    "bannerUpdated": "Banner uppdaterad framgångsrikt!",
+    "workspaceCreated": "Workspace created successfully!",
+    "workspaceUpdated": "Workspace updated successfully!"
+  },
+  "workspaces": {
+    "title": "Workspaces",
+    "newWorkspace": "New Workspace",
+    "editWorkspace": "Edit Workspace",
+    "name": "Name",
+    "namePlaceholder": "Workspace name",
+    "noWorkspacesFound": "No workspaces found.",
+    "errorSaving": "Error saving workspace",
+    "deletedSuccessfully": "Workspace deleted successfully",
+    "failedToDelete": "Failed to delete workspace.",
+    "deleteWorkspace": "Delete Workspace",
+    "deleteConfirmation": "Are you sure you want to delete this workspace?",
+    "createWorkspace": "Create workspace",
+    "edit": "Edit",
+    "delete": "Delete",
+    "toggleDropdownMenu": "Toggle dropdown menu",
+    "notFound": "Workspace not found.",
+    "addExistingProject": "Add Existing Project",
+    "createNewProject": "Create New Project",
+    "noAvailableProjects": "No available projects"
   },
   "note": {
     "title": "Titel",

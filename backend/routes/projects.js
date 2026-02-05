@@ -524,11 +524,12 @@ router.get(
 
 router.post('/project', async (req, res) => {
     try {
-        const {
+        let {
             name,
             description,
             area_id,
             workspace_id,
+            workspace_uid,
             priority,
             due_date_at,
             image_url,
@@ -542,6 +543,15 @@ router.post('/project', async (req, res) => {
 
         if (!name || !name.trim()) {
             return res.status(400).json({ error: 'Project name is required' });
+        }
+
+        // Resolve workspace_uid to workspace_id if needed
+        if (!workspace_id && workspace_uid) {
+            const ws = await Workspace.findOne({
+                where: { uid: workspace_uid },
+            });
+            if (ws) workspace_id = ws.id;
+            else return res.status(400).json({ error: 'Invalid workspace.' });
         }
 
         if (workspace_id) {
@@ -619,11 +629,12 @@ router.patch(
                 where: { uid: req.params.uid },
             });
 
-            const {
+            let {
                 name,
                 description,
                 area_id,
                 workspace_id,
+                workspace_uid,
                 pin_to_sidebar,
                 priority,
                 due_date_at,
@@ -635,6 +646,22 @@ router.patch(
 
             // Handle both tags and Tags (Sequelize association format)
             const tagsData = tags || Tags;
+
+            // Resolve workspace_uid to workspace_id if needed
+            if (workspace_uid !== undefined && workspace_id === undefined) {
+                if (workspace_uid) {
+                    const ws = await Workspace.findOne({
+                        where: { uid: workspace_uid },
+                    });
+                    if (ws) workspace_id = ws.id;
+                    else
+                        return res
+                            .status(400)
+                            .json({ error: 'Invalid workspace.' });
+                } else {
+                    workspace_id = null;
+                }
+            }
 
             const updateData = {};
             if (name !== undefined) updateData.name = name;

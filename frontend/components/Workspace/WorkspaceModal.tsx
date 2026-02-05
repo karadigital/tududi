@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { useTranslation } from 'react-i18next';
 import { Workspace } from '../../entities/Workspace';
+import { useToast } from '../Shared/ToastContext';
+import { useTranslation } from 'react-i18next';
+import DiscardChangesDialog from '../Shared/DiscardChangesDialog';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface WorkspaceModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: Partial<Workspace>) => void;
+    onSave: (data: Partial<Workspace>) => Promise<void>;
+    onDelete?: (workspaceUid: string) => Promise<void>;
     workspace?: Workspace | null;
 }
 
@@ -14,112 +17,262 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
     isOpen,
     onClose,
     onSave,
+    onDelete,
     workspace,
 }) => {
     const { t } = useTranslation();
     const [name, setName] = useState(workspace?.name || '');
-    const [isSaving, setIsSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isClosing, setIsClosing] = useState(false);
+    const [showDiscardDialog, setShowDiscardDialog] = useState(false);
     const nameInputRef = useRef<HTMLInputElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
+    const { showSuccessToast, showErrorToast } = useToast();
+
     useEffect(() => {
-        if (isOpen && nameInputRef.current) {
-            nameInputRef.current.focus();
+        if (isOpen) {
+            setName(workspace?.name || '');
+            setError(null);
+            setTimeout(() => {
+                nameInputRef.current?.focus();
+            }, 100);
         }
+    }, [isOpen, workspace]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                modalRef.current &&
+                !modalRef.current.contains(event.target as Node)
+            ) {
+                handleClose();
+            }
+        };
+
+        if (isOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, [isOpen]);
 
     useEffect(() => {
-        setName(workspace?.name || '');
-    }, [workspace]);
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                if (showDiscardDialog) {
+                    return;
+                }
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                onClose();
+                event.preventDefault();
+                event.stopPropagation();
+
+                if (hasUnsavedChangesRef.current()) {
+                    setShowDiscardDialog(true);
+                } else {
+                    handleClose();
+                }
             }
         };
+
         if (isOpen) {
             document.addEventListener('keydown', handleKeyDown);
         }
-        return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isOpen, showDiscardDialog]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!name.trim() || isSaving) return;
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) {
+            e.preventDefault();
+        }
 
-        setIsSaving(true);
+        if (!name.trim()) {
+            setError(t('errors.workspaceNameRequired'));
+            return;
+        }
+
+        setIsSubmitting(true);
+        setError(null);
+
         try {
             await onSave({
                 ...(workspace?.uid ? { uid: workspace.uid } : {}),
                 name: name.trim(),
             });
+            showSuccessToast(
+                workspace?.uid
+                    ? t('success.workspaceUpdated')
+                    : t('success.workspaceCreated')
+            );
+            handleClose();
+        } catch (err) {
+            setError((err as Error).message);
+            showErrorToast(t('errors.failedToSaveWorkspace'));
         } finally {
-            setIsSaving(false);
+            setIsSubmitting(false);
+        }
+    };
+
+    const hasUnsavedChanges = () => {
+        if (!workspace) {
+            return name.trim() !== '';
+        }
+        return name !== workspace.name;
+    };
+
+    const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+    useEffect(() => {
+        hasUnsavedChangesRef.current = hasUnsavedChanges;
+    });
+
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            onClose();
+            setIsClosing(false);
+            setShowDiscardDialog(false);
+        }, 300);
+    };
+
+    const handleDiscardChanges = () => {
+        setShowDiscardDialog(false);
+        handleClose();
+    };
+
+    const handleCancelDiscard = () => {
+        setShowDiscardDialog(false);
+    };
+
+    const handleDeleteWorkspace = async () => {
+        if (workspace?.uid && onDelete) {
+            try {
+                await onDelete(workspace.uid);
+                handleClose();
+            } catch (err) {
+                setError((err as Error).message);
+            }
         }
     };
 
     if (!isOpen) return null;
 
-    return createPortal(
-        <div
-            className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-            onClick={onClose}
-        >
+    return (
+        <>
             <div
-                ref={modalRef}
-                className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-full max-w-md mx-4"
-                onClick={(e) => e.stopPropagation()}
+                className={`fixed top-16 left-0 right-0 bottom-0 bg-gray-900 bg-opacity-80 z-40 transition-opacity duration-300 overflow-hidden sm:overflow-y-auto ${
+                    isClosing ? 'opacity-0' : 'opacity-100'
+                }`}
             >
-                <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-                    {workspace?.uid
-                        ? t('workspaces.editWorkspace', 'Edit Workspace')
-                        : t('workspaces.newWorkspace', 'New Workspace')}
-                </h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label
-                            htmlFor="workspace-name"
-                            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >
-                            {t('workspaces.name', 'Name')}
-                        </label>
-                        <input
-                            id="workspace-name"
-                            ref={nameInputRef}
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder={t(
-                                'workspaces.namePlaceholder',
-                                'Workspace name'
-                            )}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
+                <div className="h-full flex items-center justify-center sm:px-4 sm:py-4">
+                    <div
+                        ref={modalRef}
+                        className={`bg-white dark:bg-gray-800 border-0 sm:border sm:border-gray-200 sm:dark:border-gray-800 sm:rounded-lg sm:shadow-2xl w-full sm:max-w-md transform transition-transform duration-300 ${
+                            isClosing ? 'scale-95' : 'scale-100'
+                        } h-full sm:h-auto sm:my-4`}
+                    >
+                        <div className="flex flex-col h-full sm:min-h-[250px] sm:max-h-[90vh]">
+                            <div className="flex-1 flex flex-col transition-all duration-300 bg-white dark:bg-gray-800 sm:rounded-lg">
+                                <div className="flex-1 relative">
+                                    <div
+                                        className="absolute inset-0 overflow-y-auto overflow-x-hidden"
+                                        style={{
+                                            WebkitOverflowScrolling: 'touch',
+                                        }}
+                                    >
+                                        <form
+                                            className="h-full"
+                                            onSubmit={handleSubmit}
+                                        >
+                                            <fieldset className="h-full flex flex-col">
+                                                <div className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 px-4 pt-4 sm:rounded-t-lg">
+                                                    <input
+                                                        ref={nameInputRef}
+                                                        type="text"
+                                                        value={name}
+                                                        onChange={(e) =>
+                                                            setName(
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        required
+                                                        className="block w-full text-xl font-semibold bg-transparent text-black dark:text-white border-none focus:outline-none shadow-sm py-2"
+                                                        placeholder={t(
+                                                            'forms.workspaceNamePlaceholder'
+                                                        )}
+                                                        data-testid="workspace-name-input"
+                                                    />
+                                                </div>
+
+                                                {error && (
+                                                    <div className="text-red-500 px-4 mb-4">
+                                                        {error}
+                                                    </div>
+                                                )}
+                                            </fieldset>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between sm:rounded-b-lg">
+                                    <div className="flex items-center space-x-3">
+                                        {workspace?.uid && onDelete && (
+                                            <button
+                                                type="button"
+                                                onClick={
+                                                    handleDeleteWorkspace
+                                                }
+                                                className="p-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none transition duration-150 ease-in-out"
+                                                title={t(
+                                                    'common.delete',
+                                                    'Delete'
+                                                )}
+                                            >
+                                                <TrashIcon className="h-4 w-4" />
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={handleClose}
+                                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 focus:outline-none transition duration-150 ease-in-out text-sm"
+                                        >
+                                            {t('common.cancel')}
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSubmit()}
+                                        disabled={isSubmitting}
+                                        className={`px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none transition duration-150 ease-in-out text-sm ${
+                                            isSubmitting
+                                                ? 'opacity-50 cursor-not-allowed'
+                                                : ''
+                                        }`}
+                                        data-testid="workspace-save-button"
+                                    >
+                                        {isSubmitting
+                                            ? t('modals.submitting')
+                                            : workspace?.uid
+                                              ? t('modals.updateWorkspace')
+                                              : t('modals.createWorkspace')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex justify-end space-x-3">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 focus:outline-none"
-                        >
-                            {t('common.cancel', 'Cancel')}
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={!name.trim() || isSaving}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isSaving
-                                ? t('common.saving', 'Saving...')
-                                : t('common.save', 'Save')}
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
-        </div>,
-        document.body
+            {showDiscardDialog && (
+                <DiscardChangesDialog
+                    onDiscard={handleDiscardChanges}
+                    onCancel={handleCancelDiscard}
+                />
+            )}
+        </>
     );
 };
 

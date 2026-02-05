@@ -2,6 +2,7 @@ import React, { RefObject } from 'react';
 import {
     TagIcon,
     Squares2X2Icon,
+    RectangleStackIcon,
     PencilSquareIcon,
     TrashIcon,
     ShareIcon,
@@ -82,6 +83,22 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                             <span className="text-xs text-white/90 font-medium">
                                 {t(`projects.states.${project.state}`)}
                             </span>
+                        </BannerBadge>
+                    )}
+
+                    {project.Workspace && (
+                        <BannerBadge>
+                            <RectangleStackIcon className="h-3 w-3 text-white/70 flex-shrink-0 mt-0.5" />
+                            <button
+                                onClick={() =>
+                                    navigate(
+                                        `/workspaces/${project.Workspace!.uid}`
+                                    )
+                                }
+                                className="text-xs text-white/90 hover:text-blue-200 transition-colors cursor-pointer font-medium"
+                            >
+                                {project.Workspace!.name}
+                            </button>
                         </BannerBadge>
                     )}
 

@@ -48,8 +48,8 @@ const SidebarWorkspaces: React.FC<SidebarWorkspacesProps> = ({
                             openWorkspaceModal();
                         }}
                         className="text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white focus:outline-none"
-                        aria-label="Add Workspace"
-                        title="Add Workspace"
+                        aria-label={t('sidebar.addWorkspaceAriaLabel')}
+                        title={t('sidebar.addWorkspaceTitle')}
                     >
                         <PlusCircleIcon className="h-5 w-5" />
                     </button>
