@@ -1,5 +1,6 @@
 services:
     tududi:
+        build: .
         image: tududi-local:latest
         container_name: tududi
         restart: always
