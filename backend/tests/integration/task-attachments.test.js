@@ -372,11 +372,12 @@ describe('Task Attachments Routes', () => {
         });
 
         afterEach(async () => {
-            // Clean up upload directory
+            // Clean up only the specific test file, not the entire directory
+            // (other test workers may have files in the same directory)
             try {
-                await fs.rm(uploadPath, { recursive: true, force: true });
+                await fs.unlink(path.join(uploadPath, 'task-delete-test.pdf'));
             } catch (error) {
-                // Ignore errors
+                // File may already be deleted by the test
             }
         });
 
@@ -519,9 +520,10 @@ describe('Task Attachments Routes', () => {
         });
 
         afterEach(async () => {
-            // Clean up upload directory
+            // Clean up only the specific test file, not the entire directory
+            // (other test workers may have files in the same directory)
             try {
-                await fs.rm(uploadPath, { recursive: true, force: true });
+                await fs.unlink(path.join(uploadPath, 'task-download-test.pdf'));
             } catch (error) {
                 // Ignore errors
             }
