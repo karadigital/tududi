@@ -38,7 +38,6 @@ jobs:
       run: npm run build
 
   deploy-staging:
-    needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: staging
@@ -53,7 +52,7 @@ jobs:
         port: ${{ secrets.VPS_PORT }}
         script: |
           set -e
-          cd ~/flow/tududi
+          cd ~/tududi
           git pull origin main
           docker compose build
           docker compose up -d
@@ -77,7 +76,7 @@ jobs:
         envs: TAG_NAME
         script: |
           set -e
-          cd ~/flow/tududi
+          cd ~/tududi
           git fetch --tags
           git checkout "$TAG_NAME"
           docker compose build
