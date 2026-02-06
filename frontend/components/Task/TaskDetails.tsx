@@ -1470,6 +1470,30 @@ const TaskDetails: React.FC = () => {
                                         setActivePill('subtasks')
                                     }
                                 />
+                                <TaskAttachmentsCard
+                                    taskUid={task.uid}
+                                    onAttachmentsCountChange={setAttachmentCount}
+                                />
+                                <TaskRecurrenceCard
+                                    task={task}
+                                    parentTask={parentTask}
+                                    loadingParent={loadingParent}
+                                    isEditing={isEditingRecurrence}
+                                    recurrenceForm={recurrenceForm}
+                                    onStartEdit={handleStartRecurrenceEdit}
+                                    onChange={handleRecurrenceChange}
+                                    onSave={handleSaveRecurrence}
+                                    onCancel={handleCancelRecurrenceEdit}
+                                    loadingIterations={loadingIterations}
+                                    nextIterations={nextIterations}
+                                    canEdit={!task.recurring_parent_id}
+                                />
+                                <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border-2 border-gray-50 dark:border-gray-800 p-6">
+                                    <TaskTimeline
+                                        taskUid={task.uid}
+                                        refreshKey={timelineRefreshKey}
+                                    />
+                                </div>
                             </div>
 
                             {/* Right Column - Project and Tags */}

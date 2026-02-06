@@ -55,7 +55,12 @@
     "completed": "Completed",
     "allTasks": "All Tasks",
     "unpinView": "Unpin view",
-    "pinView": "Pin view"
+    "pinView": "Pin view",
+    "viewAllProjects": "View all",
+    "maxPinnedProjects": "You can pin up to 5 projects. Unpin one to make room.",
+    "projectPinned": "Project pinned to sidebar",
+    "projectUnpinned": "Project unpinned from sidebar",
+    "noProjects": "No projects yet"
   },
   "navigation": {
     "home": "Home",
