@@ -296,9 +296,7 @@ const App: React.FC = () => {
                                             {React.createElement(
                                                 React.lazy(
                                                     () =>
-                                                        import(
-                                                            './components/Admin/AdminUsersPage'
-                                                        )
+                                                        import('./components/Admin/AdminUsersPage')
                                                 )
                                             )}
                                         </React.Suspense>

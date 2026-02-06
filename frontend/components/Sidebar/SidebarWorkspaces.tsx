@@ -33,7 +33,7 @@ const SidebarWorkspaces: React.FC<SidebarWorkspacesProps> = ({
                     onClick={() =>
                         handleNavClick(
                             '/workspaces',
-                            'Workspaces',
+                            t('sidebar.workspaces'),
                             <RectangleStackIcon className="h-5 w-5 mr-2" />
                         )
                     }

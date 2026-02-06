@@ -78,6 +78,11 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
         if (!userId)
             return res.status(401).json({ error: 'Authentication required' });
 
+        const safeUserId = parseInt(userId, 10);
+        if (!Number.isInteger(safeUserId) || safeUserId <= 0) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
         const workspace = await Workspace.findOne({
             where: { uid: req.params.uid },
             attributes: [
@@ -95,13 +100,13 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
         }
 
         // Check visibility: user must be creator or have a project in the workspace
-        if (!(await hasWorkspaceAccess(workspace.id, userId))) {
+        if (!(await hasWorkspaceAccess(workspace.id, safeUserId))) {
             return res.status(404).json({ error: 'Workspace not found' });
         }
 
         // Remove internal id and replace creator with is_creator
         const { id, creator, ...workspaceData } = workspace.toJSON();
-        res.json({ ...workspaceData, is_creator: creator === userId });
+        res.json({ ...workspaceData, is_creator: creator === safeUserId });
     } catch (error) {
         logError('Error fetching workspace:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -116,6 +121,11 @@ router.post('/workspace', async (req, res) => {
             return res.status(401).json({ error: 'Authentication required' });
         }
 
+        const safeUserId = parseInt(userId, 10);
+        if (!Number.isInteger(safeUserId) || safeUserId <= 0) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
         const { name } = req.body;
 
         if (!name || _.isEmpty(name.trim())) {
@@ -126,7 +136,7 @@ router.post('/workspace', async (req, res) => {
 
         const workspace = await Workspace.create({
             name: name.trim(),
-            creator: userId,
+            creator: safeUserId,
         });
 
         res.status(201).json(_.pick(workspace, ['uid', 'name']));
@@ -148,6 +158,11 @@ router.patch('/workspace/:uid', validateUid('uid'), async (req, res) => {
         if (!userId)
             return res.status(401).json({ error: 'Authentication required' });
 
+        const safeUserId = parseInt(userId, 10);
+        if (!Number.isInteger(safeUserId) || safeUserId <= 0) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
         const workspace = await Workspace.findOne({
             where: { uid: req.params.uid },
         });
@@ -156,7 +171,7 @@ router.patch('/workspace/:uid', validateUid('uid'), async (req, res) => {
             return res.status(404).json({ error: 'Workspace not found.' });
         }
 
-        if (workspace.creator !== userId) {
+        if (workspace.creator !== safeUserId) {
             return res
                 .status(403)
                 .json({ error: 'Not authorized to modify this workspace.' });
@@ -194,6 +209,11 @@ router.delete('/workspace/:uid', validateUid('uid'), async (req, res) => {
         if (!userId)
             return res.status(401).json({ error: 'Authentication required' });
 
+        const safeUserId = parseInt(userId, 10);
+        if (!Number.isInteger(safeUserId) || safeUserId <= 0) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
         const workspace = await Workspace.findOne({
             where: { uid: req.params.uid },
         });
@@ -202,7 +222,7 @@ router.delete('/workspace/:uid', validateUid('uid'), async (req, res) => {
             return res.status(404).json({ error: 'Workspace not found.' });
         }
 
-        if (workspace.creator !== userId) {
+        if (workspace.creator !== safeUserId) {
             return res
                 .status(403)
                 .json({ error: 'Not authorized to modify this workspace.' });
