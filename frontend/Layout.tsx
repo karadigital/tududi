@@ -133,6 +133,7 @@ const Layout: React.FC<LayoutProps> = ({
         loadProjects();
     }, [projects.length, isProjectsLoading, setProjects]);
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const openNoteModal = (note: Note | null = null) => {
         setSelectedNote(note);
         setIsNoteModalOpen(true);
@@ -169,6 +170,7 @@ const Layout: React.FC<LayoutProps> = ({
         setSelectedArea(null);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const openTagModal = (tag: Tag | null = null) => {
         setSelectedTag(tag);
         setIsTagModalOpen(true);
@@ -460,9 +462,7 @@ const Layout: React.FC<LayoutProps> = ({
                     openTaskModal={openTaskModal}
                     openProjectModal={openProjectModal}
                     openWorkspaceModal={openWorkspaceModal}
-                    openNoteModal={openNoteModal}
                     openAreaModal={openAreaModal}
-                    openTagModal={openTagModal}
                     openNewHabit={openNewHabit}
                     areas={areas}
                 />
@@ -497,9 +497,7 @@ const Layout: React.FC<LayoutProps> = ({
                     openTaskModal={openTaskModal}
                     openProjectModal={openProjectModal}
                     openWorkspaceModal={openWorkspaceModal}
-                    openNoteModal={openNoteModal}
                     openAreaModal={openAreaModal}
-                    openTagModal={openTagModal}
                     openNewHabit={openNewHabit}
                     areas={areas}
                 />
@@ -534,9 +532,7 @@ const Layout: React.FC<LayoutProps> = ({
                     openTaskModal={openTaskModal}
                     openProjectModal={openProjectModal}
                     openWorkspaceModal={openWorkspaceModal}
-                    openNoteModal={openNoteModal}
                     openAreaModal={openAreaModal}
-                    openTagModal={openTagModal}
                     openNewHabit={openNewHabit}
                     areas={areas}
                 />

@@ -5,14 +5,10 @@ import {
     PlusIcon,
     CheckIcon,
     FolderIcon,
-    BookOpenIcon,
     Squares2X2Icon,
-    TagIcon,
-    InboxIcon,
 } from '@heroicons/react/24/outline';
 import TelegramIcon from '../Icons/TelegramIcon';
 import { useTranslation } from 'react-i18next';
-import { Note } from '../../entities/Note';
 import { Area } from '../../entities/Area';
 import { useTelegramStatus } from '../../contexts/TelegramStatusContext';
 import { getApiPath } from '../../config/paths';
@@ -28,9 +24,7 @@ interface SidebarFooterProps {
     toggleDropdown: () => void;
     openTaskModal: (type?: 'simplified' | 'full') => void;
     openProjectModal: () => void;
-    openNoteModal: (note: Note | null) => void;
     openAreaModal: (area: Area | null) => void;
-    openTagModal: (tag: any | null) => void;
 }
 
 const SidebarFooter: React.FC<SidebarFooterProps> = ({
@@ -39,9 +33,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
     isSidebarOpen,
     openTaskModal,
     openProjectModal,
-    openNoteModal,
     openAreaModal,
-    openTagModal,
 }) => {
     const { t } = useTranslation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -94,10 +86,6 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             // Check for Ctrl + Shift key combinations only (not Cmd/Meta key)
             if (event.ctrlKey && event.shiftKey && !event.metaKey) {
                 switch (event.key.toLowerCase()) {
-                    case 'i':
-                        event.preventDefault();
-                        handleDropdownSelect('Inbox');
-                        break;
                     case 't':
                         event.preventDefault();
                         handleDropdownSelect('Task');
@@ -106,19 +94,11 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
                         event.preventDefault();
                         handleDropdownSelect('Project');
                         break;
-                    case 'n':
-                        event.preventDefault();
-                        handleDropdownSelect('Note');
-                        break;
                     case 'a':
                         if (currentUser?.is_admin) {
                             event.preventDefault();
                             handleDropdownSelect('Area');
                         }
-                        break;
-                    case 'g':
-                        event.preventDefault();
-                        handleDropdownSelect('Tag');
                         break;
                     default:
                         break;
@@ -135,23 +115,14 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
 
     const handleDropdownSelect = (type: string) => {
         switch (type) {
-            case 'Inbox':
-                openTaskModal('simplified');
-                break;
             case 'Task':
                 openTaskModal('full');
                 break;
             case 'Project':
                 openProjectModal();
                 break;
-            case 'Note':
-                openNoteModal(null);
-                break;
             case 'Area':
                 openAreaModal(null);
-                break;
-            case 'Tag':
-                openTagModal(null);
                 break;
             default:
                 break;
@@ -160,12 +131,6 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
     };
 
     const dropdownItems = [
-        {
-            label: 'Inbox',
-            translationKey: 'dropdown.inbox',
-            icon: <InboxIcon className="h-5 w-5 mr-2" />,
-            shortcut: 'Ctrl+Shift+I',
-        },
         {
             label: 'Task',
             translationKey: 'dropdown.task',
@@ -179,23 +144,11 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             shortcut: 'Ctrl+Shift+P',
         },
         {
-            label: 'Note',
-            translationKey: 'dropdown.note',
-            icon: <BookOpenIcon className="h-5 w-5 mr-2" />,
-            shortcut: 'Ctrl+Shift+N',
-        },
-        {
             label: 'Area',
             translationKey: 'dropdown.area',
             icon: <Squares2X2Icon className="h-5 w-5 mr-2" />,
             shortcut: 'Ctrl+Shift+A',
             adminOnly: true,
-        },
-        {
-            label: 'Tag',
-            translationKey: 'dropdown.tag',
-            icon: <TagIcon className="h-5 w-5 mr-2" />,
-            shortcut: 'Ctrl+Shift+G',
         },
     ].filter((item) => !item.adminOnly || currentUser?.is_admin);
     return (
