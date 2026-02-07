@@ -142,9 +142,7 @@ async function unassignTask(taskId, unassignedByUserId) {
 
         // Critical tasks must always have an assignee
         if (isCriticalPriority(task.priority)) {
-            throw new Error(
-                'Critical tasks must have a due date and assignee'
-            );
+            throw new Error('Critical tasks must have a due date and assignee');
         }
 
         const previouslyAssignedUser = task.AssignedTo;
