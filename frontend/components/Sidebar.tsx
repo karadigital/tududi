@@ -6,6 +6,7 @@ import SidebarFooter from './Sidebar/SidebarFooter';
 import SidebarNav from './Sidebar/SidebarNav';
 import SidebarHabits from './Sidebar/SidebarHabits';
 import SidebarProjects from './Sidebar/SidebarProjects';
+import SidebarWorkspaces from './Sidebar/SidebarWorkspaces';
 import { getFeatureFlags, FeatureFlags } from '../utils/featureFlags';
 
 interface SidebarProps {
@@ -16,6 +17,7 @@ interface SidebarProps {
     toggleDarkMode: () => void;
     openTaskModal: (type?: 'simplified' | 'full') => void;
     openProjectModal: () => void;
+    openWorkspaceModal: () => void;
     openAreaModal: (area: Area | null) => void;
     openNewHabit: () => void;
     areas: Area[];
@@ -29,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     toggleDarkMode,
     openTaskModal,
     openProjectModal,
+    openWorkspaceModal,
     openAreaModal,
     openNewHabit,
     areas,
@@ -85,6 +88,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                             handleNavClick={handleNavClick}
                             location={location}
                             openProjectModal={openProjectModal}
+                        />
+                        <SidebarWorkspaces
+                            handleNavClick={handleNavClick}
+                            location={location}
+                            isDarkMode={isDarkMode}
+                            openWorkspaceModal={openWorkspaceModal}
                         />
                         {/* <SidebarNotes
                             handleNavClick={handleNavClick}

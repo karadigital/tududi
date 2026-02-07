@@ -55,7 +55,10 @@
     "createNew": "Tạo mới",
     "views": "Chế độ xem",
     "unpinView": "Bỏ ghim chế độ xem",
-    "pinView": "Ghim chế độ xem"
+    "pinView": "Ghim chế độ xem",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Trang chủ",

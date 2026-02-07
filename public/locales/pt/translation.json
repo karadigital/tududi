@@ -55,7 +55,10 @@
     "createNew": "Criar Novo",
     "views": "Visões",
     "unpinView": "Desafixar visão",
-    "pinView": "Fixar visão"
+    "pinView": "Fixar visão",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Início",

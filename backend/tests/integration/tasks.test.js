@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Task, User } = require('../../models');
+const { Task, User, Project, Workspace } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 
 describe('Tasks Routes', () => {
@@ -622,6 +622,103 @@ describe('Tasks Routes', () => {
 
             // Template should not be included because it's in the past
             expect(taskIds).not.toContain(recurringTemplate.id);
+        });
+    });
+
+    describe('Task with Workspace data', () => {
+        it('should include workspace data in task response when task belongs to a project in a workspace', async () => {
+            // Create a workspace
+            const workspace = await Workspace.create({
+                name: 'Test Workspace',
+                creator: user.id,
+            });
+
+            // Create a project in the workspace
+            const project = await Project.create({
+                name: 'Test Project',
+                user_id: user.id,
+                workspace_id: workspace.id,
+            });
+
+            // Create a task in the project
+            const task = await Task.create({
+                name: 'Task in Workspace',
+                user_id: user.id,
+                project_id: project.id,
+                status: 0,
+            });
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const foundTask = response.body.tasks.find((t) => t.id === task.id);
+            expect(foundTask).toBeDefined();
+
+            // Verify Project is included
+            expect(foundTask.Project).toBeDefined();
+            expect(foundTask.Project.id).toBe(project.id);
+            expect(foundTask.Project.name).toBe('Test Project');
+
+            // Verify Workspace is nested inside Project
+            expect(foundTask.Project.Workspace).toBeDefined();
+            expect(foundTask.Project.Workspace.id).toBe(workspace.id);
+            expect(foundTask.Project.Workspace.uid).toBe(workspace.uid);
+            expect(foundTask.Project.Workspace.name).toBe('Test Workspace');
+        });
+
+        it('should return null Workspace when task belongs to a project without workspace', async () => {
+            // Create a project without a workspace
+            const project = await Project.create({
+                name: 'Standalone Project',
+                user_id: user.id,
+                workspace_id: null,
+            });
+
+            // Create a task in the project
+            const task = await Task.create({
+                name: 'Task without Workspace',
+                user_id: user.id,
+                project_id: project.id,
+                status: 0,
+            });
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const foundTask = response.body.tasks.find((t) => t.id === task.id);
+            expect(foundTask).toBeDefined();
+
+            // Verify Project is included
+            expect(foundTask.Project).toBeDefined();
+            expect(foundTask.Project.id).toBe(project.id);
+
+            // Workspace should be null
+            expect(foundTask.Project.Workspace).toBeNull();
+        });
+
+        it('should return null Project when task has no project', async () => {
+            // Create a task without a project
+            const task = await Task.create({
+                name: 'Task without Project',
+                user_id: user.id,
+                project_id: null,
+                status: 0,
+            });
+
+            const response = await agent.get('/api/tasks');
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks).toBeDefined();
+
+            const foundTask = response.body.tasks.find((t) => t.id === task.id);
+            expect(foundTask).toBeDefined();
+
+            // Project should be null
+            expect(foundTask.Project).toBeNull();
         });
     });
 });

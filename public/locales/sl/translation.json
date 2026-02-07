@@ -55,7 +55,10 @@
     "allTasks": "Vse naloge",
     "views": "Pogledi",
     "unpinView": "Odpravi pripenjanje pogleda",
-    "pinView": "Pripni pogled"
+    "pinView": "Pripni pogled",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Domov",

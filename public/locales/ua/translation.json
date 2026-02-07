@@ -55,7 +55,10 @@
     "createNew": "Створити новий",
     "views": "Перегляди",
     "unpinView": "Відкріпити перегляд",
-    "pinView": "Закріпити перегляд"
+    "pinView": "Закріпити перегляд",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Головна",

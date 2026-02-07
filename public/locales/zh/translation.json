@@ -55,7 +55,10 @@
     "createNew": "创建新项目",
     "views": "视图",
     "unpinView": "取消固定视图",
-    "pinView": "固定视图"
+    "pinView": "固定视图",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "首页",
