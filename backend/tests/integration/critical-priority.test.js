@@ -159,4 +159,111 @@ describe('Critical Priority API Validation', () => {
             expect(res.body.priority).toBe(2);
         });
     });
+
+    describe('PATCH /api/task/:uid - Clearing fields on existing critical task', () => {
+        let criticalTask;
+
+        beforeEach(async () => {
+            const res = await agent.post('/api/task').send({
+                name: 'Critical Task',
+                priority: 3,
+                due_date: '2026-01-20',
+                assigned_to_user_id: assignee.id,
+            });
+            criticalTask = res.body;
+        });
+
+        it('should reject clearing assigned_to_user_id on critical task', async () => {
+            const res = await agent
+                .patch(`/api/task/${criticalTask.uid}`)
+                .send({ assigned_to_user_id: null });
+
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(
+                'Critical tasks must have a due date and assignee'
+            );
+        });
+
+        it('should reject clearing due_date on critical task', async () => {
+            const res = await agent
+                .patch(`/api/task/${criticalTask.uid}`)
+                .send({ due_date: null });
+
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(
+                'Critical tasks must have a due date and assignee'
+            );
+        });
+
+        it('should reject clearing due_date (empty string) on critical task', async () => {
+            const res = await agent
+                .patch(`/api/task/${criticalTask.uid}`)
+                .send({ due_date: '' });
+
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(
+                'Critical tasks must have a due date and assignee'
+            );
+        });
+
+        it('should reject clearing due_date on recurring critical task instead of auto-filling today', async () => {
+            // Make the critical task recurring
+            await agent.patch(`/api/task/${criticalTask.uid}`).send({
+                recurrence_type: 'daily',
+                recurrence_interval: 1,
+            });
+
+            // Try to clear due_date — should be rejected, not silently changed to today
+            const res = await agent
+                .patch(`/api/task/${criticalTask.uid}`)
+                .send({ due_date: null });
+
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(
+                'Critical tasks must have a due date and assignee'
+            );
+        });
+    });
+
+    describe('POST /api/task/:uid/unassign - Critical task protection', () => {
+        let criticalTask;
+
+        beforeEach(async () => {
+            const res = await agent.post('/api/task').send({
+                name: 'Critical Task',
+                priority: 3,
+                due_date: '2026-01-20',
+                assigned_to_user_id: assignee.id,
+            });
+            criticalTask = res.body;
+        });
+
+        it('should reject unassigning a critical task', async () => {
+            const res = await agent.post(
+                `/api/task/${criticalTask.uid}/unassign`
+            );
+
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(
+                'Critical tasks must have a due date and assignee'
+            );
+        });
+
+        it('should allow unassigning a non-critical task', async () => {
+            // Create a non-critical assigned task
+            const createRes = await agent.post('/api/task').send({
+                name: 'Normal Task',
+                priority: 1,
+                assigned_to_user_id: assignee.id,
+            });
+            expect(createRes.status).toBe(201);
+
+            const res = await agent.post(
+                `/api/task/${createRes.body.uid}/unassign`
+            );
+
+            expect(res.status).toBe(200);
+            expect(res.body.AssignedTo).toBeNull();
+        });
+    });
 });

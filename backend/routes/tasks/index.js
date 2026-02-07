@@ -584,7 +584,7 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
             validateCriticalPriority(
                 {
                     priority: taskAttributes.priority,
-                    due_date: taskAttributes.due_date,
+                    due_date: req.body.due_date,
                     assigned_to_user_id: req.body.assigned_to_user_id,
                 },
                 task // existing task for fallback values
@@ -1052,6 +1052,13 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
         const task = await taskRepository.findByUid(req.params.uid);
         if (!task) {
             return res.status(404).json({ error: 'Task not found' });
+        }
+
+        // Prevent unassigning critical tasks
+        if (task.priority === Task.PRIORITY.CRITICAL) {
+            return res.status(400).json({
+                error: 'Critical tasks must have a due date and assignee',
+            });
         }
 
         await unassignTask(task.id, req.currentUser.id);
