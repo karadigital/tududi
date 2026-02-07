@@ -93,7 +93,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                         <SidebarProjects
                             handleNavClick={handleNavClick}
                             location={location}
-                            isDarkMode={isDarkMode}
                             openProjectModal={openProjectModal}
                         />
                         <SidebarWorkspaces

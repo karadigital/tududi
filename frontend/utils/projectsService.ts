@@ -131,3 +131,10 @@ export const fetchProjectBySlug = async (uidSlug: string): Promise<Project> => {
     await handleAuthResponse(response, 'Failed to fetch project.');
     return await response.json();
 };
+
+export const toggleProjectPin = async (
+    projectUid: string,
+    pinned: boolean
+): Promise<Project> => {
+    return updateProject(projectUid, { pin_to_sidebar: pinned });
+};

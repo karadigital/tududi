@@ -5,6 +5,7 @@ const {
     Task,
     TaskEvent,
     RecurringCompletion,
+    Project,
     sequelize,
 } = require('../../models');
 const taskRepository = require('../../repositories/TaskRepository');
@@ -80,6 +81,21 @@ const {
 } = require('./middleware/access');
 
 const { sortTasksByOrder } = require('./operations/sorting');
+
+async function touchProjectTimestamp(projectId) {
+    if (projectId) {
+        try {
+            const project = await Project.findByPk(projectId);
+            if (project) {
+                project.changed('updated_at', true);
+                await project.save();
+            }
+        } catch (error) {
+            logError('Error touching project timestamp:', error);
+            // Don't fail the parent operation if timestamp update fails
+        }
+    }
+}
 
 if (process.env.NODE_ENV === 'development') {
     enableQueryLogging();
@@ -397,6 +413,8 @@ router.post('/task', async (req, res) => {
             logError('Error auto-subscribing department admins:', error);
             // Don't fail task creation if auto-subscription fails
         }
+
+        await touchProjectTimestamp(task.project_id);
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES,
@@ -833,6 +851,11 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
             }
         }
 
+        await touchProjectTimestamp(task.project_id);
+        if (oldValues.project_id && oldValues.project_id !== task.project_id) {
+            await touchProjectTimestamp(oldValues.project_id);
+        }
+
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES,
         });
@@ -897,6 +920,8 @@ router.delete('/task/:uid', requireTaskDeleteAccess, async (req, res) => {
             }
         }
 
+        const projectId = task.project_id;
+
         await sequelize.query('PRAGMA foreign_keys = OFF');
 
         try {
@@ -915,6 +940,8 @@ router.delete('/task/:uid', requireTaskDeleteAccess, async (req, res) => {
         } finally {
             await sequelize.query('PRAGMA foreign_keys = ON');
         }
+
+        await touchProjectTimestamp(projectId);
 
         res.json({ message: 'Task successfully deleted' });
     } catch (error) {
