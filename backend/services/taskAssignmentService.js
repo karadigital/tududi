@@ -5,6 +5,9 @@ const {
     shouldSendTelegramNotification,
 } = require('../utils/notificationPreferences');
 const { getAccess } = require('./permissionsService');
+const {
+    isCriticalPriority,
+} = require('../routes/tasks/utils/critical-validation');
 
 /**
  * Assign a task to a user
@@ -13,7 +16,7 @@ const { getAccess } = require('./permissionsService');
  * @param {number} taskId - Task ID to assign
  * @param {number} assignedToUserId - User ID to assign to
  * @param {number} assignedByUserId - User ID performing the assignment
- * @returns {Promise<Task>} - Updated task with AssignedTo user
+ * @returns {Promise<void>}
  */
 async function assignTask(taskId, assignedToUserId, assignedByUserId) {
     try {
@@ -83,38 +86,6 @@ async function assignTask(taskId, assignedToUserId, assignedByUserId) {
 
         // Send notification to assignee
         await notifyAssignment(task, assignee, task.Owner);
-
-        // Reload task with AssignedTo user
-        const updatedTask = await Task.findByPk(taskId, {
-            include: [
-                {
-                    model: User,
-                    as: 'Owner',
-                    attributes: [
-                        'id',
-                        'uid',
-                        'email',
-                        'name',
-                        'surname',
-                        'avatar_image',
-                    ],
-                },
-                {
-                    model: User,
-                    as: 'AssignedTo',
-                    attributes: [
-                        'id',
-                        'uid',
-                        'email',
-                        'name',
-                        'surname',
-                        'avatar_image',
-                    ],
-                },
-            ],
-        });
-
-        return updatedTask;
     } catch (error) {
         logError('Error assigning task:', error);
         throw error;
@@ -127,7 +98,7 @@ async function assignTask(taskId, assignedToUserId, assignedByUserId) {
  *
  * @param {number} taskId - Task ID to unassign
  * @param {number} unassignedByUserId - User ID performing the unassignment
- * @returns {Promise<Task>} - Updated task
+ * @returns {Promise<void>}
  */
 async function unassignTask(taskId, unassignedByUserId) {
     try {
@@ -169,6 +140,11 @@ async function unassignTask(taskId, unassignedByUserId) {
             throw new Error('Task is not assigned');
         }
 
+        // Critical tasks must always have an assignee
+        if (isCriticalPriority(task.priority)) {
+            throw new Error('Critical tasks must have a due date and assignee');
+        }
+
         const previouslyAssignedUser = task.AssignedTo;
         const previousAssignedToId = task.assigned_to_user_id;
 
@@ -190,38 +166,6 @@ async function unassignTask(taskId, unassignedByUserId) {
         if (previouslyAssignedUser) {
             await notifyUnassignment(task, previouslyAssignedUser, task.Owner);
         }
-
-        // Reload task
-        const updatedTask = await Task.findByPk(taskId, {
-            include: [
-                {
-                    model: User,
-                    as: 'Owner',
-                    attributes: [
-                        'id',
-                        'uid',
-                        'email',
-                        'name',
-                        'surname',
-                        'avatar_image',
-                    ],
-                },
-                {
-                    model: User,
-                    as: 'AssignedTo',
-                    attributes: [
-                        'id',
-                        'uid',
-                        'email',
-                        'name',
-                        'surname',
-                        'avatar_image',
-                    ],
-                },
-            ],
-        });
-
-        return updatedTask;
     } catch (error) {
         logError('Error unassigning task:', error);
         throw error;

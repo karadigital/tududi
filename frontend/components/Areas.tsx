@@ -124,6 +124,14 @@ const Areas: React.FC = () => {
         } catch (error) {
             console.error('Error saving area:', error);
             useStore.getState().areasStore.setError(true);
+            const message = error instanceof Error ? error.message : undefined;
+            showErrorToast(
+                message ||
+                    t(
+                        'errors.failedToSaveArea',
+                        'Failed to save department. You may not have permission.'
+                    )
+            );
         } finally {
             useStore.getState().areasStore.setLoading(false);
         }
