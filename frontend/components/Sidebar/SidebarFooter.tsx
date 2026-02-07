@@ -111,7 +111,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [currentUser]);
+    }, [currentUser?.is_admin]);
 
     const handleDropdownSelect = (type: string) => {
         switch (type) {
