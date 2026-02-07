@@ -1020,11 +1020,12 @@ router.post('/task/:uid/assign', requireTaskWriteAccess, async (req, res) => {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        const updatedTask = await assignTask(
-            task.id,
-            assigned_to_user_id,
-            req.currentUser.id
-        );
+        await assignTask(task.id, assigned_to_user_id, req.currentUser.id);
+
+        // Re-fetch with full includes so the response contains subtasks, tags, etc.
+        const updatedTask = await Task.findByPk(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
 
         const serialized = await serializeTask(
             updatedTask,
@@ -1053,7 +1054,12 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        const updatedTask = await unassignTask(task.id, req.currentUser.id);
+        await unassignTask(task.id, req.currentUser.id);
+
+        // Re-fetch with full includes so the response contains subtasks, tags, etc.
+        const updatedTask = await Task.findByPk(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
 
         const serialized = await serializeTask(
             updatedTask,
