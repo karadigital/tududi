@@ -441,8 +441,9 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
         let isBookmark = false;
 
         try {
-            const { isUrl: detectUrl, extractUrlTitle } =
-                await import('../../utils/urlService');
+            const { isUrl: detectUrl, extractUrlTitle } = await import(
+                '../../utils/urlService'
+            );
 
             if (detectUrl(sourceText.trim())) {
                 setLoading(true);

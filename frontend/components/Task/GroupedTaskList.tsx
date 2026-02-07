@@ -901,7 +901,10 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                                 {dayTasks.length === 0 && (
                                                     <div className="text-center py-8 text-gray-400 dark:text-gray-600">
                                                         <p className="text-sm">
-                                                            No tasks scheduled
+                                                            {t(
+                                                                'tasks.noTasksScheduled',
+                                                                'No tasks scheduled'
+                                                            )}
                                                         </p>
                                                     </div>
                                                 )}
@@ -990,7 +993,8 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                     )}
                                 </span>
                                 <span className="text-xs text-blue-600 dark:text-blue-400">
-                                    {group.instances.length} upcoming
+                                    {group.instances.length}{' '}
+                                    {t('task.upcoming', 'upcoming')}
                                 </span>
                             </div>
                         )}
@@ -1005,7 +1009,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                     {formatRecurrence(
                                         group.template.recurrence_type!
                                     )}{' '}
-                                    instances
+                                    {t('recurrence.instances', 'instances')}
                                 </div>
                                 {group.instances
                                     .sort(

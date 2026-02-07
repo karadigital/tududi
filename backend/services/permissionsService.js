@@ -408,7 +408,14 @@ async function getAccessibleWorkspaceIds(userId) {
          UNION
          SELECT DISTINCT p.workspace_id
          FROM projects p
-         WHERE p.user_id = :userId AND p.workspace_id IS NOT NULL`,
+         WHERE p.user_id = :userId AND p.workspace_id IS NOT NULL
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         INNER JOIN permissions perm ON perm.resource_uid = p.uid
+           AND perm.resource_type = 'project'
+           AND perm.user_id = :userId
+         WHERE p.workspace_id IS NOT NULL`,
         {
             replacements: { userId },
             type: QueryTypes.SELECT,

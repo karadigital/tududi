@@ -588,8 +588,9 @@ const Layout: React.FC<LayoutProps> = ({
                         onSave={handleSaveProject}
                         onDelete={async (projectUid) => {
                             try {
-                                const { deleteProject } =
-                                    await import('./utils/projectsService');
+                                const { deleteProject } = await import(
+                                    './utils/projectsService'
+                                );
                                 await deleteProject(projectUid);
 
                                 // Update global projects store

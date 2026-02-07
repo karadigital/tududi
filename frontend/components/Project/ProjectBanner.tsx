@@ -90,6 +90,7 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                         <BannerBadge>
                             <RectangleStackIcon className="h-3 w-3 text-white/70 flex-shrink-0 mt-0.5" />
                             <button
+                                type="button"
                                 onClick={() =>
                                     navigate(
                                         `/workspaces/${project.Workspace!.uid}`

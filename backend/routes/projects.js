@@ -218,18 +218,26 @@ router.get('/projects', async (req, res) => {
 
         // Filter by workspace
         if (req.query.workspace) {
-            const workspaceUid = req.query.workspace.split('-')[0];
+            const workspaceUid = extractUidFromSlug(req.query.workspace);
+            if (!workspaceUid) {
+                return res
+                    .status(400)
+                    .json({ error: 'Invalid workspace parameter.' });
+            }
             const workspace = await Workspace.findOne({
                 where: { uid: workspaceUid },
             });
-            if (
-                workspace &&
-                (await hasWorkspaceAccess(workspace.id, req.authUserId))
-            ) {
-                whereClause = {
-                    [Op.and]: [whereClause, { workspace_id: workspace.id }],
-                };
+            if (!workspace) {
+                return res.status(404).json({ error: 'Workspace not found.' });
             }
+            if (!(await hasWorkspaceAccess(workspace.id, req.authUserId))) {
+                return res
+                    .status(403)
+                    .json({ error: 'Access denied to this workspace.' });
+            }
+            whereClause = {
+                [Op.and]: [whereClause, { workspace_id: workspace.id }],
+            };
         }
 
         const projects = await Project.findAll({
