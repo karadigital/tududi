@@ -1054,6 +1054,19 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
             return res.status(404).json({ error: 'Task not found' });
         }
 
+        try {
+            validateCriticalPriority(
+                {
+                    priority: task.priority,
+                    due_date: task.due_date,
+                    assigned_to_user_id: null,
+                },
+                task
+            );
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
         await unassignTask(task.id, req.currentUser.id);
 
         // Re-fetch with full includes so the response contains subtasks, tags, etc.
@@ -1071,7 +1084,8 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
 
         if (
             error.message === 'Not authorized to unassign this task' ||
-            error.message === 'Task is not assigned'
+            error.message === 'Task is not assigned' ||
+            error.message === 'Critical tasks must have a due date and assignee'
         ) {
             return res.status(400).json({ error: error.message });
         }
