@@ -55,7 +55,10 @@
     "createNew": "Creează Nou",
     "views": "Vizualizări",
     "unpinView": "Deblochează vizualizarea",
-    "pinView": "Fixează vizualizarea"
+    "pinView": "Fixează vizualizarea",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Acasă",

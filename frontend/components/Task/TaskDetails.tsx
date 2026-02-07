@@ -1472,7 +1472,9 @@ const TaskDetails: React.FC = () => {
                                 />
                                 <TaskAttachmentsCard
                                     taskUid={task.uid}
-                                    onAttachmentsCountChange={setAttachmentCount}
+                                    onAttachmentsCountChange={
+                                        setAttachmentCount
+                                    }
                                 />
                                 <TaskRecurrenceCard
                                     task={task}

@@ -57,6 +57,14 @@ module.exports = (sequelize) => {
                     key: 'id',
                 },
             },
+            workspace_id: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+                references: {
+                    model: 'workspaces',
+                    key: 'id',
+                },
+            },
             image_url: {
                 type: DataTypes.TEXT,
                 allowNull: true,

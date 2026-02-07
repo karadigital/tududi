@@ -55,7 +55,10 @@
     "createNew": "Създай ново",
     "views": "Прегледи",
     "unpinView": "Отпинване на преглед",
-    "pinView": "Прикрепяне на преглед"
+    "pinView": "Прикрепяне на преглед",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Начало",

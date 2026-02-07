@@ -4,6 +4,7 @@ import { Area } from '../entities/Area';
 import { Note } from '../entities/Note';
 import { Task } from '../entities/Task';
 import { Tag } from '../entities/Tag';
+import { Workspace } from '../entities/Workspace';
 import { InboxItem } from '../entities/InboxItem';
 import { getApiPath } from '../config/paths';
 
@@ -27,6 +28,19 @@ interface AreasStore {
     setLoading: (isLoading: boolean) => void;
     setError: (isError: boolean) => void;
     loadAreas: () => Promise<void>;
+}
+
+interface WorkspacesStore {
+    workspaces: Workspace[];
+    currentWorkspace: Workspace | null;
+    isLoading: boolean;
+    isError: boolean;
+    hasLoaded: boolean;
+    setWorkspaces: (workspaces: Workspace[]) => void;
+    setCurrentWorkspace: (workspace: Workspace | null) => void;
+    setLoading: (isLoading: boolean) => void;
+    setError: (isError: boolean) => void;
+    loadWorkspaces: () => Promise<void>;
 }
 
 interface ProjectsStore {
@@ -127,6 +141,7 @@ interface HabitsStore {
 interface StoreState {
     notesStore: NotesStore;
     areasStore: AreasStore;
+    workspacesStore: WorkspacesStore;
     projectsStore: ProjectsStore;
     tagsStore: TagsStore;
     tasksStore: TasksStore;
@@ -228,6 +243,70 @@ export const useStore = create<StoreState>((set: any) => ({
                 set((state) => ({
                     areasStore: {
                         ...state.areasStore,
+                        isError: true,
+                        isLoading: false,
+                        hasLoaded: true,
+                    },
+                }));
+            }
+        },
+    },
+    workspacesStore: {
+        workspaces: [],
+        currentWorkspace: null,
+        isLoading: false,
+        isError: false,
+        hasLoaded: false,
+        setWorkspaces: (workspaces) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, workspaces },
+            })),
+        setCurrentWorkspace: (currentWorkspace) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, currentWorkspace },
+            })),
+        setLoading: (isLoading) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, isLoading },
+            })),
+        setError: (isError) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, isError },
+            })),
+        loadWorkspaces: async () => {
+            const state = useStore.getState();
+            if (state.workspacesStore.isLoading) return;
+
+            const { fetchWorkspaces } = await import(
+                '../utils/workspacesService'
+            );
+
+            set((state) => ({
+                workspacesStore: {
+                    ...state.workspacesStore,
+                    isLoading: true,
+                    isError: false,
+                },
+            }));
+
+            try {
+                const workspaces = await fetchWorkspaces();
+                set((state) => ({
+                    workspacesStore: {
+                        ...state.workspacesStore,
+                        workspaces,
+                        isLoading: false,
+                        hasLoaded: true,
+                    },
+                }));
+            } catch (error) {
+                console.error(
+                    'loadWorkspaces: Failed to load workspaces:',
+                    error
+                );
+                set((state) => ({
+                    workspacesStore: {
+                        ...state.workspacesStore,
                         isError: true,
                         isLoading: false,
                         hasLoaded: true,

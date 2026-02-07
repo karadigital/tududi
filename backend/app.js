@@ -176,6 +176,7 @@ const registerApiRoutes = (basePath) => {
     app.use(basePath, require('./routes/admin'));
     app.use(basePath, require('./routes/shares'));
     app.use(basePath, require('./routes/areas'));
+    app.use(basePath, require('./routes/workspaces'));
     app.use(basePath, require('./routes/notes'));
     app.use(basePath, require('./routes/tags'));
     app.use(basePath, require('./routes/users'));

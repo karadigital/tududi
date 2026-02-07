@@ -9,6 +9,7 @@ import ProjectModal from './components/Project/ProjectModal';
 import NoteModal from './components/Note/NoteModal';
 import AreaModal from './components/Area/AreaModal';
 import TagModal from './components/Tag/TagModal';
+import WorkspaceModal from './components/Workspace/WorkspaceModal';
 import InboxModal from './components/Inbox/InboxModal';
 import TaskModal from './components/Task/TaskModal';
 import { Note } from './entities/Note';
@@ -17,10 +18,12 @@ import { Tag } from './entities/Tag';
 import { Project } from './entities/Project';
 import { Task } from './entities/Task';
 import { User } from './entities/User';
+import { Workspace } from './entities/Workspace';
 import { useStore } from './store/useStore';
 import { createNote, updateNote } from './utils/notesService';
 import { createArea, updateArea } from './utils/areasService';
 import { createTag, updateTag } from './utils/tagsService';
+import { saveWorkspace, deleteWorkspace } from './utils/workspacesService';
 import {
     fetchProjects,
     createProject,
@@ -60,6 +63,7 @@ const Layout: React.FC<LayoutProps> = ({
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+    const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
     const [taskModalType, setTaskModalType] = useState<'simplified' | 'full'>(
         'simplified'
     );
@@ -67,6 +71,8 @@ const Layout: React.FC<LayoutProps> = ({
     const [selectedNote, setSelectedNote] = useState<Note | null>(null);
     const [selectedArea, setSelectedArea] = useState<Area | null>(null);
     const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+    const [selectedWorkspace, setSelectedWorkspace] =
+        useState<Workspace | null>(null);
 
     const {
         notesStore: { isLoading: isNotesLoading, isError: isNotesError },
@@ -171,6 +177,53 @@ const Layout: React.FC<LayoutProps> = ({
     const closeTagModal = () => {
         setIsTagModalOpen(false);
         setSelectedTag(null);
+    };
+
+    const openWorkspaceModal = () => {
+        setSelectedWorkspace(null);
+        setIsWorkspaceModalOpen(true);
+    };
+
+    const closeWorkspaceModal = () => {
+        setIsWorkspaceModalOpen(false);
+        setSelectedWorkspace(null);
+    };
+
+    const handleSaveWorkspace = async (workspaceData: Partial<Workspace>) => {
+        try {
+            await saveWorkspace(workspaceData, () =>
+                useStore.getState().workspacesStore.loadWorkspaces()
+            );
+            closeWorkspaceModal();
+        } catch (error: any) {
+            console.error('Error saving workspace:', error);
+            if (isAuthError(error)) {
+                return;
+            }
+            closeWorkspaceModal();
+        }
+    };
+
+    const handleDeleteWorkspace = async (workspaceUid: string) => {
+        try {
+            await deleteWorkspace(workspaceUid);
+            await useStore.getState().workspacesStore.loadWorkspaces();
+            showSuccessToast(
+                t('success.workspaceDeleted', 'Workspace deleted')
+            );
+            closeWorkspaceModal();
+        } catch (error: any) {
+            console.error('Error deleting workspace:', error);
+            if (isAuthError(error)) {
+                return;
+            }
+            showErrorToast(
+                t(
+                    'errors.failedToDeleteWorkspace',
+                    'Failed to delete workspace'
+                )
+            );
+        }
     };
 
     const handleSaveNote = async (noteData: Note) => {
@@ -406,6 +459,7 @@ const Layout: React.FC<LayoutProps> = ({
                     toggleDarkMode={toggleDarkMode}
                     openTaskModal={openTaskModal}
                     openProjectModal={openProjectModal}
+                    openWorkspaceModal={openWorkspaceModal}
                     openNoteModal={openNoteModal}
                     openAreaModal={openAreaModal}
                     openTagModal={openTagModal}
@@ -442,6 +496,7 @@ const Layout: React.FC<LayoutProps> = ({
                     toggleDarkMode={toggleDarkMode}
                     openTaskModal={openTaskModal}
                     openProjectModal={openProjectModal}
+                    openWorkspaceModal={openWorkspaceModal}
                     openNoteModal={openNoteModal}
                     openAreaModal={openAreaModal}
                     openTagModal={openTagModal}
@@ -478,6 +533,7 @@ const Layout: React.FC<LayoutProps> = ({
                     toggleDarkMode={toggleDarkMode}
                     openTaskModal={openTaskModal}
                     openProjectModal={openProjectModal}
+                    openWorkspaceModal={openWorkspaceModal}
                     openNoteModal={openNoteModal}
                     openAreaModal={openAreaModal}
                     openTagModal={openTagModal}
@@ -597,6 +653,16 @@ const Layout: React.FC<LayoutProps> = ({
                         onClose={closeTagModal}
                         onSave={handleSaveTag}
                         tag={selectedTag}
+                    />
+                )}
+
+                {isWorkspaceModalOpen && (
+                    <WorkspaceModal
+                        isOpen={isWorkspaceModalOpen}
+                        onClose={closeWorkspaceModal}
+                        onSave={handleSaveWorkspace}
+                        onDelete={handleDeleteWorkspace}
+                        workspace={selectedWorkspace}
                     />
                 )}
             </div>

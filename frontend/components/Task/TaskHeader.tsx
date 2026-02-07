@@ -1193,14 +1193,16 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     <span>{getAssigneeDisplayName()}</span>
                                 </div>
                             )}
-                            {subtasksCount !== undefined && subtasksCount > 0 && (
-                                <div className="flex items-center">
-                                    <ListBulletIcon className="h-3 w-3 mr-1" />
-                                    <span>
-                                        {completedSubtasksCount}/{subtasksCount}
-                                    </span>
-                                </div>
-                            )}
+                            {subtasksCount !== undefined &&
+                                subtasksCount > 0 && (
+                                    <div className="flex items-center">
+                                        <ListBulletIcon className="h-3 w-3 mr-1" />
+                                        <span>
+                                            {completedSubtasksCount}/
+                                            {subtasksCount}
+                                        </span>
+                                    </div>
+                                )}
                         </div>
 
                         {onToggleCompletion && (
