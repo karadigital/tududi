@@ -30,6 +30,7 @@ import {
 import { getApiPath } from '../config/paths';
 import { getCurrentUser } from '../utils/userUtils';
 import MultiSelectFilterDropdown from './Shared/MultiSelectFilterDropdown';
+import DateRangeFilterDropdown from './Shared/DateRangeFilterDropdown';
 import {
     filterTasksByRecurrence,
     RecurrenceFilterValue,
@@ -84,6 +85,9 @@ const Tasks: React.FC = () => {
     const [selectedRecurrenceFilters, setSelectedRecurrenceFilters] = useState<
         RecurrenceFilterValue[]
     >([]);
+    const [dateField, setDateField] = useState<'due_date' | 'created_at' | 'completed_at'>('due_date');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
 
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(false);
@@ -275,6 +279,20 @@ const Tasks: React.FC = () => {
         } else {
             setSelectedRecurrenceFilters([]);
         }
+    }, [location.search]);
+
+    useEffect(() => {
+        const dateFieldParam = query.get('date_field');
+        const dateFromParam = query.get('date_from');
+        const dateToParam = query.get('date_to');
+
+        if (dateFieldParam === 'due_date' || dateFieldParam === 'created_at' || dateFieldParam === 'completed_at') {
+            setDateField(dateFieldParam);
+        } else {
+            setDateField('due_date');
+        }
+        setDateFrom(dateFromParam || '');
+        setDateTo(dateToParam || '');
     }, [location.search]);
 
     useEffect(() => {
@@ -732,6 +750,40 @@ const Tasks: React.FC = () => {
             params.delete('recurrence');
         } else {
             params.set('recurrence', values.join(','));
+        }
+
+        navigate(
+            {
+                pathname: location.pathname,
+                search: `?${params.toString()}`,
+            },
+            { replace: true }
+        );
+    };
+
+    const handleDateFilterChange = (
+        field: 'due_date' | 'created_at' | 'completed_at',
+        from: string,
+        to: string
+    ) => {
+        const params = new URLSearchParams(location.search);
+
+        if (!from && !to) {
+            params.delete('date_field');
+            params.delete('date_from');
+            params.delete('date_to');
+        } else {
+            params.set('date_field', field);
+            if (from) {
+                params.set('date_from', from);
+            } else {
+                params.delete('date_from');
+            }
+            if (to) {
+                params.set('date_to', to);
+            } else {
+                params.delete('date_to');
+            }
         }
 
         navigate(
@@ -1214,6 +1266,23 @@ const Tasks: React.FC = () => {
                                     'tasks.recurrenceFilter.selected',
                                     '{{count}} types selected'
                                 )}
+                            />
+                            <DateRangeFilterDropdown
+                                dateField={dateField}
+                                dateFrom={dateFrom}
+                                dateTo={dateTo}
+                                onDateFieldChange={(field) =>
+                                    handleDateFilterChange(field, dateFrom, dateTo)
+                                }
+                                onDateFromChange={(from) =>
+                                    handleDateFilterChange(dateField, from, dateTo)
+                                }
+                                onDateToChange={(to) =>
+                                    handleDateFilterChange(dateField, dateFrom, to)
+                                }
+                                onClear={() =>
+                                    handleDateFilterChange(dateField, '', '')
+                                }
                             />
                         </div>
 
