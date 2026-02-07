@@ -5,6 +5,9 @@ const {
     shouldSendTelegramNotification,
 } = require('../utils/notificationPreferences');
 const { getAccess } = require('./permissionsService');
+const {
+    isCriticalPriority,
+} = require('../routes/tasks/utils/critical-validation');
 
 /**
  * Assign a task to a user
@@ -135,6 +138,13 @@ async function unassignTask(taskId, unassignedByUserId) {
 
         if (!task.assigned_to_user_id) {
             throw new Error('Task is not assigned');
+        }
+
+        // Critical tasks must always have an assignee
+        if (isCriticalPriority(task.priority)) {
+            throw new Error(
+                'Critical tasks must have a due date and assignee'
+            );
         }
 
         const previouslyAssignedUser = task.AssignedTo;
