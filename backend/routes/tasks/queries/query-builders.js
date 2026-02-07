@@ -12,7 +12,6 @@ const {
     getSafeTimezone,
     getUpcomingRangeInUTC,
     getTodayBoundsInUTC,
-    getDayBoundsInUTC,
     dateStringToUTC,
 } = require('../../../utils/timezone-utils');
 
@@ -339,33 +338,43 @@ async function filterTasksByParams(
         whereClause.priority = Task.getPriorityValue(params.priority);
     }
 
-    // Date range filter
+    // Date range filter (only for All Tasks view — avoid overwriting view-specific date constraints)
     const allowedDateFields = ['due_date', 'created_at', 'completed_at'];
+    const dateFormatRegex = /^\d{4}-\d{2}-\d{2}$/;
+    const validDateFrom =
+        params.date_from && dateFormatRegex.test(params.date_from)
+            ? params.date_from
+            : null;
+    const validDateTo =
+        params.date_to && dateFormatRegex.test(params.date_to)
+            ? params.date_to
+            : null;
     if (
+        (!params.type || params.type === 'all') &&
         params.date_field &&
         allowedDateFields.includes(params.date_field) &&
-        (params.date_from || params.date_to)
+        (validDateFrom || validDateTo)
     ) {
         const safeTimezone = getSafeTimezone(userTimezone);
         const dateConditions = {};
 
-        if (params.date_from && params.date_to) {
+        if (validDateFrom && validDateTo) {
             const fromStart = dateStringToUTC(
-                params.date_from,
+                validDateFrom,
                 safeTimezone,
                 'start'
             );
-            const toEnd = dateStringToUTC(params.date_to, safeTimezone, 'end');
+            const toEnd = dateStringToUTC(validDateTo, safeTimezone, 'end');
             dateConditions[Op.between] = [fromStart, toEnd];
-        } else if (params.date_from) {
+        } else if (validDateFrom) {
             const fromStart = dateStringToUTC(
-                params.date_from,
+                validDateFrom,
                 safeTimezone,
                 'start'
             );
             dateConditions[Op.gte] = fromStart;
-        } else if (params.date_to) {
-            const toEnd = dateStringToUTC(params.date_to, safeTimezone, 'end');
+        } else if (validDateTo) {
+            const toEnd = dateStringToUTC(validDateTo, safeTimezone, 'end');
             dateConditions[Op.lte] = toEnd;
         }
 

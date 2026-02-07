@@ -133,5 +133,24 @@ describe('Task Date Range Filter', () => {
             expect(names).toContain('March 10 task');
             expect(names).not.toContain('March 5 task');
         });
+
+        it('should ignore malformed date strings', async () => {
+            const res = await agent.get(
+                '/api/v1/tasks?date_field=due_date&date_from=not-a-date&date_to=also-bad'
+            );
+            expect(res.status).toBe(200);
+            // Both dates malformed, filter not applied, all tasks returned
+            expect(res.body.tasks.length).toBe(4);
+        });
+
+        it('should not apply date filter for non-all view types', async () => {
+            const res = await agent.get(
+                '/api/v1/tasks?type=someday&date_field=due_date&date_from=2025-03-01&date_to=2025-03-15'
+            );
+            expect(res.status).toBe(200);
+            // The someday view returns tasks with no due date; date filter should not override this
+            const names = res.body.tasks.map((t) => t.name);
+            expect(names).toContain('No due date task');
+        });
     });
 });
