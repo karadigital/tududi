@@ -18,7 +18,7 @@ const {
  * @param {number} taskId - Task ID to subscribe to
  * @param {number} subscriberUserId - User ID to subscribe
  * @param {number} subscribedByUserId - User ID performing the subscription
- * @returns {Promise<Task>} - Updated task with Subscribers
+ * @returns {Promise<void>}
  */
 async function subscribeToTask(taskId, subscriberUserId, subscribedByUserId) {
     try {
@@ -88,27 +88,6 @@ async function subscribeToTask(taskId, subscriberUserId, subscribedByUserId) {
             propagation: 'subscription',
             granted_by_user_id: subscribedByUserId,
         });
-
-        // Reload task with updated subscribers
-        await task.reload({
-            include: [
-                {
-                    model: User,
-                    as: 'Subscribers',
-                    attributes: [
-                        'id',
-                        'uid',
-                        'email',
-                        'name',
-                        'surname',
-                        'avatar_image',
-                    ],
-                    through: { attributes: [] },
-                },
-            ],
-        });
-
-        return task;
     } catch (error) {
         logError('Error subscribing to task:', error);
         throw error;
@@ -122,7 +101,7 @@ async function subscribeToTask(taskId, subscriberUserId, subscribedByUserId) {
  * @param {number} taskId - Task ID to unsubscribe from
  * @param {number} subscriberUserId - User ID to unsubscribe
  * @param {number} unsubscribedByUserId - User ID performing the unsubscription
- * @returns {Promise<Task>} - Updated task
+ * @returns {Promise<void>}
  */
 async function unsubscribeFromTask(
     taskId,
@@ -174,27 +153,6 @@ async function unsubscribeFromTask(
                 propagation: 'subscription',
             },
         });
-
-        // Reload task with updated subscribers
-        await task.reload({
-            include: [
-                {
-                    model: User,
-                    as: 'Subscribers',
-                    attributes: [
-                        'id',
-                        'uid',
-                        'email',
-                        'name',
-                        'surname',
-                        'avatar_image',
-                    ],
-                    through: { attributes: [] },
-                },
-            ],
-        });
-
-        return task;
     } catch (error) {
         logError('Error unsubscribing from task:', error);
         throw error;
