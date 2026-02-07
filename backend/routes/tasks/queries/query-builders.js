@@ -12,6 +12,8 @@ const {
     getSafeTimezone,
     getUpcomingRangeInUTC,
     getTodayBoundsInUTC,
+    getDayBoundsInUTC,
+    dateStringToUTC,
 } = require('../../../utils/timezone-utils');
 
 async function filterTasksByParams(
@@ -335,6 +337,34 @@ async function filterTasksByParams(
 
     if (params.priority) {
         whereClause.priority = Task.getPriorityValue(params.priority);
+    }
+
+    // Date range filter
+    const allowedDateFields = ['due_date', 'created_at', 'completed_at'];
+    if (
+        params.date_field &&
+        allowedDateFields.includes(params.date_field) &&
+        (params.date_from || params.date_to)
+    ) {
+        const safeTimezone = getSafeTimezone(userTimezone);
+        const dateConditions = {};
+
+        if (params.date_from && params.date_to) {
+            const fromStart = dateStringToUTC(params.date_from, safeTimezone, 'start');
+            const toEnd = dateStringToUTC(params.date_to, safeTimezone, 'end');
+            dateConditions[Op.between] = [fromStart, toEnd];
+        } else if (params.date_from) {
+            const fromStart = dateStringToUTC(params.date_from, safeTimezone, 'start');
+            dateConditions[Op.gte] = fromStart;
+        } else if (params.date_to) {
+            const toEnd = dateStringToUTC(params.date_to, safeTimezone, 'end');
+            dateConditions[Op.lte] = toEnd;
+        }
+
+        whereClause[params.date_field] = {
+            ...dateConditions,
+            [Op.ne]: null,
+        };
     }
 
     if (params.assigned_to_me === 'true' || params.assigned_to_me === true) {
