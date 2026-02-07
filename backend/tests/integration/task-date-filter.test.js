@@ -93,7 +93,9 @@ describe('Task Date Range Filter', () => {
 
         it('should filter by completed_at field', async () => {
             // Complete a task first
-            const task = await Task.findOne({ where: { name: 'March 5 task' } });
+            const task = await Task.findOne({
+                where: { name: 'March 5 task' },
+            });
             await task.update({
                 status: 2,
                 completed_at: new Date('2025-03-06T10:00:00Z'),
@@ -118,7 +120,9 @@ describe('Task Date Range Filter', () => {
         });
 
         it('should work together with status filter', async () => {
-            const task = await Task.findOne({ where: { name: 'March 5 task' } });
+            const task = await Task.findOne({
+                where: { name: 'March 5 task' },
+            });
             await task.update({ status: 2 });
 
             const res = await agent.get(

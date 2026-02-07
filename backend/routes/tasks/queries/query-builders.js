@@ -350,11 +350,19 @@ async function filterTasksByParams(
         const dateConditions = {};
 
         if (params.date_from && params.date_to) {
-            const fromStart = dateStringToUTC(params.date_from, safeTimezone, 'start');
+            const fromStart = dateStringToUTC(
+                params.date_from,
+                safeTimezone,
+                'start'
+            );
             const toEnd = dateStringToUTC(params.date_to, safeTimezone, 'end');
             dateConditions[Op.between] = [fromStart, toEnd];
         } else if (params.date_from) {
-            const fromStart = dateStringToUTC(params.date_from, safeTimezone, 'start');
+            const fromStart = dateStringToUTC(
+                params.date_from,
+                safeTimezone,
+                'start'
+            );
             dateConditions[Op.gte] = fromStart;
         } else if (params.date_to) {
             const toEnd = dateStringToUTC(params.date_to, safeTimezone, 'end');

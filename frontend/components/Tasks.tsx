@@ -85,7 +85,9 @@ const Tasks: React.FC = () => {
     const [selectedRecurrenceFilters, setSelectedRecurrenceFilters] = useState<
         RecurrenceFilterValue[]
     >([]);
-    const [dateField, setDateField] = useState<'due_date' | 'created_at' | 'completed_at'>('due_date');
+    const [dateField, setDateField] = useState<
+        'due_date' | 'created_at' | 'completed_at'
+    >('due_date');
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
 
@@ -286,7 +288,11 @@ const Tasks: React.FC = () => {
         const dateFromParam = query.get('date_from');
         const dateToParam = query.get('date_to');
 
-        if (dateFieldParam === 'due_date' || dateFieldParam === 'created_at' || dateFieldParam === 'completed_at') {
+        if (
+            dateFieldParam === 'due_date' ||
+            dateFieldParam === 'created_at' ||
+            dateFieldParam === 'completed_at'
+        ) {
             setDateField(dateFieldParam);
         } else {
             setDateField('due_date');
@@ -1272,13 +1278,25 @@ const Tasks: React.FC = () => {
                                 dateFrom={dateFrom}
                                 dateTo={dateTo}
                                 onDateFieldChange={(field) =>
-                                    handleDateFilterChange(field, dateFrom, dateTo)
+                                    handleDateFilterChange(
+                                        field,
+                                        dateFrom,
+                                        dateTo
+                                    )
                                 }
                                 onDateFromChange={(from) =>
-                                    handleDateFilterChange(dateField, from, dateTo)
+                                    handleDateFilterChange(
+                                        dateField,
+                                        from,
+                                        dateTo
+                                    )
                                 }
                                 onDateToChange={(to) =>
-                                    handleDateFilterChange(dateField, dateFrom, to)
+                                    handleDateFilterChange(
+                                        dateField,
+                                        dateFrom,
+                                        to
+                                    )
                                 }
                                 onClear={() =>
                                     handleDateFilterChange(dateField, '', '')
