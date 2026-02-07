@@ -200,7 +200,7 @@ const Layout: React.FC<LayoutProps> = ({
             if (isAuthError(error)) {
                 return;
             }
-            throw error;
+            closeWorkspaceModal();
         }
     };
 

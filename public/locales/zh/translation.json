@@ -424,9 +424,7 @@
     "deleteProject": {
       "title": "删除项目",
       "message": "您确定要删除项目 \"{{projectName}}\" 吗？"
-    },
-    "createWorkspace": "Create Workspace",
-    "updateWorkspace": "Update Workspace"
+    }
   },
   "forms": {
     "title": "标题",
@@ -497,8 +495,7 @@
     "tagInputPlaceholder": "输入以添加标签",
     "createTagOption": "+ 创建 \"{{tagName}}\"",
     "removeTagAriaLabel": "移除标签 {{tagName}}",
-    "projectDescriptionPlaceholder": "输入项目描述",
-    "workspaceNamePlaceholder": "Enter workspace name"
+    "projectDescriptionPlaceholder": "输入项目描述"
   },
   "auth": {
     "login": "登录",
@@ -596,9 +593,7 @@
     "projectImageTooLarge": "图片太大。请选取一个小于10MB的文件。",
     "projectImageUpload": "上传图片失败。请尝试一个更小的文件或不同的格式。",
     "bannerSaveFailed": "保存横幅失败",
-    "critical_requires_fields": "紧急任务必须有截止日期和负责人",
-    "workspaceNameRequired": "Workspace name is required.",
-    "failedToSaveWorkspace": "Failed to save workspace."
+    "critical_requires_fields": "紧急任务必须有截止日期和负责人"
   },
   "inbox": {
     "title": "收件箱",
@@ -678,30 +673,7 @@
     "taskUpdated": "任务更新成功！",
     "taskDeleted": "任务删除成功！",
     "noteDeleted": "笔记删除成功！",
-    "bannerUpdated": "横幅更新成功！",
-    "workspaceCreated": "Workspace created successfully!",
-    "workspaceUpdated": "Workspace updated successfully!"
-  },
-  "workspaces": {
-    "title": "Workspaces",
-    "newWorkspace": "New Workspace",
-    "editWorkspace": "Edit Workspace",
-    "name": "Name",
-    "namePlaceholder": "Workspace name",
-    "noWorkspacesFound": "No workspaces found.",
-    "errorSaving": "Error saving workspace",
-    "deletedSuccessfully": "Workspace deleted successfully",
-    "failedToDelete": "Failed to delete workspace.",
-    "deleteWorkspace": "Delete Workspace",
-    "deleteConfirmation": "Are you sure you want to delete this workspace?",
-    "createWorkspace": "Create workspace",
-    "edit": "Edit",
-    "delete": "Delete",
-    "toggleDropdownMenu": "Toggle dropdown menu",
-    "notFound": "Workspace not found.",
-    "addExistingProject": "Add Existing Project",
-    "createNewProject": "Create New Project",
-    "noAvailableProjects": "No available projects"
+    "bannerUpdated": "横幅更新成功！"
   },
   "note": {
     "title": "标题",

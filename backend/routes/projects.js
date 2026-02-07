@@ -559,12 +559,17 @@ router.post('/project', async (req, res) => {
                 where: { uid: workspace_uid },
             });
             if (ws) workspace_id = ws.id;
-            else return res.status(400).json({ error: 'Invalid workspace.' });
+            else
+                return res
+                    .status(403)
+                    .json({ error: 'Access denied to this workspace.' });
         }
 
         if (workspace_id) {
             if (!(await hasWorkspaceAccess(workspace_id, req.authUserId))) {
-                return res.status(400).json({ error: 'Invalid workspace.' });
+                return res
+                    .status(403)
+                    .json({ error: 'Access denied to this workspace.' });
             }
         }
 
@@ -663,9 +668,9 @@ router.patch(
                     });
                     if (ws) workspace_id = ws.id;
                     else
-                        return res
-                            .status(400)
-                            .json({ error: 'Invalid workspace.' });
+                        return res.status(403).json({
+                            error: 'Access denied to this workspace.',
+                        });
                 } else {
                     workspace_id = null;
                 }
@@ -681,8 +686,8 @@ router.patch(
                     !(await hasWorkspaceAccess(workspace_id, req.authUserId))
                 ) {
                     return res
-                        .status(400)
-                        .json({ error: 'Invalid workspace.' });
+                        .status(403)
+                        .json({ error: 'Access denied to this workspace.' });
                 }
                 updateData.workspace_id = workspace_id;
             }

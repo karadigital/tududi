@@ -424,9 +424,7 @@
     "deleteProject": {
       "title": "Изтриване на проект",
       "message": "Сигурни ли сте, че искате да изтриете проекта \"{{projectName}}\"?"
-    },
-    "createWorkspace": "Create Workspace",
-    "updateWorkspace": "Update Workspace"
+    }
   },
   "forms": {
     "title": "Заглавие",
@@ -497,8 +495,7 @@
     "tagInputPlaceholder": "Напишете, за да добавите етикет",
     "createTagOption": "+ Създайте \"{{tagName}}\"",
     "removeTagAriaLabel": "Премахнете етикет {{tagName}}",
-    "projectDescriptionPlaceholder": "Въведете описание на проекта",
-    "workspaceNamePlaceholder": "Enter workspace name"
+    "projectDescriptionPlaceholder": "Въведете описание на проекта"
   },
   "auth": {
     "login": "Вход",
@@ -596,9 +593,7 @@
     "projectImageTooLarge": "Изображението е твърде голямо. Моля, изберете файл под 10MB.",
     "projectImageUpload": "Неуспешно качване на изображение. Моля, опитайте с по-малък файл или различен формат.",
     "bannerSaveFailed": "Неуспешно запазване на банера",
-    "critical_requires_fields": "Critical tasks must have a due date and assignee",
-    "workspaceNameRequired": "Workspace name is required.",
-    "failedToSaveWorkspace": "Failed to save workspace."
+    "critical_requires_fields": "Critical tasks must have a due date and assignee"
   },
   "inbox": {
     "title": "Входяща поща",
@@ -678,30 +673,7 @@
     "taskUpdated": "Задачата е актуализирана успешно!",
     "taskDeleted": "Задачата е изтрита успешно!",
     "noteDeleted": "Бележката беше изтрита успешно!",
-    "bannerUpdated": "Банерът е актуализиран успешно!",
-    "workspaceCreated": "Workspace created successfully!",
-    "workspaceUpdated": "Workspace updated successfully!"
-  },
-  "workspaces": {
-    "title": "Workspaces",
-    "newWorkspace": "New Workspace",
-    "editWorkspace": "Edit Workspace",
-    "name": "Name",
-    "namePlaceholder": "Workspace name",
-    "noWorkspacesFound": "No workspaces found.",
-    "errorSaving": "Error saving workspace",
-    "deletedSuccessfully": "Workspace deleted successfully",
-    "failedToDelete": "Failed to delete workspace.",
-    "deleteWorkspace": "Delete Workspace",
-    "deleteConfirmation": "Are you sure you want to delete this workspace?",
-    "createWorkspace": "Create workspace",
-    "edit": "Edit",
-    "delete": "Delete",
-    "toggleDropdownMenu": "Toggle dropdown menu",
-    "notFound": "Workspace not found.",
-    "addExistingProject": "Add Existing Project",
-    "createNewProject": "Create New Project",
-    "noAvailableProjects": "No available projects"
+    "bannerUpdated": "Банерът е актуализиран успешно!"
   },
   "note": {
     "title": "Заглавие",

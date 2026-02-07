@@ -926,106 +926,26 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
             {renderGroupedContent()}
 
             {/* Grouped recurring tasks */}
-            {recurringGroups.map((group) => {
-                const isVirtualTemplate = (group.template as any)
-                    .isVirtualTemplate;
-                const isExpanded =
-                    expandedRecurringGroups.has(group.template.id!) ||
-                    isVirtualTemplate; // Auto-expand virtual templates
+            {groupBy === 'none' &&
+                recurringGroups.map((group) => {
+                    const isVirtualTemplate = (group.template as any)
+                        .isVirtualTemplate;
+                    const isExpanded =
+                        expandedRecurringGroups.has(group.template.id!) ||
+                        isVirtualTemplate; // Auto-expand virtual templates
 
-                return (
-                    <div
-                        key={group.template.id}
-                        className="recurring-task-group mb-2"
-                    >
-                        {/* Show template only if it's not virtual */}
-                        {!isVirtualTemplate && (
-                            <div className="relative">
-                                <div className="flex items-center">
-                                    <div className="flex-1">
-                                        <TaskItem
-                                            task={group.template}
-                                            onTaskUpdate={onTaskUpdate}
-                                            onTaskCompletionToggle={
-                                                onTaskCompletionToggle
-                                            }
-                                            onTaskDelete={onTaskDelete}
-                                            projects={projects}
-                                            hideProjectName={hideProjectName}
-                                            onToggleToday={onToggleToday}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Recurring instances count and expand button */}
-                                {group.instances.length > 0 && (
-                                    <button
-                                        onClick={() =>
-                                            toggleRecurringGroup(
-                                                group.template.id!
-                                            )
-                                        }
-                                        className="absolute top-3 right-3 flex items-center space-x-2 px-3 py-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                                    >
-                                        <ArrowPathIcon className="h-3 w-3" />
-                                        <span>
-                                            {group.instances.length}{' '}
-                                            {t('task.upcoming', 'upcoming')}
-                                        </span>
-                                        {isExpanded ? (
-                                            <ChevronDownIcon className="h-3 w-3" />
-                                        ) : (
-                                            <ChevronRightIcon className="h-3 w-3" />
-                                        )}
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
-                        {/* For virtual templates, show a simple header */}
-                        {isVirtualTemplate && group.instances.length > 0 && (
-                            <div className="mb-2 flex items-center space-x-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                                <ArrowPathIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                    {group.template.name} -{' '}
-                                    {formatRecurrence(
-                                        group.template.recurrence_type!
-                                    )}
-                                </span>
-                                <span className="text-xs text-blue-600 dark:text-blue-400">
-                                    {group.instances.length}{' '}
-                                    {t('task.upcoming', 'upcoming')}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* Expanded instances */}
-                        {isExpanded && group.instances.length > 0 && (
-                            <div
-                                className={`mt-2 space-y-1.5 border-l-2 border-blue-200 dark:border-blue-800 pl-4 ${!isVirtualTemplate ? 'ml-8' : 'ml-4'}`}
-                            >
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 flex items-center">
-                                    <ArrowPathIcon className="h-3 w-3 mr-1" />
-                                    {formatRecurrence(
-                                        group.template.recurrence_type!
-                                    )}{' '}
-                                    {t('recurrence.instances', 'instances')}
-                                </div>
-                                {group.instances
-                                    .sort(
-                                        (a, b) =>
-                                            new Date(
-                                                a.due_date || ''
-                                            ).getTime() -
-                                            new Date(b.due_date || '').getTime()
-                                    )
-                                    .map((instance) => (
-                                        <div
-                                            key={instance.id}
-                                            className="opacity-75 hover:opacity-100 transition-opacity"
-                                        >
+                    return (
+                        <div
+                            key={group.template.id}
+                            className="recurring-task-group mb-2"
+                        >
+                            {/* Show template only if it's not virtual */}
+                            {!isVirtualTemplate && (
+                                <div className="relative">
+                                    <div className="flex items-center">
+                                        <div className="flex-1">
                                             <TaskItem
-                                                task={instance}
+                                                task={group.template}
                                                 onTaskUpdate={onTaskUpdate}
                                                 onTaskCompletionToggle={
                                                     onTaskCompletionToggle
@@ -1038,12 +958,100 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                                 onToggleToday={onToggleToday}
                                             />
                                         </div>
-                                    ))}
-                            </div>
-                        )}
-                    </div>
-                );
-            })}
+                                    </div>
+
+                                    {/* Recurring instances count and expand button */}
+                                    {group.instances.length > 0 && (
+                                        <button
+                                            onClick={() =>
+                                                toggleRecurringGroup(
+                                                    group.template.id!
+                                                )
+                                            }
+                                            className="absolute top-3 right-3 flex items-center space-x-2 px-3 py-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                                        >
+                                            <ArrowPathIcon className="h-3 w-3" />
+                                            <span>
+                                                {group.instances.length}{' '}
+                                                {t('task.upcoming', 'upcoming')}
+                                            </span>
+                                            {isExpanded ? (
+                                                <ChevronDownIcon className="h-3 w-3" />
+                                            ) : (
+                                                <ChevronRightIcon className="h-3 w-3" />
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* For virtual templates, show a simple header */}
+                            {isVirtualTemplate &&
+                                group.instances.length > 0 && (
+                                    <div className="mb-2 flex items-center space-x-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                        <ArrowPathIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                            {group.template.name} -{' '}
+                                            {formatRecurrence(
+                                                group.template.recurrence_type!
+                                            )}
+                                        </span>
+                                        <span className="text-xs text-blue-600 dark:text-blue-400">
+                                            {group.instances.length}{' '}
+                                            {t('task.upcoming', 'upcoming')}
+                                        </span>
+                                    </div>
+                                )}
+
+                            {/* Expanded instances */}
+                            {isExpanded && group.instances.length > 0 && (
+                                <div
+                                    className={`mt-2 space-y-1.5 border-l-2 border-blue-200 dark:border-blue-800 pl-4 ${!isVirtualTemplate ? 'ml-8' : 'ml-4'}`}
+                                >
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 flex items-center">
+                                        <ArrowPathIcon className="h-3 w-3 mr-1" />
+                                        {formatRecurrence(
+                                            group.template.recurrence_type!
+                                        )}{' '}
+                                        {t('recurrence.instances', 'instances')}
+                                    </div>
+                                    {group.instances
+                                        .sort(
+                                            (a, b) =>
+                                                new Date(
+                                                    a.due_date || ''
+                                                ).getTime() -
+                                                new Date(
+                                                    b.due_date || ''
+                                                ).getTime()
+                                        )
+                                        .map((instance) => (
+                                            <div
+                                                key={instance.id}
+                                                className="opacity-75 hover:opacity-100 transition-opacity"
+                                            >
+                                                <TaskItem
+                                                    task={instance}
+                                                    onTaskUpdate={onTaskUpdate}
+                                                    onTaskCompletionToggle={
+                                                        onTaskCompletionToggle
+                                                    }
+                                                    onTaskDelete={onTaskDelete}
+                                                    projects={projects}
+                                                    hideProjectName={
+                                                        hideProjectName
+                                                    }
+                                                    onToggleToday={
+                                                        onToggleToday
+                                                    }
+                                                />
+                                            </div>
+                                        ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
 
             {standaloneTask.length === 0 &&
                 recurringGroups.length === 0 &&

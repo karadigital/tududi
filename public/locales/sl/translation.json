@@ -424,9 +424,7 @@
     "deleteProject": {
       "title": "Izbriši projekt",
       "message": "Ali ste prepričani, da želite izbrisati projekt \"{{projectName}}\"?"
-    },
-    "createWorkspace": "Create Workspace",
-    "updateWorkspace": "Update Workspace"
+    }
   },
   "forms": {
     "title": "Naslov",
@@ -497,8 +495,7 @@
     "tagInputPlaceholder": "Vtipkajte za dodajanje oznake",
     "createTagOption": "+ Ustvari \"{{tagName}}\"",
     "removeTagAriaLabel": "Odstrani oznako {{tagName}}",
-    "projectDescriptionPlaceholder": "Vnesite opis projekta",
-    "workspaceNamePlaceholder": "Enter workspace name"
+    "projectDescriptionPlaceholder": "Vnesite opis projekta"
   },
   "auth": {
     "login": "Prijava",
@@ -596,9 +593,7 @@
     "projectImageTooLarge": "Slika je prevelika. Izberite datoteko, ki je manjša od 10 MB.",
     "projectImageUpload": "Nalaganje slike ni uspelo. Poskusite z manjšo datoteko ali drugačnim formatom.",
     "bannerSaveFailed": "Shranjevanje bannerja ni uspelo",
-    "critical_requires_fields": "Kritične naloge morajo imeti rok in odgovorno osebo",
-    "workspaceNameRequired": "Workspace name is required.",
-    "failedToSaveWorkspace": "Failed to save workspace."
+    "critical_requires_fields": "Kritične naloge morajo imeti rok in odgovorno osebo"
   },
   "inbox": {
     "title": "Prejeto",
@@ -678,30 +673,7 @@
     "taskUpdated": "Naloga uspešno posodobljena!",
     "taskDeleted": "Naloga uspešno izbrisana!",
     "noteDeleted": "Opomba je bila uspešno izbrisana!",
-    "bannerUpdated": "Banner je bil uspešno posodobljen!",
-    "workspaceCreated": "Workspace created successfully!",
-    "workspaceUpdated": "Workspace updated successfully!"
-  },
-  "workspaces": {
-    "title": "Workspaces",
-    "newWorkspace": "New Workspace",
-    "editWorkspace": "Edit Workspace",
-    "name": "Name",
-    "namePlaceholder": "Workspace name",
-    "noWorkspacesFound": "No workspaces found.",
-    "errorSaving": "Error saving workspace",
-    "deletedSuccessfully": "Workspace deleted successfully",
-    "failedToDelete": "Failed to delete workspace.",
-    "deleteWorkspace": "Delete Workspace",
-    "deleteConfirmation": "Are you sure you want to delete this workspace?",
-    "createWorkspace": "Create workspace",
-    "edit": "Edit",
-    "delete": "Delete",
-    "toggleDropdownMenu": "Toggle dropdown menu",
-    "notFound": "Workspace not found.",
-    "addExistingProject": "Add Existing Project",
-    "createNewProject": "Create New Project",
-    "noAvailableProjects": "No available projects"
+    "bannerUpdated": "Banner je bil uspešno posodobljen!"
   },
   "note": {
     "title": "Naslov",

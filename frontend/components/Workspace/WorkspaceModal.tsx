@@ -3,6 +3,7 @@ import { Workspace } from '../../entities/Workspace';
 import { useToast } from '../Shared/ToastContext';
 import { useTranslation } from 'react-i18next';
 import DiscardChangesDialog from '../Shared/DiscardChangesDialog';
+import ConfirmDialog from '../Shared/ConfirmDialog';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface WorkspaceModalProps {
@@ -26,6 +27,7 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const nameInputRef = useRef<HTMLInputElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -162,6 +164,19 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
         }
     };
 
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
+    };
+
+    const handleConfirmDelete = () => {
+        setShowDeleteConfirm(false);
+        handleDeleteWorkspace();
+    };
+
+    const handleCancelDelete = () => {
+        setShowDeleteConfirm(false);
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -226,7 +241,7 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                                         {workspace?.uid && onDelete && (
                                             <button
                                                 type="button"
-                                                onClick={handleDeleteWorkspace}
+                                                onClick={handleDeleteClick}
                                                 className="p-2 border border-red-300 dark:border-red-600 text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 focus:outline-none transition duration-150 ease-in-out"
                                                 title={t(
                                                     'common.delete',
@@ -272,6 +287,20 @@ const WorkspaceModal: React.FC<WorkspaceModalProps> = ({
                 <DiscardChangesDialog
                     onDiscard={handleDiscardChanges}
                     onCancel={handleCancelDiscard}
+                />
+            )}
+            {showDeleteConfirm && (
+                <ConfirmDialog
+                    title={t(
+                        'workspaces.deleteConfirmTitle',
+                        'Delete workspace?'
+                    )}
+                    message={t(
+                        'workspaces.deleteConfirmMessage',
+                        'This will delete the workspace and remove it from all associated projects. This action cannot be undone.'
+                    )}
+                    onConfirm={handleConfirmDelete}
+                    onCancel={handleCancelDelete}
                 />
             )}
         </>
