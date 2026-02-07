@@ -523,7 +523,9 @@ describe('Task Attachments Routes', () => {
             // Clean up only the specific test file, not the entire directory
             // (other test workers may have files in the same directory)
             try {
-                await fs.unlink(path.join(uploadPath, 'task-download-test.pdf'));
+                await fs.unlink(
+                    path.join(uploadPath, 'task-download-test.pdf')
+                );
             } catch (error) {
                 // Ignore errors
             }

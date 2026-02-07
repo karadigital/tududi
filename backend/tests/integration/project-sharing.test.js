@@ -423,7 +423,10 @@ describe('Project Sharing Integration Tests', () => {
             const path = require('path');
             const fs = require('fs').promises;
             const uploadPath = path.join(__dirname, '../../uploads/tasks');
-            for (const filename of ['task-download-shared.pdf', 'task-ro-download.pdf']) {
+            for (const filename of [
+                'task-download-shared.pdf',
+                'task-ro-download.pdf',
+            ]) {
                 try {
                     await fs.unlink(path.join(uploadPath, filename));
                 } catch (error) {
