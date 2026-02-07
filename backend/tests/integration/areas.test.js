@@ -37,9 +37,7 @@ describe('/api/departments', () => {
                 .send({ name: 'Blocked Department' });
 
             expect(response.status).toBe(403);
-            expect(response.body.error).toBe(
-                'Only administrators can create departments'
-            );
+            expect(response.body.error).toBe('Forbidden');
         });
 
         it('should create a new area', async () => {
