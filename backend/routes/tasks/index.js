@@ -857,7 +857,7 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
         }
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
-            include: TASK_INCLUDES,
+            include: TASK_INCLUDES_WITH_SUBTASKS,
         });
 
         const serializedTask = await serializeTask(
@@ -1097,11 +1097,12 @@ router.post('/task/:uid/subscribe', requireTaskReadAccess, async (req, res) => {
         const {
             subscribeToTask,
         } = require('../../services/taskSubscriptionService');
-        const updatedTask = await subscribeToTask(
-            task.id,
-            user_id,
-            req.currentUser.id
-        );
+        await subscribeToTask(task.id, user_id, req.currentUser.id);
+
+        // Re-fetch with full includes so the response contains subtasks, tags, etc.
+        const updatedTask = await Task.findByPk(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
 
         const serialized = await serializeTask(
             updatedTask,
@@ -1145,11 +1146,12 @@ router.post(
             const {
                 unsubscribeFromTask,
             } = require('../../services/taskSubscriptionService');
-            const updatedTask = await unsubscribeFromTask(
-                task.id,
-                user_id,
-                req.currentUser.id
-            );
+            await unsubscribeFromTask(task.id, user_id, req.currentUser.id);
+
+            // Re-fetch with full includes so the response contains subtasks, tags, etc.
+            const updatedTask = await Task.findByPk(task.id, {
+                include: TASK_INCLUDES_WITH_SUBTASKS,
+            });
 
             const serialized = await serializeTask(
                 updatedTask,
