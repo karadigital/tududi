@@ -55,7 +55,10 @@
     "createNew": "Создать новый",
     "views": "Представления",
     "unpinView": "Открепить представление",
-    "pinView": "Закрепить представление"
+    "pinView": "Закрепить представление",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Главная",

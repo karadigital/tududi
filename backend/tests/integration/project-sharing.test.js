@@ -418,6 +418,23 @@ describe('Project Sharing Integration Tests', () => {
             taskInSharedProject = taskResponse.body;
         });
 
+        afterEach(async () => {
+            // Clean up any test files created by download tests
+            const path = require('path');
+            const fs = require('fs').promises;
+            const uploadPath = path.join(__dirname, '../../uploads/tasks');
+            for (const filename of [
+                'task-download-shared.pdf',
+                'task-ro-download.pdf',
+            ]) {
+                try {
+                    await fs.unlink(path.join(uploadPath, filename));
+                } catch (error) {
+                    // File may not exist for non-download tests
+                }
+            }
+        });
+
         test('shared user with RW access can view attachments in shared project task', async () => {
             // Owner creates an attachment on the task
             const attachment = await TaskAttachment.create({

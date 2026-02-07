@@ -89,6 +89,7 @@ const RecurringCompletion = require('./recurringCompletion')(sequelize);
 const TaskAttachment = require('./task_attachment')(sequelize);
 const Backup = require('./backup')(sequelize);
 const AreasMember = require('./areas_member')(sequelize);
+const Workspace = require('./workspace')(sequelize);
 
 User.hasMany(Area, { foreignKey: 'user_id' });
 Area.belongsTo(User, { foreignKey: 'user_id' });
@@ -97,6 +98,12 @@ User.hasMany(Project, { foreignKey: 'user_id' });
 Project.belongsTo(User, { foreignKey: 'user_id' });
 Project.belongsTo(Area, { foreignKey: 'area_id', allowNull: true });
 Area.hasMany(Project, { foreignKey: 'area_id' });
+
+User.hasMany(Workspace, { foreignKey: 'creator' });
+Workspace.belongsTo(User, { foreignKey: 'creator', as: 'Creator' });
+
+Workspace.hasMany(Project, { foreignKey: 'workspace_id' });
+Project.belongsTo(Workspace, { foreignKey: 'workspace_id', allowNull: true });
 
 // Area-User members many-to-many relationship
 Area.belongsToMany(User, {
@@ -260,4 +267,5 @@ module.exports = {
     TaskAttachment,
     Backup,
     AreasMember,
+    Workspace,
 };

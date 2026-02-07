@@ -2,6 +2,7 @@ import { Area } from './Area';
 import { Tag } from './Tag';
 import { PriorityType, Task } from './Task';
 import { Note } from './Note';
+import { Workspace } from './Workspace';
 
 export type ProjectState =
     | 'idea'
@@ -20,6 +21,9 @@ export interface Project {
     area?: Area;
     area_id?: number | null;
     area_uid?: string | null;
+    workspace_id?: number | null;
+    workspace_uid?: string;
+    Workspace?: Workspace | null;
     tags?: Tag[];
     priority?: PriorityType;
     tasks?: Task[];

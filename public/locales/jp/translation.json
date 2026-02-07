@@ -55,7 +55,10 @@
     "createNew": "新規作成",
     "views": "ビュー",
     "unpinView": "ピン留めを外す",
-    "pinView": "ピン留めする"
+    "pinView": "ピン留めする",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "ホーム",

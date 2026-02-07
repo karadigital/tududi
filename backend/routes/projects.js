@@ -12,9 +12,11 @@ const {
     Note,
     User,
     Permission,
+    Workspace,
     sequelize,
 } = require('../models');
 const permissionsService = require('../services/permissionsService');
+const { hasWorkspaceAccess } = require('../services/permissionsService');
 const { Op } = require('sequelize');
 const { extractUidFromSlug } = require('../utils/slug-utils');
 const { validateTagName } = require('../services/tagsService');
@@ -214,6 +216,30 @@ router.get('/projects', async (req, res) => {
             whereClause = { [Op.and]: [whereClause, { area_id }] };
         }
 
+        // Filter by workspace
+        if (req.query.workspace) {
+            const workspaceUid = extractUidFromSlug(req.query.workspace);
+            if (!workspaceUid) {
+                return res
+                    .status(400)
+                    .json({ error: 'Invalid workspace parameter.' });
+            }
+            const workspace = await Workspace.findOne({
+                where: { uid: workspaceUid },
+            });
+            if (!workspace) {
+                return res.status(404).json({ error: 'Workspace not found.' });
+            }
+            if (!(await hasWorkspaceAccess(workspace.id, req.authUserId))) {
+                return res
+                    .status(403)
+                    .json({ error: 'Access denied to this workspace.' });
+            }
+            whereClause = {
+                [Op.and]: [whereClause, { workspace_id: workspace.id }],
+            };
+        }
+
         const projects = await Project.findAll({
             where: whereClause,
             include: [
@@ -228,6 +254,11 @@ router.get('/projects', async (req, res) => {
                 },
                 {
                     model: Area,
+                    required: false,
+                    attributes: ['id', 'uid', 'name'],
+                },
+                {
+                    model: Workspace,
                     required: false,
                     attributes: ['id', 'uid', 'name'],
                 },
@@ -423,6 +454,11 @@ router.get(
                         attributes: ['id', 'uid', 'name'],
                     },
                     {
+                        model: Workspace,
+                        required: false,
+                        attributes: ['id', 'uid', 'name'],
+                    },
+                    {
                         model: Tag,
                         attributes: ['id', 'name', 'uid'],
                         through: { attributes: [] },
@@ -496,10 +532,12 @@ router.get(
 
 router.post('/project', async (req, res) => {
     try {
-        const {
+        let {
             name,
             description,
             area_id,
+            workspace_id,
+            workspace_uid,
             priority,
             due_date_at,
             image_url,
@@ -515,6 +553,26 @@ router.post('/project', async (req, res) => {
             return res.status(400).json({ error: 'Project name is required' });
         }
 
+        // Resolve workspace_uid to workspace_id if needed
+        if (!workspace_id && workspace_uid) {
+            const ws = await Workspace.findOne({
+                where: { uid: workspace_uid },
+            });
+            if (ws) workspace_id = ws.id;
+            else
+                return res
+                    .status(403)
+                    .json({ error: 'Access denied to this workspace.' });
+        }
+
+        if (workspace_id) {
+            if (!(await hasWorkspaceAccess(workspace_id, req.authUserId))) {
+                return res
+                    .status(403)
+                    .json({ error: 'Access denied to this workspace.' });
+            }
+        }
+
         // Generate UID explicitly to avoid Sequelize caching issues
         const projectUid = uid();
 
@@ -523,6 +581,7 @@ router.post('/project', async (req, res) => {
             name: name.trim(),
             description: description || '',
             area_id: area_id || null,
+            workspace_id: workspace_id || null,
             pin_to_sidebar: false,
             priority: priority || null,
             due_date_at: due_date_at || null,
@@ -583,10 +642,12 @@ router.patch(
                 where: { uid: req.params.uid },
             });
 
-            const {
+            let {
                 name,
                 description,
                 area_id,
+                workspace_id,
+                workspace_uid,
                 pin_to_sidebar,
                 priority,
                 due_date_at,
@@ -599,10 +660,37 @@ router.patch(
             // Handle both tags and Tags (Sequelize association format)
             const tagsData = tags || Tags;
 
+            // Resolve workspace_uid to workspace_id if needed
+            if (workspace_uid !== undefined && workspace_id === undefined) {
+                if (workspace_uid) {
+                    const ws = await Workspace.findOne({
+                        where: { uid: workspace_uid },
+                    });
+                    if (ws) workspace_id = ws.id;
+                    else
+                        return res.status(403).json({
+                            error: 'Access denied to this workspace.',
+                        });
+                } else {
+                    workspace_id = null;
+                }
+            }
+
             const updateData = {};
             if (name !== undefined) updateData.name = name;
             if (description !== undefined) updateData.description = description;
             if (area_id !== undefined) updateData.area_id = area_id;
+            if (workspace_id !== undefined) {
+                if (
+                    workspace_id &&
+                    !(await hasWorkspaceAccess(workspace_id, req.authUserId))
+                ) {
+                    return res
+                        .status(403)
+                        .json({ error: 'Access denied to this workspace.' });
+                }
+                updateData.workspace_id = workspace_id;
+            }
             if (pin_to_sidebar !== undefined)
                 updateData.pin_to_sidebar = pin_to_sidebar;
             if (priority !== undefined) updateData.priority = priority;
@@ -623,6 +711,11 @@ router.patch(
                     },
                     {
                         model: Area,
+                        required: false,
+                        attributes: ['id', 'uid', 'name'],
+                    },
+                    {
+                        model: Workspace,
                         required: false,
                         attributes: ['id', 'uid', 'name'],
                     },

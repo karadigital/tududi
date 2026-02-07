@@ -286,7 +286,15 @@ router.get('/attachments/:attachmentUid/download', async (req, res) => {
 
         // Send file
         const filePath = path.join(config.uploadPath, attachment.file_path);
-        res.download(filePath, attachment.original_filename);
+        res.download(filePath, attachment.original_filename, (err) => {
+            if (err && !res.headersSent) {
+                logError('Error downloading attachment file:', err);
+                res.status(err.status || 500).json({
+                    error: 'Failed to download attachment',
+                    details: err.message,
+                });
+            }
+        });
     } catch (error) {
         logError('Error downloading attachment:', error);
         res.status(500).json({

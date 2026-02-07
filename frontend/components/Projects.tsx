@@ -25,7 +25,11 @@ import ProjectItem from './Project/ProjectItem';
 import ProjectShareModal from './Project/ProjectShareModal';
 import { useToast } from './Shared/ToastContext';
 
-const Projects: React.FC = () => {
+interface ProjectsProps {
+    workspaceUid?: string;
+}
+
+const Projects: React.FC<ProjectsProps> = ({ workspaceUid }) => {
     const { t } = useTranslation();
     const { showErrorToast } = useToast();
     const {
@@ -269,6 +273,18 @@ const Projects: React.FC = () => {
         return getAreaUidFromParams();
     }, [searchParams, areas]);
 
+    // Workspace filter from prop or URL params
+    const actualWorkspaceFilter = useMemo(() => {
+        if (workspaceUid) return workspaceUid;
+
+        const workspaceParam = searchParams.get('workspace');
+        if (workspaceParam) {
+            return workspaceParam.split('-')[0];
+        }
+
+        return '';
+    }, [searchParams, workspaceUid]);
+
     // Filter, sort and search projects
     const displayProjects = useMemo(() => {
         let filteredProjects = [...projects];
@@ -285,6 +301,13 @@ const Projects: React.FC = () => {
             filteredProjects = filteredProjects.filter((project) => {
                 const projectArea = project.area || (project as any).Area;
                 return projectArea?.uid === actualAreaFilter;
+            });
+        }
+
+        // Apply workspace filter by UID
+        if (actualWorkspaceFilter) {
+            filteredProjects = filteredProjects.filter((project) => {
+                return project.Workspace?.uid === actualWorkspaceFilter;
             });
         }
 
@@ -347,7 +370,14 @@ const Projects: React.FC = () => {
         });
 
         return filteredProjects;
-    }, [projects, stateFilter, actualAreaFilter, searchQuery, orderBy]);
+    }, [
+        projects,
+        stateFilter,
+        actualAreaFilter,
+        actualWorkspaceFilter,
+        searchQuery,
+        orderBy,
+    ]);
 
     if (isLoading) {
         return (

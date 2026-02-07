@@ -55,7 +55,10 @@
     "createNew": "Luo uusi",
     "views": "Näkymät",
     "unpinView": "Irrota näkymä",
-    "pinView": "Kiinnitä näkymä"
+    "pinView": "Kiinnitä näkymä",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Koti",

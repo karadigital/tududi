@@ -55,7 +55,10 @@
     "createNew": "Opret ny",
     "views": "Visninger",
     "unpinView": "Fjern fastgørelse af visning",
-    "pinView": "Fastgør visning"
+    "pinView": "Fastgør visning",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Hjem",
