@@ -8,6 +8,7 @@ const _ = require('lodash');
 const router = express.Router();
 const { getAuthenticatedUserId } = require('../utils/request-utils');
 const { hasAccess } = require('../middleware/authorize');
+const { requireAdmin } = require('../middleware/requireAdmin');
 const areaMembershipService = require('../services/areaMembershipService');
 const { isAdmin } = require('../services/rolesService');
 const { execAction } = require('../services/execAction');
@@ -158,13 +159,11 @@ router.get(
     }
 );
 
-router.post('/departments', async (req, res) => {
+router.post('/departments', requireAdmin, async (req, res) => {
     let transaction;
     try {
         const userId = getAuthenticatedUserId(req);
-        if (!userId) {
-            return res.status(401).json({ error: 'Authentication required' });
-        }
+
         const { name, description } = req.body;
 
         if (!name || _.isEmpty(name.trim())) {

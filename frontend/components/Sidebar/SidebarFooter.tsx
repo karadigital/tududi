@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Area } from '../../entities/Area';
 import { useTelegramStatus } from '../../contexts/TelegramStatusContext';
 import { getApiPath } from '../../config/paths';
+import { getCurrentUser } from '../../utils/userUtils';
 
 interface SidebarFooterProps {
     currentUser: { email: string };
@@ -37,6 +38,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
     const { t } = useTranslation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const { status: telegramStatus } = useTelegramStatus();
+    const currentUser = getCurrentUser();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [version, setVersion] = useState<string>('v0.86');
 
@@ -93,8 +95,10 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
                         handleDropdownSelect('Project');
                         break;
                     case 'a':
-                        event.preventDefault();
-                        handleDropdownSelect('Area');
+                        if (currentUser?.is_admin) {
+                            event.preventDefault();
+                            handleDropdownSelect('Area');
+                        }
                         break;
                     default:
                         break;
@@ -107,7 +111,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [currentUser?.is_admin]);
 
     const handleDropdownSelect = (type: string) => {
         switch (type) {
@@ -144,8 +148,9 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             translationKey: 'dropdown.area',
             icon: <Squares2X2Icon className="h-5 w-5 mr-2" />,
             shortcut: 'Ctrl+Shift+A',
+            adminOnly: true,
         },
-    ];
+    ].filter((item) => !item.adminOnly || currentUser?.is_admin);
     return (
         <div className="mt-auto p-3">
             {/* Version Display */}

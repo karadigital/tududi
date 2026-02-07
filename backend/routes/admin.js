@@ -72,25 +72,7 @@ module.exports = router;
 // --- Admin Users Management ---
 // NOTE: app.js already mounts this router under requireAuth
 
-// Middleware to ensure admin access
-async function requireAdmin(req, res, next) {
-    try {
-        const requesterId = req.currentUser?.id || req.session?.userId;
-        if (!requesterId)
-            return res.status(401).json({ error: 'Authentication required' });
-
-        // Fetch user to get uid for isAdmin check
-        const user = await User.findByPk(requesterId, { attributes: ['uid'] });
-        if (!user)
-            return res.status(401).json({ error: 'Authentication required' });
-
-        const admin = await isAdmin(user.uid);
-        if (!admin) return res.status(403).json({ error: 'Forbidden' });
-        next();
-    } catch (err) {
-        next(err);
-    }
-}
+const { requireAdmin } = require('../middleware/requireAdmin');
 
 // GET /api/admin/users - list users with role and creation date
 router.get('/admin/users', requireAdmin, async (req, res) => {
