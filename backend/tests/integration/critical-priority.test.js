@@ -159,4 +159,65 @@ describe('Critical Priority API Validation', () => {
             expect(res.body.priority).toBe(2);
         });
     });
+
+    describe('POST /api/task/:uid/unassign - Unassign critical task', () => {
+        let criticalTask;
+
+        beforeEach(async () => {
+            criticalTask = await Task.create({
+                name: 'Critical Task',
+                user_id: user.id,
+                priority: 3,
+                due_date: '2026-01-20',
+                assigned_to_user_id: assignee.id,
+            });
+        });
+
+        it('should reject unassigning a critical task', async () => {
+            const res = await agent.post(
+                `/api/task/${criticalTask.uid}/unassign`
+            );
+
+            expect(res.status).toBe(400);
+            expect(res.body.error).toBe(
+                'Critical tasks must have a due date and assignee'
+            );
+
+            // Verify task state was not mutated
+            await criticalTask.reload();
+            expect(criticalTask.assigned_to_user_id).toBe(assignee.id);
+        });
+
+        it('should allow unassigning a non-critical task', async () => {
+            const nonCriticalTask = await Task.create({
+                name: 'High Priority Task',
+                user_id: user.id,
+                priority: 2,
+                due_date: '2026-01-20',
+                assigned_to_user_id: assignee.id,
+            });
+
+            const res = await agent.post(
+                `/api/task/${nonCriticalTask.uid}/unassign`
+            );
+
+            expect(res.status).toBe(200);
+            expect(res.body.AssignedTo).toBeNull();
+        });
+
+        it('should allow unassigning after downgrading from critical priority', async () => {
+            // Downgrade from critical to high
+            await agent.patch(`/api/task/${criticalTask.uid}`).send({
+                priority: 2,
+            });
+
+            // Now unassign should succeed
+            const res = await agent.post(
+                `/api/task/${criticalTask.uid}/unassign`
+            );
+
+            expect(res.status).toBe(200);
+            expect(res.body.AssignedTo).toBeNull();
+        });
+    });
 });
