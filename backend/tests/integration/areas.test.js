@@ -9,6 +9,7 @@ describe('/api/departments', () => {
     beforeEach(async () => {
         user = await createTestUser({
             email: 'test@example.com',
+            is_admin: true,
         });
 
         // Create authenticated agent
@@ -20,6 +21,27 @@ describe('/api/departments', () => {
     });
 
     describe('POST /api/departments', () => {
+        it('should return 403 for non-admin users', async () => {
+            const nonAdminUser = await createTestUser({
+                email: 'nonadmin@example.com',
+            });
+
+            const nonAdminAgent = request.agent(app);
+            await nonAdminAgent.post('/api/login').send({
+                email: 'nonadmin@example.com',
+                password: 'password123',
+            });
+
+            const response = await nonAdminAgent
+                .post('/api/departments')
+                .send({ name: 'Blocked Department' });
+
+            expect(response.status).toBe(403);
+            expect(response.body.error).toBe(
+                'Only administrators can create departments'
+            );
+        });
+
         it('should create a new area', async () => {
             const areaData = {
                 name: 'Work',
@@ -186,7 +208,17 @@ describe('/api/departments', () => {
         });
 
         it('should return 404 for non-existent area', async () => {
-            const response = await agent.get(
+            // Use a non-admin user so hasAccess returns 404 (admin can see all)
+            const nonAdminUser = await createTestUser({
+                email: 'nonadmin-get@example.com',
+            });
+            const nonAdminAgent = request.agent(app);
+            await nonAdminAgent.post('/api/login').send({
+                email: 'nonadmin-get@example.com',
+                password: 'password123',
+            });
+
+            const response = await nonAdminAgent.get(
                 '/api/departments/abcd1234efghijk'
             );
 
@@ -197,6 +229,16 @@ describe('/api/departments', () => {
         });
 
         it("should not allow access to other user's areas", async () => {
+            // Use a non-admin user to test cross-user access denial
+            const nonAdminUser = await createTestUser({
+                email: 'nonadmin-access@example.com',
+            });
+            const nonAdminAgent = request.agent(app);
+            await nonAdminAgent.post('/api/login').send({
+                email: 'nonadmin-access@example.com',
+                password: 'password123',
+            });
+
             const bcrypt = require('bcrypt');
             const otherUser = await User.create({
                 email: 'other@example.com',
@@ -208,7 +250,7 @@ describe('/api/departments', () => {
                 user_id: otherUser.id,
             });
 
-            const response = await agent.get(
+            const response = await nonAdminAgent.get(
                 `/api/departments/${otherArea.uid}`
             );
 
@@ -273,6 +315,16 @@ describe('/api/departments', () => {
         });
 
         it("should not allow updating other user's areas", async () => {
+            // Use a non-admin user to test cross-user access denial
+            const nonAdminUser = await createTestUser({
+                email: 'nonadmin-patch@example.com',
+            });
+            const nonAdminAgent = request.agent(app);
+            await nonAdminAgent.post('/api/login').send({
+                email: 'nonadmin-patch@example.com',
+                password: 'password123',
+            });
+
             const bcrypt = require('bcrypt');
             const otherUser = await User.create({
                 email: 'other@example.com',
@@ -284,7 +336,7 @@ describe('/api/departments', () => {
                 user_id: otherUser.id,
             });
 
-            const response = await agent
+            const response = await nonAdminAgent
                 .patch(`/api/departments/${otherArea.uid}`)
                 .send({ name: 'Updated' });
 
@@ -341,6 +393,16 @@ describe('/api/departments', () => {
         });
 
         it("should not allow deleting other user's areas", async () => {
+            // Use a non-admin user to test cross-user access denial
+            const nonAdminUser = await createTestUser({
+                email: 'nonadmin-delete@example.com',
+            });
+            const nonAdminAgent = request.agent(app);
+            await nonAdminAgent.post('/api/login').send({
+                email: 'nonadmin-delete@example.com',
+                password: 'password123',
+            });
+
             const bcrypt = require('bcrypt');
             const otherUser = await User.create({
                 email: 'other@example.com',
@@ -352,7 +414,7 @@ describe('/api/departments', () => {
                 user_id: otherUser.id,
             });
 
-            const response = await agent.delete(
+            const response = await nonAdminAgent.delete(
                 `/api/departments/${otherArea.uid}`
             );
 

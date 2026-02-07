@@ -131,7 +131,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, []);
+    }, [currentUser]);
 
     const handleDropdownSelect = (type: string) => {
         switch (type) {
@@ -189,6 +189,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             translationKey: 'dropdown.area',
             icon: <Squares2X2Icon className="h-5 w-5 mr-2" />,
             shortcut: 'Ctrl+Shift+A',
+            adminOnly: true,
         },
         {
             label: 'Tag',
@@ -196,7 +197,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             icon: <TagIcon className="h-5 w-5 mr-2" />,
             shortcut: 'Ctrl+Shift+G',
         },
-    ].filter((item) => item.label !== 'Area' || currentUser?.is_admin);
+    ].filter((item) => !item.adminOnly || currentUser?.is_admin);
     return (
         <div className="mt-auto p-3">
             {/* Version Display */}
