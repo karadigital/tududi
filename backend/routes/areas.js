@@ -165,6 +165,19 @@ router.post('/departments', async (req, res) => {
         if (!userId) {
             return res.status(401).json({ error: 'Authentication required' });
         }
+
+        // Only global admins can create departments
+        const user = await User.findByPk(userId, { attributes: ['uid'] });
+        if (!user) {
+            return res.status(401).json({ error: 'User not found' });
+        }
+        const userIsAdmin = await isAdmin(user.uid);
+        if (!userIsAdmin) {
+            return res.status(403).json({
+                error: 'Only administrators can create departments',
+            });
+        }
+
         const { name, description } = req.body;
 
         if (!name || _.isEmpty(name.trim())) {

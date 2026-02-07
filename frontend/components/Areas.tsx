@@ -121,9 +121,16 @@ const Areas: React.FC = () => {
             setIsAreaModalOpen(false);
             setSelectedArea(null);
             useStore.getState().areasStore.setError(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error saving area:', error);
             useStore.getState().areasStore.setError(true);
+            showErrorToast(
+                error?.message ||
+                    t(
+                        'errors.failedToSaveArea',
+                        'Failed to save department. You may not have permission.'
+                    )
+            );
         } finally {
             useStore.getState().areasStore.setLoading(false);
         }

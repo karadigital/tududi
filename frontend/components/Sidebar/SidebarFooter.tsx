@@ -16,6 +16,7 @@ import { Note } from '../../entities/Note';
 import { Area } from '../../entities/Area';
 import { useTelegramStatus } from '../../contexts/TelegramStatusContext';
 import { getApiPath } from '../../config/paths';
+import { getCurrentUser } from '../../utils/userUtils';
 
 interface SidebarFooterProps {
     currentUser: { email: string };
@@ -45,6 +46,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
     const { t } = useTranslation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const { status: telegramStatus } = useTelegramStatus();
+    const currentUser = getCurrentUser();
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [version, setVersion] = useState<string>('v0.86');
 
@@ -109,8 +111,10 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
                         handleDropdownSelect('Note');
                         break;
                     case 'a':
-                        event.preventDefault();
-                        handleDropdownSelect('Area');
+                        if (currentUser?.is_admin) {
+                            event.preventDefault();
+                            handleDropdownSelect('Area');
+                        }
                         break;
                     case 'g':
                         event.preventDefault();
@@ -192,7 +196,7 @@ const SidebarFooter: React.FC<SidebarFooterProps> = ({
             icon: <TagIcon className="h-5 w-5 mr-2" />,
             shortcut: 'Ctrl+Shift+G',
         },
-    ];
+    ].filter((item) => item.label !== 'Area' || currentUser?.is_admin);
     return (
         <div className="mt-auto p-3">
             {/* Version Display */}
