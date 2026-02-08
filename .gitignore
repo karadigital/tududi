@@ -6,7 +6,6 @@ certs/
 .DS_Store
 .cursor
 AGENTS.md
-CLAUDE.md
 CLAUDE.local.md
 
 .byebug_history
