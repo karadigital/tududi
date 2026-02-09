@@ -15,7 +15,6 @@ import { getApiPath } from '../../config/paths';
 import { getCurrentUser } from '../../utils/userUtils';
 
 interface SidebarFooterProps {
-    currentUser: { email: string };
     isDarkMode: boolean;
     toggleDarkMode: () => void;
     isSidebarOpen: boolean;

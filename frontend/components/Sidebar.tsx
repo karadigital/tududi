@@ -132,7 +132,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <SidebarFooter
-                        currentUser={currentUser}
                         isDarkMode={isDarkMode}
                         toggleDarkMode={toggleDarkMode}
                         isSidebarOpen={isSidebarOpen}

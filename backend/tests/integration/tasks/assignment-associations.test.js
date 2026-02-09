@@ -62,6 +62,10 @@ describe('Task assignment/unassignment preserves associations', () => {
             `DELETE FROM tasks_subscribers WHERE user_id IN (:userIds)`,
             { replacements: { userIds } }
         );
+        await sequelize.query(
+            `DELETE FROM tasks_tags WHERE task_id IN (SELECT id FROM tasks WHERE user_id IN (:userIds))`,
+            { replacements: { userIds } }
+        );
         await Task.destroy({ where: { user_id: userIds }, force: true });
         await Tag.destroy({ where: { user_id: owner.id } });
         await Project.destroy({ where: { user_id: owner.id }, force: true });

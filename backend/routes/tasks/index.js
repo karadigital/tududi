@@ -1082,8 +1082,10 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
     } catch (error) {
         logError('Error unassigning task:', error);
 
+        if (error.message === 'Not authorized to unassign this task') {
+            return res.status(403).json({ error: error.message });
+        }
         if (
-            error.message === 'Not authorized to unassign this task' ||
             error.message === 'Task is not assigned' ||
             error.message === 'Critical tasks must have a due date and assignee'
         ) {
