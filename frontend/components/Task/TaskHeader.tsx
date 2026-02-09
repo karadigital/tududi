@@ -366,41 +366,32 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                             {project && !hideProjectName && (
                                 <div className="flex items-center min-w-0 max-w-[10rem]">
                                     <FolderIcon className="h-3 w-3 mr-1 flex-shrink-0" />
-                                    <Link
-                                        to={
-                                            project.uid
-                                                ? `/project/${project.uid}-${project.name
-                                                      .toLowerCase()
-                                                      .replace(
-                                                          /[^a-z0-9]+/g,
-                                                          '-'
-                                                      )
-                                                      .replace(/^-|-$/g, '')}`
-                                                : `/project/${project.id}`
-                                        }
-                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors truncate"
-                                        onClick={(e) => {
-                                            const projectPath = project.uid
-                                                ? `/project/${project.uid}-${project.name
-                                                      .toLowerCase()
-                                                      .replace(
-                                                          /[^a-z0-9]+/g,
-                                                          '-'
-                                                      )
-                                                      .replace(/^-|-$/g, '')}`
-                                                : `/project/${project.id}`;
-                                            // Prevent navigation if we're already on this project's page
-                                            if (
-                                                window.location.pathname ===
-                                                projectPath
-                                            ) {
-                                                e.preventDefault();
-                                            }
-                                            e.stopPropagation();
-                                        }}
-                                    >
-                                        {project.name}
-                                    </Link>
+                                    {(() => {
+                                        const projectPath = project.uid
+                                            ? `/project/${project.uid}-${project.name
+                                                  .toLowerCase()
+                                                  .replace(/[^a-z0-9]+/g, '-')
+                                                  .replace(/^-|-$/g, '')}`
+                                            : `/project/${project.id}`;
+                                        return (
+                                            <Link
+                                                to={projectPath}
+                                                className="text-gray-500 dark:text-gray-400 hover:underline transition-colors truncate"
+                                                onClick={(e) => {
+                                                    if (
+                                                        window.location
+                                                            .pathname ===
+                                                        projectPath
+                                                    ) {
+                                                        e.preventDefault();
+                                                    }
+                                                    e.stopPropagation();
+                                                }}
+                                            >
+                                                {project.name}
+                                            </Link>
+                                        );
+                                    })()}
                                 </div>
                             )}
                             {task.tags && task.tags.length > 0 && (
@@ -988,41 +979,32 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                             {project && !hideProjectName && (
                                 <div className="flex items-center">
                                     <FolderIcon className="h-3 w-3 mr-1" />
-                                    <Link
-                                        to={
-                                            project.uid
-                                                ? `/project/${project.uid}-${project.name
-                                                      .toLowerCase()
-                                                      .replace(
-                                                          /[^a-z0-9]+/g,
-                                                          '-'
-                                                      )
-                                                      .replace(/^-|-$/g, '')}`
-                                                : `/project/${project.id}`
-                                        }
-                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                        onClick={(e) => {
-                                            const projectPath = project.uid
-                                                ? `/project/${project.uid}-${project.name
-                                                      .toLowerCase()
-                                                      .replace(
-                                                          /[^a-z0-9]+/g,
-                                                          '-'
-                                                      )
-                                                      .replace(/^-|-$/g, '')}`
-                                                : `/project/${project.id}`;
-                                            // Prevent navigation if we're already on this project's page
-                                            if (
-                                                window.location.pathname ===
-                                                projectPath
-                                            ) {
-                                                e.preventDefault();
-                                            }
-                                            e.stopPropagation();
-                                        }}
-                                    >
-                                        {project.name}
-                                    </Link>
+                                    {(() => {
+                                        const projectPath = project.uid
+                                            ? `/project/${project.uid}-${project.name
+                                                  .toLowerCase()
+                                                  .replace(/[^a-z0-9]+/g, '-')
+                                                  .replace(/^-|-$/g, '')}`
+                                            : `/project/${project.id}`;
+                                        return (
+                                            <Link
+                                                to={projectPath}
+                                                className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
+                                                onClick={(e) => {
+                                                    if (
+                                                        window.location
+                                                            .pathname ===
+                                                        projectPath
+                                                    ) {
+                                                        e.preventDefault();
+                                                    }
+                                                    e.stopPropagation();
+                                                }}
+                                            >
+                                                {project.name}
+                                            </Link>
+                                        );
+                                    })()}
                                 </div>
                             )}
                             {task.tags && task.tags.length > 0 && (
