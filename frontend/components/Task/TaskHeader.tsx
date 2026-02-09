@@ -12,7 +12,6 @@ import {
     PlayIcon,
     PauseCircleIcon,
     CheckIcon,
-    UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { TagIcon, FolderIcon, FireIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
@@ -348,86 +347,6 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         {task.original_name || task.name}
                                     </span>
                                 </div>
-                                {/* Show project and tags info in upcoming view */}
-                                {project && !hideProjectName && (
-                                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                        <FolderIcon className="h-3 w-3 mr-1" />
-                                        <Link
-                                            to={
-                                                project.uid
-                                                    ? `/project/${project.uid}-${project.name
-                                                          .toLowerCase()
-                                                          .replace(
-                                                              /[^a-z0-9]+/g,
-                                                              '-'
-                                                          )
-                                                          .replace(
-                                                              /^-|-$/g,
-                                                              ''
-                                                          )}`
-                                                    : `/project/${project.id}`
-                                            }
-                                            className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                            onClick={(e) => {
-                                                // Prevent navigation if we're already on this project's page
-                                                if (
-                                                    window.location.pathname ===
-                                                    `/project/${project.id}`
-                                                ) {
-                                                    e.preventDefault();
-                                                }
-                                                e.stopPropagation();
-                                            }}
-                                        >
-                                            {project.name}
-                                        </Link>
-                                    </div>
-                                )}
-                                {task.tags && task.tags.length > 0 && (
-                                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                        <TagIcon className="h-3 w-3 mr-1" />
-                                        <span>
-                                            {task.tags.map((tag, index) => (
-                                                <React.Fragment key={tag.name}>
-                                                    <Link
-                                                        to={
-                                                            tag.uid
-                                                                ? `/tag/${tag.uid}-${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                                : `/tag/${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                        }
-                                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                                        onClick={(e) =>
-                                                            e.stopPropagation()
-                                                        }
-                                                    >
-                                                        {tag.name}
-                                                    </Link>
-                                                    {index <
-                                                        task.tags!.length - 1 &&
-                                                        ', '}
-                                                </React.Fragment>
-                                            ))}
-                                        </span>
-                                    </div>
-                                )}
                             </div>
                         ) : (
                             <div className="flex items-center gap-1.5">
@@ -443,156 +362,152 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                             </div>
                         )}
                         {/* Project, tags, due date, and recurrence in same row, with spacing when they exist */}
-                        {!isUpcomingView && (
-                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-x-auto">
-                                {project && !hideProjectName && (
-                                    <div className="flex items-center">
-                                        <FolderIcon className="h-3 w-3 mr-1" />
-                                        <Link
-                                            to={
-                                                project.uid
-                                                    ? `/project/${project.uid}-${project.name
-                                                          .toLowerCase()
-                                                          .replace(
-                                                              /[^a-z0-9]+/g,
-                                                              '-'
-                                                          )
-                                                          .replace(
-                                                              /^-|-$/g,
-                                                              ''
-                                                          )}`
-                                                    : `/project/${project.id}`
-                                            }
-                                            className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                            onClick={(e) => {
-                                                // Prevent navigation if we're already on this project's page
-                                                if (
-                                                    window.location.pathname ===
-                                                    `/project/${project.id}`
-                                                ) {
-                                                    e.preventDefault();
-                                                }
-                                                e.stopPropagation();
-                                            }}
-                                        >
-                                            {project.name}
-                                        </Link>
-                                    </div>
-                                )}
-                                {task.tags && task.tags.length > 0 && (
-                                    <div className="flex items-center">
-                                        <TagIcon className="h-3 w-3 mr-1" />
-                                        <span>
-                                            {task.tags.map((tag, index) => (
-                                                <React.Fragment key={tag.name}>
-                                                    <Link
-                                                        to={
-                                                            tag.uid
-                                                                ? `/tag/${tag.uid}-${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                                : `/tag/${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                        }
-                                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                                        onClick={(e) =>
-                                                            e.stopPropagation()
-                                                        }
-                                                    >
-                                                        {tag.name}
-                                                    </Link>
-                                                    {index <
-                                                        task.tags!.length - 1 &&
-                                                        ', '}
-                                                </React.Fragment>
-                                            ))}
-                                        </span>
-                                    </div>
-                                )}
-                                {task.due_date && (
-                                    <div className="flex items-center whitespace-nowrap">
-                                        <CalendarIcon className="h-3 w-3 mr-1" />
-                                        <span>
-                                            {formatDueDate(task.due_date)}
-                                        </span>
-                                    </div>
-                                )}
-                                {task.recurrence_type &&
-                                    task.recurrence_type !== 'none' && (
-                                        <div className="flex items-center">
-                                            <ArrowPathIcon className="h-3 w-3 mr-1" />
-                                            <span>
-                                                {formatRecurrence(
-                                                    task.recurrence_type
-                                                )}
-                                            </span>
-                                        </div>
-                                    )}
-                                {task.recurring_parent_id && (
-                                    <div className="flex items-center">
+                        <div className="flex items-center flex-wrap gap-x-3 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                            {project && !hideProjectName && (
+                                <div className="flex items-center min-w-0 max-w-[10rem]">
+                                    <FolderIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                                    {(() => {
+                                        const projectPath = project.uid
+                                            ? `/project/${project.uid}-${project.name
+                                                  .toLowerCase()
+                                                  .replace(/[^a-z0-9]+/g, '-')
+                                                  .replace(/^-|-$/g, '')}`
+                                            : `/project/${project.id}`;
+                                        return (
+                                            <Link
+                                                to={projectPath}
+                                                className="text-gray-500 dark:text-gray-400 hover:underline transition-colors truncate"
+                                                onClick={(e) => {
+                                                    if (
+                                                        window.location
+                                                            .pathname ===
+                                                        projectPath
+                                                    ) {
+                                                        e.preventDefault();
+                                                    }
+                                                    e.stopPropagation();
+                                                }}
+                                            >
+                                                {project.name}
+                                            </Link>
+                                        );
+                                    })()}
+                                </div>
+                            )}
+                            {task.tags && task.tags.length > 0 && (
+                                <div className="flex items-center">
+                                    <TagIcon className="h-3 w-3 mr-1" />
+                                    <span>
+                                        {task.tags.map((tag, index) => (
+                                            <React.Fragment key={tag.name}>
+                                                <Link
+                                                    to={
+                                                        tag.uid
+                                                            ? `/tag/${tag.uid}-${tag.name
+                                                                  .toLowerCase()
+                                                                  .replace(
+                                                                      /[^a-z0-9]+/g,
+                                                                      '-'
+                                                                  )
+                                                                  .replace(
+                                                                      /^-|-$/g,
+                                                                      ''
+                                                                  )}`
+                                                            : `/tag/${tag.name
+                                                                  .toLowerCase()
+                                                                  .replace(
+                                                                      /[^a-z0-9]+/g,
+                                                                      '-'
+                                                                  )
+                                                                  .replace(
+                                                                      /^-|-$/g,
+                                                                      ''
+                                                                  )}`
+                                                    }
+                                                    className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
+                                                    onClick={(e) =>
+                                                        e.stopPropagation()
+                                                    }
+                                                >
+                                                    {tag.name}
+                                                </Link>
+                                                {index <
+                                                    task.tags!.length - 1 &&
+                                                    ', '}
+                                            </React.Fragment>
+                                        ))}
+                                    </span>
+                                </div>
+                            )}
+                            {task.due_date && (
+                                <div className="flex items-center whitespace-nowrap flex-shrink-0">
+                                    <CalendarIcon className="h-3 w-3 mr-1" />
+                                    <span>{formatDueDate(task.due_date)}</span>
+                                </div>
+                            )}
+                            {task.recurrence_type &&
+                                task.recurrence_type !== 'none' && (
+                                    <div className="flex items-center flex-shrink-0">
                                         <ArrowPathIcon className="h-3 w-3 mr-1" />
                                         <span>
-                                            {t(
-                                                'recurrence.instance',
-                                                'Recurring task instance'
+                                            {formatRecurrence(
+                                                task.recurrence_type
                                             )}
                                         </span>
                                     </div>
                                 )}
-                                {formattedDeferUntil && (
-                                    <div className="flex items-center">
-                                        <CalendarDaysIcon className="h-3 w-3 mr-1" />
-                                        <span>{formattedDeferUntil}</span>
-                                    </div>
-                                )}
-                                {task.AssignedTo && (
-                                    <div className="flex items-center">
-                                        {task.AssignedTo.avatar_image ? (
-                                            <img
-                                                src={getApiPath(
-                                                    task.AssignedTo.avatar_image
-                                                )}
-                                                alt={getAssigneeDisplayName()}
-                                                className="h-4 w-4 rounded-full mr-1"
-                                            />
-                                        ) : (
-                                            <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
-                                                {(
-                                                    task.AssignedTo.name?.[0] ||
-                                                    task.AssignedTo.email[0]
-                                                ).toUpperCase()}
-                                            </div>
+                            {task.recurring_parent_id && (
+                                <div className="flex items-center flex-shrink-0">
+                                    <ArrowPathIcon className="h-3 w-3 mr-1" />
+                                    <span>
+                                        {t(
+                                            'recurrence.instance',
+                                            'Recurring task instance'
                                         )}
-                                        <span>{getAssigneeDisplayName()}</span>
-                                    </div>
-                                )}
-                                {subtasksCount !== undefined &&
-                                    subtasksCount > 0 && (
-                                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                            <ListBulletIcon className="h-3 w-3 mr-1" />
-                                            <span>
-                                                {completedSubtasksCount}/
-                                                {subtasksCount}
-                                            </span>
+                                    </span>
+                                </div>
+                            )}
+                            {formattedDeferUntil && (
+                                <div className="flex items-center flex-shrink-0">
+                                    <CalendarDaysIcon className="h-3 w-3 mr-1" />
+                                    <span>{formattedDeferUntil}</span>
+                                </div>
+                            )}
+                            {task.AssignedTo && (
+                                <div className="flex items-center min-w-0 max-w-[8rem]">
+                                    {task.AssignedTo.avatar_image ? (
+                                        <img
+                                            src={getApiPath(
+                                                task.AssignedTo.avatar_image
+                                            )}
+                                            alt={getAssigneeDisplayName()}
+                                            className="h-4 w-4 rounded-full mr-1 flex-shrink-0 object-cover"
+                                        />
+                                    ) : (
+                                        <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
+                                            {(
+                                                task.AssignedTo.name?.[0] ||
+                                                task.AssignedTo.email?.[0] ||
+                                                '?'
+                                            ).toUpperCase()}
                                         </div>
                                     )}
-                            </div>
-                        )}
+                                    <span className="truncate">
+                                        {getAssigneeDisplayName()}
+                                    </span>
+                                </div>
+                            )}
+                            {subtasksCount !== undefined &&
+                                subtasksCount > 0 && (
+                                    <div className="flex items-center flex-shrink-0">
+                                        <ListBulletIcon className="h-3 w-3 mr-1" />
+                                        <span>
+                                            {completedSubtasksCount}/
+                                            {subtasksCount}
+                                        </span>
+                                    </div>
+                                )}
+                        </div>
                     </div>
                 </div>
                 {!isUpcomingView && !task.habit_mode && (
@@ -1064,32 +979,32 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                             {project && !hideProjectName && (
                                 <div className="flex items-center">
                                     <FolderIcon className="h-3 w-3 mr-1" />
-                                    <Link
-                                        to={
-                                            project.uid
-                                                ? `/project/${project.uid}-${project.name
-                                                      .toLowerCase()
-                                                      .replace(
-                                                          /[^a-z0-9]+/g,
-                                                          '-'
-                                                      )
-                                                      .replace(/^-|-$/g, '')}`
-                                                : `/project/${project.id}`
-                                        }
-                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                        onClick={(e) => {
-                                            // Prevent navigation if we're already on this project's page
-                                            if (
-                                                window.location.pathname ===
-                                                `/project/${project.id}`
-                                            ) {
-                                                e.preventDefault();
-                                            }
-                                            e.stopPropagation();
-                                        }}
-                                    >
-                                        {project.name}
-                                    </Link>
+                                    {(() => {
+                                        const projectPath = project.uid
+                                            ? `/project/${project.uid}-${project.name
+                                                  .toLowerCase()
+                                                  .replace(/[^a-z0-9]+/g, '-')
+                                                  .replace(/^-|-$/g, '')}`
+                                            : `/project/${project.id}`;
+                                        return (
+                                            <Link
+                                                to={projectPath}
+                                                className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
+                                                onClick={(e) => {
+                                                    if (
+                                                        window.location
+                                                            .pathname ===
+                                                        projectPath
+                                                    ) {
+                                                        e.preventDefault();
+                                                    }
+                                                    e.stopPropagation();
+                                                }}
+                                            >
+                                                {project.name}
+                                            </Link>
+                                        );
+                                    })()}
                                 </div>
                             )}
                             {task.tags && task.tags.length > 0 && (
@@ -1185,11 +1100,11 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
                                             {(
                                                 task.AssignedTo.name?.[0] ||
-                                                task.AssignedTo.email[0]
+                                                task.AssignedTo.email?.[0] ||
+                                                '?'
                                             ).toUpperCase()}
                                         </div>
                                     )}
-                                    <UserCircleIcon className="h-3 w-3 mr-1" />
                                     <span>{getAssigneeDisplayName()}</span>
                                 </div>
                             )}

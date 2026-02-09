@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Area } from '../entities/Area';
-import { Note } from '../entities/Note';
-import { Tag } from '../entities/Tag';
 import SidebarAreas from './Sidebar/SidebarAreas';
 import SidebarFooter from './Sidebar/SidebarFooter';
 import SidebarNav from './Sidebar/SidebarNav';
@@ -20,9 +18,7 @@ interface SidebarProps {
     openTaskModal: (type?: 'simplified' | 'full') => void;
     openProjectModal: () => void;
     openWorkspaceModal: () => void;
-    openNoteModal: (note: Note | null) => void;
     openAreaModal: (area: Area | null) => void;
-    openTagModal: (tag: Tag | null) => void;
     openNewHabit: () => void;
     areas: Area[];
 }
@@ -30,15 +26,12 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
     isSidebarOpen,
     setIsSidebarOpen,
-    currentUser,
     isDarkMode,
     toggleDarkMode,
     openTaskModal,
     openProjectModal,
     openWorkspaceModal,
-    openNoteModal,
     openAreaModal,
-    openTagModal,
     openNewHabit,
     areas,
 }) => {
@@ -138,7 +131,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <SidebarFooter
-                        currentUser={currentUser}
                         isDarkMode={isDarkMode}
                         toggleDarkMode={toggleDarkMode}
                         isSidebarOpen={isSidebarOpen}
@@ -147,9 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                         toggleDropdown={toggleDropdown}
                         openTaskModal={openTaskModal}
                         openProjectModal={openProjectModal}
-                        openNoteModal={openNoteModal}
                         openAreaModal={openAreaModal}
-                        openTagModal={openTagModal}
                     />
                 </div>
             )}

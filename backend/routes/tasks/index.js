@@ -857,7 +857,7 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
         }
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
-            include: TASK_INCLUDES,
+            include: TASK_INCLUDES_WITH_SUBTASKS,
         });
 
         const serializedTask = await serializeTask(
@@ -1020,11 +1020,12 @@ router.post('/task/:uid/assign', requireTaskWriteAccess, async (req, res) => {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        const updatedTask = await assignTask(
-            task.id,
-            assigned_to_user_id,
-            req.currentUser.id
-        );
+        await assignTask(task.id, assigned_to_user_id, req.currentUser.id);
+
+        // Re-fetch with full includes so the response contains subtasks, tags, etc.
+        const updatedTask = await Task.findByPk(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
 
         const serialized = await serializeTask(
             updatedTask,
@@ -1053,7 +1054,25 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        const updatedTask = await unassignTask(task.id, req.currentUser.id);
+        try {
+            validateCriticalPriority(
+                {
+                    priority: task.priority,
+                    due_date: task.due_date,
+                    assigned_to_user_id: null,
+                },
+                task
+            );
+        } catch (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        await unassignTask(task.id, req.currentUser.id);
+
+        // Re-fetch with full includes so the response contains subtasks, tags, etc.
+        const updatedTask = await Task.findByPk(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
 
         const serialized = await serializeTask(
             updatedTask,
@@ -1063,9 +1082,12 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
     } catch (error) {
         logError('Error unassigning task:', error);
 
+        if (error.message === 'Not authorized to unassign this task') {
+            return res.status(403).json({ error: error.message });
+        }
         if (
-            error.message === 'Not authorized to unassign this task' ||
-            error.message === 'Task is not assigned'
+            error.message === 'Task is not assigned' ||
+            error.message === 'Critical tasks must have a due date and assignee'
         ) {
             return res.status(400).json({ error: error.message });
         }
@@ -1091,11 +1113,12 @@ router.post('/task/:uid/subscribe', requireTaskReadAccess, async (req, res) => {
         const {
             subscribeToTask,
         } = require('../../services/taskSubscriptionService');
-        const updatedTask = await subscribeToTask(
-            task.id,
-            user_id,
-            req.currentUser.id
-        );
+        await subscribeToTask(task.id, user_id, req.currentUser.id);
+
+        // Re-fetch with full includes so the response contains subtasks, tags, etc.
+        const updatedTask = await Task.findByPk(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
 
         const serialized = await serializeTask(
             updatedTask,
@@ -1139,11 +1162,12 @@ router.post(
             const {
                 unsubscribeFromTask,
             } = require('../../services/taskSubscriptionService');
-            const updatedTask = await unsubscribeFromTask(
-                task.id,
-                user_id,
-                req.currentUser.id
-            );
+            await unsubscribeFromTask(task.id, user_id, req.currentUser.id);
+
+            // Re-fetch with full includes so the response contains subtasks, tags, etc.
+            const updatedTask = await Task.findByPk(task.id, {
+                include: TASK_INCLUDES_WITH_SUBTASKS,
+            });
 
             const serialized = await serializeTask(
                 updatedTask,
