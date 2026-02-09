@@ -26,7 +26,6 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
     isSidebarOpen,
     setIsSidebarOpen,
-    currentUser,
     isDarkMode,
     toggleDarkMode,
     openTaskModal,
@@ -132,7 +131,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </div>
 
                     <SidebarFooter
-                        currentUser={currentUser}
                         isDarkMode={isDarkMode}
                         toggleDarkMode={toggleDarkMode}
                         isSidebarOpen={isSidebarOpen}

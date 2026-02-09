@@ -12,7 +12,6 @@ import {
     PlayIcon,
     PauseCircleIcon,
     CheckIcon,
-    UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { TagIcon, FolderIcon, FireIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
@@ -381,10 +380,19 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         }
                                         className="text-gray-500 dark:text-gray-400 hover:underline transition-colors truncate"
                                         onClick={(e) => {
+                                            const projectPath = project.uid
+                                                ? `/project/${project.uid}-${project.name
+                                                      .toLowerCase()
+                                                      .replace(
+                                                          /[^a-z0-9]+/g,
+                                                          '-'
+                                                      )
+                                                      .replace(/^-|-$/g, '')}`
+                                                : `/project/${project.id}`;
                                             // Prevent navigation if we're already on this project's page
                                             if (
                                                 window.location.pathname ===
-                                                `/project/${project.id}`
+                                                projectPath
                                             ) {
                                                 e.preventDefault();
                                             }
@@ -488,7 +496,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
                                             {(
                                                 task.AssignedTo.name?.[0] ||
-                                                task.AssignedTo.email[0]
+                                                task.AssignedTo.email?.[0] ||
+                                                '?'
                                             ).toUpperCase()}
                                         </div>
                                     )}
@@ -993,10 +1002,19 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         }
                                         className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
                                         onClick={(e) => {
+                                            const projectPath = project.uid
+                                                ? `/project/${project.uid}-${project.name
+                                                      .toLowerCase()
+                                                      .replace(
+                                                          /[^a-z0-9]+/g,
+                                                          '-'
+                                                      )
+                                                      .replace(/^-|-$/g, '')}`
+                                                : `/project/${project.id}`;
                                             // Prevent navigation if we're already on this project's page
                                             if (
                                                 window.location.pathname ===
-                                                `/project/${project.id}`
+                                                projectPath
                                             ) {
                                                 e.preventDefault();
                                             }
@@ -1100,11 +1118,11 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                         <div className="h-4 w-4 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center text-white text-[10px] mr-1 flex-shrink-0">
                                             {(
                                                 task.AssignedTo.name?.[0] ||
-                                                task.AssignedTo.email[0]
+                                                task.AssignedTo.email?.[0] ||
+                                                '?'
                                             ).toUpperCase()}
                                         </div>
                                     )}
-                                    <UserCircleIcon className="h-3 w-3 mr-1" />
                                     <span>{getAssigneeDisplayName()}</span>
                                 </div>
                             )}
