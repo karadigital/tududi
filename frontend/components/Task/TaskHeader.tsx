@@ -12,7 +12,6 @@ import {
     PlayIcon,
     PauseCircleIcon,
     CheckIcon,
-    UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { TagIcon, FolderIcon, FireIcon } from '@heroicons/react/24/solid';
 import { useTranslation } from 'react-i18next';
