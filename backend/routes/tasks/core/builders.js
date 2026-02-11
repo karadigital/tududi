@@ -32,7 +32,9 @@ function buildTaskAttributes(body, userId, timezone, isUpdate = false) {
         assigned_to_user_id:
             body.assigned_to_user_id !== undefined
                 ? body.assigned_to_user_id
-                : null,
+                : isUpdate
+                  ? undefined
+                  : userId, // Auto-assign creator only on creation
         recurrence_type: recurrenceType,
         recurrence_interval: body.recurrence_interval || null,
         recurrence_end_date: body.recurrence_end_date || null,

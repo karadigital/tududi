@@ -32,8 +32,8 @@ describe('Subtasks Completion Logic Integration', () => {
         });
     });
 
-    describe('Parent Task Completion Affects Subtasks', () => {
-        it('should complete all subtasks when parent task is completed', async () => {
+    describe('Parent Task Completion Does NOT Affect Subtasks (Independent Behavior)', () => {
+        it('should NOT complete subtasks when parent task is completed', async () => {
             // Create parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -42,7 +42,7 @@ describe('Subtasks Completion Logic Integration', () => {
                 priority: Task.PRIORITY.MEDIUM,
             });
 
-            // Create subtasks
+            // Create subtasks with different statuses
             const subtask1 = await Task.create({
                 name: 'Subtask 1',
                 user_id: testUser.id,
@@ -64,6 +64,7 @@ describe('Subtasks Completion Logic Integration', () => {
                 user_id: testUser.id,
                 parent_task_id: parentTask.id,
                 status: Task.STATUS.DONE,
+                completed_at: new Date(),
                 priority: Task.PRIORITY.MEDIUM,
             });
 
@@ -76,20 +77,22 @@ describe('Subtasks Completion Logic Integration', () => {
             expect(updatedParent.status).toBe(Task.STATUS.DONE);
             expect(updatedParent.completed_at).not.toBeNull();
 
-            // Verify all subtasks are completed
+            // Verify subtasks are UNCHANGED (independent behavior)
             const updatedSubtasks = await Task.findAll({
                 where: { parent_task_id: parentTask.id },
                 order: [['id', 'ASC']],
             });
 
             expect(updatedSubtasks).toHaveLength(3);
-            updatedSubtasks.forEach((subtask) => {
-                expect(subtask.status).toBe(Task.STATUS.DONE);
-                expect(subtask.completed_at).not.toBeNull();
-            });
+            expect(updatedSubtasks[0].status).toBe(Task.STATUS.NOT_STARTED);
+            expect(updatedSubtasks[0].completed_at).toBeNull();
+            expect(updatedSubtasks[1].status).toBe(Task.STATUS.IN_PROGRESS);
+            expect(updatedSubtasks[1].completed_at).toBeNull();
+            expect(updatedSubtasks[2].status).toBe(Task.STATUS.DONE);
+            expect(updatedSubtasks[2].completed_at).not.toBeNull();
         });
 
-        it('should undone all subtasks when parent task is undone', async () => {
+        it('should NOT undone subtasks when parent task is undone', async () => {
             // Create completed parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -127,21 +130,21 @@ describe('Subtasks Completion Logic Integration', () => {
             expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
             expect(updatedParent.completed_at).toBeNull();
 
-            // Verify all subtasks are undone
+            // Verify subtasks are UNCHANGED (remain completed - independent behavior)
             const updatedSubtasks = await Task.findAll({
                 where: { parent_task_id: parentTask.id },
             });
 
             expect(updatedSubtasks).toHaveLength(2);
             updatedSubtasks.forEach((subtask) => {
-                expect(subtask.status).toBe(Task.STATUS.NOT_STARTED);
-                expect(subtask.completed_at).toBeNull();
+                expect(subtask.status).toBe(Task.STATUS.DONE);
+                expect(subtask.completed_at).not.toBeNull();
             });
         });
     });
 
-    describe('Subtask Completion Affects Parent Task', () => {
-        it('should complete parent task when all subtasks are completed', async () => {
+    describe('Subtask Completion Does NOT Affect Parent Task (Independent Behavior)', () => {
+        it('should NOT auto-complete parent task when all subtasks are completed', async () => {
             // Create parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -179,13 +182,13 @@ describe('Subtasks Completion Logic Integration', () => {
             const res2 = await toggleTaskCompletion(subtask2.id);
             expect(res2.status).toBe(200);
 
-            // Parent should now be completed
+            // Parent should still be incomplete (user must manually complete it)
             updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.DONE);
-            expect(updatedParent.completed_at).not.toBeNull();
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
+            expect(updatedParent.completed_at).toBeNull();
         });
 
-        it('should undone parent task when any subtask is undone', async () => {
+        it('should NOT undone parent task when any subtask is undone', async () => {
             // Create completed parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -218,14 +221,18 @@ describe('Subtasks Completion Logic Integration', () => {
             let res = await toggleTaskCompletion(subtask1.id);
             expect(res.status).toBe(200);
 
-            // Parent should be undone
+            // Parent should remain DONE (independent behavior)
             const updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
-            expect(updatedParent.completed_at).toBeNull();
+            expect(updatedParent.status).toBe(Task.STATUS.DONE);
+            expect(updatedParent.completed_at).not.toBeNull();
 
             // Other subtask should remain done
             const updatedSubtask2 = await Task.findByPk(subtask2.id);
             expect(updatedSubtask2.status).toBe(Task.STATUS.DONE);
+
+            // The undone subtask should be undone
+            const updatedSubtask1 = await Task.findByPk(subtask1.id);
+            expect(updatedSubtask1.status).toBe(Task.STATUS.NOT_STARTED);
         });
 
         it('should not affect parent task when no subtasks exist', async () => {
@@ -248,8 +255,8 @@ describe('Subtasks Completion Logic Integration', () => {
         });
     });
 
-    describe('Complex Completion Scenarios', () => {
-        it('should handle mixed subtask states correctly', async () => {
+    describe('Complex Completion Scenarios (Independent Behavior)', () => {
+        it('should handle mixed subtask states correctly - parent stays unchanged', async () => {
             // Create parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -288,7 +295,7 @@ describe('Subtasks Completion Logic Integration', () => {
             let res = await toggleTaskCompletion(subtask2.id);
             expect(res.status).toBe(200);
 
-            // Parent should still be incomplete
+            // Parent should still be incomplete (independent behavior)
             let updatedParent = await Task.findByPk(parentTask.id);
             expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
 
@@ -296,12 +303,12 @@ describe('Subtasks Completion Logic Integration', () => {
             const res2 = await toggleTaskCompletion(subtask3.id);
             expect(res2.status).toBe(200);
 
-            // Parent should now be completed
+            // Parent should STILL be incomplete (independent behavior - no auto-complete)
             updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.DONE);
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
         });
 
-        it('should handle rapid completion toggles correctly', async () => {
+        it('should handle rapid completion toggles correctly - parent unchanged', async () => {
             // Create parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -329,20 +336,13 @@ describe('Subtasks Completion Logic Integration', () => {
             const res3 = await toggleTaskCompletion(subtask.id);
             expect(res3.status).toBe(200);
 
-            // Final state should be consistent
+            // Final state: subtask is done (3 toggles: not_started -> done -> not_started -> done)
             const updatedSubtask = await Task.findByPk(subtask.id);
             const updatedParent = await Task.findByPk(parentTask.id);
 
-            // Final state should be consistent
-            expect(
-                updatedSubtask.status === Task.STATUS.DONE
-                    ? updatedParent.status
-                    : updatedParent.status
-            ).toBe(
-                updatedSubtask.status === Task.STATUS.DONE
-                    ? Task.STATUS.DONE
-                    : Task.STATUS.NOT_STARTED
-            );
+            // Parent should remain NOT_STARTED regardless of subtask state (independent behavior)
+            expect(updatedSubtask.status).toBe(Task.STATUS.DONE);
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
         });
     });
 
@@ -377,7 +377,7 @@ describe('Subtasks Completion Logic Integration', () => {
             expect(deletedSubtask).toBeNull();
         });
 
-        it('should handle concurrent completion updates', async () => {
+        it('should handle concurrent completion updates - parent unchanged', async () => {
             // Create parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -414,9 +414,17 @@ describe('Subtasks Completion Logic Integration', () => {
                 expect(result.status).toBe(200);
             });
 
-            // Final state should be consistent
+            // All subtasks should be completed
+            const updatedSubtasks = await Task.findAll({
+                where: { parent_task_id: parentTask.id },
+            });
+            updatedSubtasks.forEach((subtask) => {
+                expect(subtask.status).toBe(Task.STATUS.DONE);
+            });
+
+            // Parent should remain NOT_STARTED (independent behavior)
             const updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.DONE);
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
         });
 
         it('should handle deleted parent task gracefully (FK constraints disabled)', async () => {
@@ -451,7 +459,7 @@ describe('Subtasks Completion Logic Integration', () => {
     });
 
     describe('Performance Considerations', () => {
-        it('should handle many subtasks efficiently', async () => {
+        it('should handle many subtasks efficiently - parent unchanged', async () => {
             // Create parent task
             const parentTask = await Task.create({
                 name: 'Parent Task',
@@ -488,9 +496,17 @@ describe('Subtasks Completion Logic Integration', () => {
             // Should complete within reasonable time (threshold increased for CI/parallel test environments)
             expect(endTime - startTime).toBeLessThan(30000); // 30 seconds
 
-            // Parent should be completed
+            // All subtasks should be completed
+            const updatedSubtasks = await Task.findAll({
+                where: { parent_task_id: parentTask.id },
+            });
+            updatedSubtasks.forEach((subtask) => {
+                expect(subtask.status).toBe(Task.STATUS.DONE);
+            });
+
+            // Parent should remain NOT_STARTED (independent behavior)
             const updatedParent = await Task.findByPk(parentTask.id);
-            expect(updatedParent.status).toBe(Task.STATUS.DONE);
+            expect(updatedParent.status).toBe(Task.STATUS.NOT_STARTED);
         });
     });
 });

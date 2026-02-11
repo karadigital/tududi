@@ -2,12 +2,18 @@ name: CI
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, 'release/*' ]
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
 
 jobs:
   test:
+    if: >-
+      !(github.event_name == 'pull_request' &&
+        github.base_ref == 'main' &&
+        github.event.pull_request.draft)
     runs-on: ubuntu-latest
 
     steps:
@@ -34,3 +40,49 @@ jobs:
 
     - name: Build frontend
       run: npm run build
+
+  deploy-staging:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+    - name: Deploy to staging
+      uses: appleboy/ssh-action@v1
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        script: |
+          set -e
+          cd ~/tududi
+          git pull origin main
+          docker compose build
+          docker compose up -d
+
+  deploy-production:
+    needs: test
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Deploy to production
+      uses: appleboy/ssh-action@v1
+      env:
+        TAG_NAME: ${{ github.ref_name }}
+      with:
+        host: ${{ secrets.VPS_HOST }}
+        username: ${{ secrets.VPS_USER }}
+        key: ${{ secrets.VPS_SSH_KEY }}
+        port: ${{ secrets.VPS_PORT }}
+        envs: TAG_NAME
+        script: |
+          set -e
+          cd ~/tududi
+          git fetch --tags
+          git checkout "$TAG_NAME"
+          docker compose build
+          docker compose up -d

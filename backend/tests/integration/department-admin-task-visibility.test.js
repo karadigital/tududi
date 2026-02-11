@@ -11,10 +11,12 @@ const { createTestUser } = require('../helpers/testUtils');
  * 1. Superadmin sees all tasks
  * 2. Superadmin can edit any task
  * 3. Department admin sees member tasks only
- * 4. Department admin can edit member tasks
- * 5. Department admin cannot see outsider tasks
- * 6. Regular member cannot see other member tasks
- * 7. Adding user to second department fails
+ * 4. Department admin can view member task details (read-only)
+ * 5. Department admin cannot edit member tasks (read-only access)
+ * 6. Department admin cannot delete member tasks (read-only access)
+ * 7. Department admin cannot see outsider tasks
+ * 8. Regular member cannot see other member tasks
+ * 9. Adding user to second department fails
  */
 describe('Department Admin Task Visibility', () => {
     // Helper to generate unique emails
@@ -175,24 +177,58 @@ describe('Department Admin Task Visibility', () => {
             expect(taskIds).not.toContain(outsiderTask.id);
         });
 
-        it('department admin can edit member tasks', async () => {
+        it('department admin can view member task details (read-only)', async () => {
             // Create a task owned by department member
             const memberTask = await Task.create({
                 name: 'Dept Member Task',
                 user_id: deptMember.id,
             });
 
-            // Department admin edits the member's task
+            // Department admin can GET task details
+            const res = await deptAdminAgent.get(`/api/task/${memberTask.uid}`);
+
+            expect(res.status).toBe(200);
+            expect(res.body.name).toBe('Dept Member Task');
+        });
+
+        it('department admin cannot edit member tasks (read-only access)', async () => {
+            // Create a task owned by department member
+            const memberTask = await Task.create({
+                name: 'Dept Member Task',
+                user_id: deptMember.id,
+            });
+
+            // Department admin attempts to edit the member's task
             const res = await deptAdminAgent
                 .patch(`/api/task/${memberTask.uid}`)
                 .send({ name: 'Updated by Dept Admin' });
 
-            expect(res.status).toBe(200);
-            expect(res.body.name).toBe('Updated by Dept Admin');
+            // Should be forbidden - department admins have read-only access
+            expect(res.status).toBe(403);
 
-            // Verify the update persisted
-            const updatedTask = await Task.findByPk(memberTask.id);
-            expect(updatedTask.name).toBe('Updated by Dept Admin');
+            // Verify the task was NOT updated
+            const unchangedTask = await Task.findByPk(memberTask.id);
+            expect(unchangedTask.name).toBe('Dept Member Task');
+        });
+
+        it('department admin cannot delete member tasks (read-only access)', async () => {
+            // Create a task owned by department member
+            const memberTask = await Task.create({
+                name: 'Dept Member Task',
+                user_id: deptMember.id,
+            });
+
+            // Department admin attempts to delete the member's task
+            const res = await deptAdminAgent.delete(
+                `/api/task/${memberTask.uid}`
+            );
+
+            // Should be forbidden - department admins have read-only access
+            expect(res.status).toBe(403);
+
+            // Verify the task still exists
+            const existingTask = await Task.findByPk(memberTask.id);
+            expect(existingTask).not.toBeNull();
         });
 
         it('department admin cannot see outsider tasks', async () => {

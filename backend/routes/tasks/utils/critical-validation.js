@@ -1,6 +1,20 @@
 const { Task } = require('../../../models');
 
 /**
+ * Checks if a priority value represents critical priority.
+ * @param {number|string} priority - The priority value to check
+ * @returns {boolean} True if priority is critical
+ */
+function isCriticalPriority(priority) {
+    return (
+        priority === 3 ||
+        priority === '3' ||
+        priority === Task.PRIORITY.CRITICAL ||
+        priority === 'critical'
+    );
+}
+
+/**
  * Validates that critical priority tasks have required fields.
  * @param {Object} taskData - The task data being created/updated
  * @param {Object} existingTask - The existing task (for updates), optional
@@ -12,14 +26,7 @@ function validateCriticalPriority(taskData, existingTask = null) {
             ? taskData.priority
             : existingTask?.priority;
 
-    // Check if priority is critical (value 3 or string 'critical')
-    const isCritical =
-        priority === 3 ||
-        priority === '3' ||
-        priority === Task.PRIORITY.CRITICAL ||
-        priority === 'critical';
-
-    if (!isCritical) {
+    if (!isCriticalPriority(priority)) {
         return; // Not critical, no validation needed
     }
 
@@ -40,5 +47,6 @@ function validateCriticalPriority(taskData, existingTask = null) {
 }
 
 module.exports = {
+    isCriticalPriority,
     validateCriticalPriority,
 };

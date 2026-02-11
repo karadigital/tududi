@@ -55,7 +55,10 @@
     "createNew": "إنشاء جديد",
     "views": "عرض",
     "unpinView": "إلغاء تثبيت العرض",
-    "pinView": "تثبيت العرض"
+    "pinView": "تثبيت العرض",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "الرئيسية",

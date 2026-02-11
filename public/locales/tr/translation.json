@@ -55,7 +55,10 @@
     "createNew": "Yeni Oluştur",
     "views": "Görünümler",
     "unpinView": "Görünümü sabitlemeyi kaldır",
-    "pinView": "Görünümü sabitle"
+    "pinView": "Görünümü sabitle",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Ana Sayfa",

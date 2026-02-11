@@ -1,6 +1,14 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Project, User, Area, Task, Note } = require('../../models');
+const {
+    Project,
+    User,
+    Area,
+    Task,
+    Note,
+    Permission,
+    sequelize,
+} = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 
 describe('Projects Routes', () => {
@@ -30,7 +38,6 @@ describe('Projects Routes', () => {
                 name: 'Test Project',
                 description: 'Test Description',
                 state: 'planned',
-                pin_to_sidebar: false,
                 priority: 1,
                 area_id: area.id,
             };
@@ -41,9 +48,7 @@ describe('Projects Routes', () => {
             expect(response.body.name).toBe(projectData.name);
             expect(response.body.description).toBe(projectData.description);
             expect(response.body.state).toBe(projectData.state);
-            expect(response.body.pin_to_sidebar).toBe(
-                projectData.pin_to_sidebar
-            );
+            expect(response.body.pin_to_sidebar).toBe(false);
             expect(response.body.priority).toBe(projectData.priority);
             expect(response.body.area_id).toBe(area.id);
             expect(response.body.user_id).toBe(user.id);
@@ -512,6 +517,24 @@ describe('Projects Routes', () => {
             expect(orphanedNote3.title).toBe('Note 3');
         });
 
+        it('should delete project and its pins are cleaned up by CASCADE', async () => {
+            // Pin the project first
+            await sequelize.query(
+                'INSERT INTO project_pins (project_id, user_id, created_at, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                { replacements: [project.id, user.id] }
+            );
+
+            const response = await agent.delete(`/api/project/${project.uid}`);
+            expect(response.status).toBe(200);
+
+            // Verify pin was cleaned up by CASCADE
+            const [pins] = await sequelize.query(
+                'SELECT * FROM project_pins WHERE project_id = ?',
+                { replacements: [project.id] }
+            );
+            expect(pins.length).toBe(0);
+        });
+
         it('should delete project with both tasks and notes (orphan both)', async () => {
             // Create tasks associated with the project
             const task = await Task.create({
@@ -551,6 +574,258 @@ describe('Projects Routes', () => {
             expect(orphanedNote.project_id).toBeNull();
             expect(orphanedNote.title).toBe('Note with project');
             expect(orphanedNote.content).toBe('This note belongs to a project');
+        });
+    });
+
+    describe('POST /api/project/:uid/pin', () => {
+        let project;
+
+        beforeEach(async () => {
+            project = await Project.create({
+                name: 'Pinnable Project',
+                user_id: user.id,
+            });
+        });
+
+        it('should pin a project', async () => {
+            const response = await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.pin_to_sidebar).toBe(true);
+        });
+
+        it('should unpin a project', async () => {
+            // Pin first
+            await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            // Then unpin
+            const response = await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: false });
+
+            expect(response.status).toBe(200);
+            expect(response.body.pin_to_sidebar).toBe(false);
+        });
+
+        it('should enforce max 5 pinned projects', async () => {
+            // Create and pin 5 projects
+            for (let i = 0; i < 5; i++) {
+                const p = await Project.create({
+                    name: `Pin Project ${i}`,
+                    user_id: user.id,
+                });
+                await agent
+                    .post(`/api/project/${p.uid}/pin`)
+                    .send({ pinned: true });
+            }
+
+            // Try to pin a 6th
+            const response = await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe(
+                'Maximum of 5 pinned projects allowed.'
+            );
+        });
+
+        it('should require authentication', async () => {
+            const response = await request(app)
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(401);
+        });
+
+        it('should allow pinning the same project twice (idempotent)', async () => {
+            await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            const response = await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.pin_to_sidebar).toBe(true);
+        });
+
+        it('should allow re-pinning when at max limit (idempotent)', async () => {
+            // Pin 5 projects including the test project
+            const projects = [project];
+            for (let i = 0; i < 4; i++) {
+                projects.push(
+                    await Project.create({
+                        name: `Pin ${i}`,
+                        user_id: user.id,
+                    })
+                );
+            }
+            for (const p of projects) {
+                await agent
+                    .post(`/api/project/${p.uid}/pin`)
+                    .send({ pinned: true });
+            }
+
+            // Re-pin the first one — should succeed (idempotent, not a new pin)
+            const response = await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.pin_to_sidebar).toBe(true);
+        });
+    });
+
+    describe('Per-user pin isolation', () => {
+        let userB, agentB, sharedProject;
+
+        beforeEach(async () => {
+            // Create User B
+            userB = await createTestUser({
+                email: 'userb@example.com',
+            });
+            agentB = request.agent(app);
+            await agentB.post('/api/login').send({
+                email: 'userb@example.com',
+                password: 'password123',
+            });
+
+            // Create a project owned by User A
+            sharedProject = await Project.create({
+                name: 'Shared Project',
+                user_id: user.id,
+            });
+
+            // Share with User B (ro access)
+            await Permission.create({
+                user_id: userB.id,
+                granted_by_user_id: user.id,
+                resource_type: 'project',
+                resource_uid: sharedProject.uid,
+                access_level: 'ro',
+            });
+        });
+
+        it('should isolate pin state between users', async () => {
+            // User A pins the shared project
+            const pinResponse = await agent
+                .post(`/api/project/${sharedProject.uid}/pin`)
+                .send({ pinned: true });
+            expect(pinResponse.status).toBe(200);
+            expect(pinResponse.body.pin_to_sidebar).toBe(true);
+
+            // User A sees it pinned
+            const userAProjects = await agent.get(
+                '/api/projects?pin_to_sidebar=true'
+            );
+            expect(userAProjects.body.projects.length).toBe(1);
+            expect(userAProjects.body.projects[0].id).toBe(sharedProject.id);
+
+            // User B does NOT see it pinned
+            const userBProjects = await agentB.get(
+                '/api/projects?pin_to_sidebar=true'
+            );
+            expect(userBProjects.body.projects.length).toBe(0);
+        });
+
+        it('should allow both users to pin independently', async () => {
+            // Both users pin the project
+            await agent
+                .post(`/api/project/${sharedProject.uid}/pin`)
+                .send({ pinned: true });
+            await agentB
+                .post(`/api/project/${sharedProject.uid}/pin`)
+                .send({ pinned: true });
+
+            // User A unpins
+            await agent
+                .post(`/api/project/${sharedProject.uid}/pin`)
+                .send({ pinned: false });
+
+            // User A sees it unpinned
+            const userADetail = await agent.get(
+                `/api/project/${sharedProject.uid}`
+            );
+            expect(userADetail.body.pin_to_sidebar).toBe(false);
+
+            // User B still sees it pinned
+            const userBDetail = await agentB.get(
+                `/api/project/${sharedProject.uid}`
+            );
+            expect(userBDetail.body.pin_to_sidebar).toBe(true);
+        });
+
+        it('should allow RO user on shared project to pin', async () => {
+            const response = await agentB
+                .post(`/api/project/${sharedProject.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.pin_to_sidebar).toBe(true);
+        });
+    });
+
+    describe('GET /api/projects with pin_to_sidebar filter', () => {
+        let pinnedProject, unpinnedProject;
+
+        beforeEach(async () => {
+            pinnedProject = await Project.create({
+                name: 'Pinned Project',
+                user_id: user.id,
+            });
+            unpinnedProject = await Project.create({
+                name: 'Unpinned Project',
+                user_id: user.id,
+            });
+
+            // Pin only the first project
+            await agent
+                .post(`/api/project/${pinnedProject.uid}/pin`)
+                .send({ pinned: true });
+        });
+
+        it('should filter to only pinned projects', async () => {
+            const response = await agent.get(
+                '/api/projects?pin_to_sidebar=true'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.projects.length).toBe(1);
+            expect(response.body.projects[0].id).toBe(pinnedProject.id);
+            expect(response.body.projects[0].pin_to_sidebar).toBe(true);
+        });
+
+        it('should filter to only unpinned projects', async () => {
+            const response = await agent.get(
+                '/api/projects?pin_to_sidebar=false'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.projects.length).toBe(1);
+            expect(response.body.projects[0].id).toBe(unpinnedProject.id);
+            expect(response.body.projects[0].pin_to_sidebar).toBe(false);
+        });
+
+        it('should return all projects with pin state when no filter', async () => {
+            const response = await agent.get('/api/projects');
+
+            expect(response.status).toBe(200);
+            expect(response.body.projects.length).toBe(2);
+
+            const pinned = response.body.projects.find(
+                (p) => p.id === pinnedProject.id
+            );
+            const unpinned = response.body.projects.find(
+                (p) => p.id === unpinnedProject.id
+            );
+            expect(pinned.pin_to_sidebar).toBe(true);
+            expect(unpinned.pin_to_sidebar).toBe(false);
         });
     });
 });

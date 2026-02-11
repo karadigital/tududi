@@ -55,7 +55,10 @@
     "createNew": "Maak Nieuw",
     "views": "Weergaven",
     "unpinView": "Weergave losmaken",
-    "pinView": "Weergave vastzetten"
+    "pinView": "Weergave vastzetten",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Home",

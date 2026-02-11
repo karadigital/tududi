@@ -106,6 +106,16 @@ async function exportUserData(userId) {
             throw new Error('User not found');
         }
 
+        // Query pinned project IDs for this user
+        const pinnedRows = await sequelize.query(
+            'SELECT project_id FROM project_pins WHERE user_id = :userId',
+            {
+                replacements: { userId },
+                type: sequelize.constructor.QueryTypes.SELECT,
+            }
+        );
+        const pinnedProjectIds = new Set(pinnedRows.map((r) => r.project_id));
+
         // Fetch all user-owned entities
         const [
             areas,
@@ -197,6 +207,10 @@ async function exportUserData(userId) {
                 areas: areas.map((area) => area.toJSON()),
                 projects: projects.map((project) => {
                     const projectData = project.toJSON();
+                    // Include per-user pin state for backup
+                    projectData.pin_to_sidebar = pinnedProjectIds.has(
+                        project.id
+                    );
                     // Extract tag UIDs for relationship mapping
                     projectData.tag_uids = (project.Tags || []).map(
                         (tag) => tag.uid
@@ -357,7 +371,6 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                             uid: projectData.uid,
                             name: projectData.name,
                             description: projectData.description,
-                            pin_to_sidebar: projectData.pin_to_sidebar,
                             priority: projectData.priority,
                             due_date_at: projectData.due_date_at,
                             image_url: projectData.image_url,
@@ -372,6 +385,20 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                     );
                     stats.projects.created++;
                     uidToIdMap.projects[projectData.uid] = newProject.id;
+
+                    // Restore pin state via join table
+                    if (projectData.pin_to_sidebar) {
+                        await sequelize.query(
+                            'INSERT OR IGNORE INTO project_pins (project_id, user_id, created_at, updated_at) VALUES (:projectId, :userId, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+                            {
+                                replacements: {
+                                    projectId: newProject.id,
+                                    userId: userId,
+                                },
+                                transaction,
+                            }
+                        );
+                    }
 
                     // Create project-tag relationships
                     if (

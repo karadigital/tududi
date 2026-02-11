@@ -107,8 +107,9 @@ async function getAccess(userId, resourceType, resourceUid) {
         if (t.assigned_to_user_id === userId) return ACCESS.RW;
 
         // Check if user is a department admin and the task owner is in their department
+        // Department admins have read-only access to tasks in their department
         const memberUserIds = await getDepartmentMemberUserIds(userId);
-        if (memberUserIds.includes(t.user_id)) return ACCESS.RW;
+        if (memberUserIds.includes(t.user_id)) return ACCESS.RO;
 
         // Check if user has access through the parent project
         if (t.project_id) {
@@ -399,6 +400,36 @@ async function canDeleteTask(userId, taskUid) {
     return task.user_id === userId;
 }
 
+async function getAccessibleWorkspaceIds(userId) {
+    const rows = await sequelize.query(
+        `SELECT DISTINCT w.id
+         FROM workspaces w
+         WHERE w.creator = :userId
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         WHERE p.user_id = :userId AND p.workspace_id IS NOT NULL
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         INNER JOIN permissions perm ON perm.resource_uid = p.uid
+           AND perm.resource_type = 'project'
+           AND perm.user_id = :userId
+         WHERE p.workspace_id IS NOT NULL`,
+        {
+            replacements: { userId },
+            type: QueryTypes.SELECT,
+            raw: true,
+        }
+    );
+    return rows.map((r) => r.id).filter(Boolean);
+}
+
+async function hasWorkspaceAccess(workspaceId, userId) {
+    const accessibleIds = await getAccessibleWorkspaceIds(userId);
+    return accessibleIds.includes(workspaceId);
+}
+
 module.exports = {
     ACCESS,
     getAccess,
@@ -407,4 +438,6 @@ module.exports = {
     ownedOrAssignedTasksWhere,
     actionableTasksWhere,
     canDeleteTask,
+    hasWorkspaceAccess,
+    getAccessibleWorkspaceIds,
 };

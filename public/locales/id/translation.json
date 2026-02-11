@@ -55,7 +55,10 @@
     "createNew": "Buat Baru",
     "views": "Tampilan",
     "unpinView": "Lepaskan tampilan",
-    "pinView": "Sematkan tampilan"
+    "pinView": "Sematkan tampilan",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Beranda",

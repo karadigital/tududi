@@ -55,7 +55,10 @@
     "createNew": "Δημιουργία Νέου",
     "views": "Προβολές",
     "unpinView": "Αφαίρεση καρφώματος προβολής",
-    "pinView": "Καρφίτσωμα προβολής"
+    "pinView": "Καρφίτσωμα προβολής",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "Αρχική",

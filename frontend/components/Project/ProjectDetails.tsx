@@ -352,6 +352,11 @@ const ProjectDetails: React.FC = () => {
             completed_at: null,
         });
         setTasks([...tasks, newTask]);
+        if (newTask.Project) {
+            useStore
+                .getState()
+                .projectsStore.updateProjectInStore(newTask.Project);
+        }
         const taskLink = (
             <span>
                 {t('task.created', 'Task')}{' '}
@@ -439,12 +444,19 @@ const ProjectDetails: React.FC = () => {
                 )
             );
         }
+        if (savedTask.Project) {
+            useStore
+                .getState()
+                .projectsStore.updateProjectInStore(savedTask.Project);
+        }
     };
 
     const handleTaskDelete = async (taskUid: string | undefined) => {
         if (!taskUid) return;
         await deleteTask(taskUid);
         setTasks(tasks.filter((task) => task.uid !== taskUid));
+        // Note: deleteTask in useStore already refetches projects,
+        // which includes the server-updated timestamp from touchProjectTimestamp
     };
 
     const handleTaskCompletionToggle = (updatedTask: Task) => {
@@ -471,6 +483,11 @@ const ProjectDetails: React.FC = () => {
                     : task
             )
         );
+        if (updatedTask.Project) {
+            useStore
+                .getState()
+                .projectsStore.updateProjectInStore(updatedTask.Project);
+        }
     };
 
     const handleToggleToday = async (taskId: number, task?: Task) => {
@@ -570,6 +587,11 @@ const ProjectDetails: React.FC = () => {
             completed_at: null,
         });
         setTasks([...tasks, newTask]);
+        if (newTask.Project) {
+            useStore
+                .getState()
+                .projectsStore.updateProjectInStore(newTask.Project);
+        }
         setShowAutoSuggestForm(false);
         const taskLink = (
             <span>

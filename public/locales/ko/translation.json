@@ -55,7 +55,10 @@
     "createNew": "새로 만들기",
     "views": "뷰",
     "unpinView": "뷰 고정 해제",
-    "pinView": "뷰 고정"
+    "pinView": "뷰 고정",
+    "workspaces": "Workspaces",
+    "addWorkspaceAriaLabel": "Add Workspace",
+    "addWorkspaceTitle": "Add Workspace"
   },
   "navigation": {
     "home": "홈",

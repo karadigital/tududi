@@ -4,6 +4,7 @@ import { Area } from '../entities/Area';
 import { Note } from '../entities/Note';
 import { Task } from '../entities/Task';
 import { Tag } from '../entities/Tag';
+import { Workspace } from '../entities/Workspace';
 import { InboxItem } from '../entities/InboxItem';
 import { getApiPath } from '../config/paths';
 
@@ -29,6 +30,19 @@ interface AreasStore {
     loadAreas: () => Promise<void>;
 }
 
+interface WorkspacesStore {
+    workspaces: Workspace[];
+    currentWorkspace: Workspace | null;
+    isLoading: boolean;
+    isError: boolean;
+    hasLoaded: boolean;
+    setWorkspaces: (workspaces: Workspace[]) => void;
+    setCurrentWorkspace: (workspace: Workspace | null) => void;
+    setLoading: (isLoading: boolean) => void;
+    setError: (isError: boolean) => void;
+    loadWorkspaces: () => Promise<void>;
+}
+
 interface ProjectsStore {
     projects: Project[];
     currentProject: Project | null;
@@ -38,6 +52,7 @@ interface ProjectsStore {
     setCurrentProject: (project: Project | null) => void;
     setLoading: (isLoading: boolean) => void;
     setError: (isError: boolean) => void;
+    updateProjectInStore: (updatedProject: Project) => void;
 }
 
 interface TagsStore {
@@ -126,6 +141,7 @@ interface HabitsStore {
 interface StoreState {
     notesStore: NotesStore;
     areasStore: AreasStore;
+    workspacesStore: WorkspacesStore;
     projectsStore: ProjectsStore;
     tagsStore: TagsStore;
     tasksStore: TasksStore;
@@ -235,6 +251,70 @@ export const useStore = create<StoreState>((set: any) => ({
             }
         },
     },
+    workspacesStore: {
+        workspaces: [],
+        currentWorkspace: null,
+        isLoading: false,
+        isError: false,
+        hasLoaded: false,
+        setWorkspaces: (workspaces) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, workspaces },
+            })),
+        setCurrentWorkspace: (currentWorkspace) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, currentWorkspace },
+            })),
+        setLoading: (isLoading) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, isLoading },
+            })),
+        setError: (isError) =>
+            set((state) => ({
+                workspacesStore: { ...state.workspacesStore, isError },
+            })),
+        loadWorkspaces: async () => {
+            const state = useStore.getState();
+            if (state.workspacesStore.isLoading) return;
+
+            const { fetchWorkspaces } = await import(
+                '../utils/workspacesService'
+            );
+
+            set((state) => ({
+                workspacesStore: {
+                    ...state.workspacesStore,
+                    isLoading: true,
+                    isError: false,
+                },
+            }));
+
+            try {
+                const workspaces = await fetchWorkspaces();
+                set((state) => ({
+                    workspacesStore: {
+                        ...state.workspacesStore,
+                        workspaces,
+                        isLoading: false,
+                        hasLoaded: true,
+                    },
+                }));
+            } catch (error) {
+                console.error(
+                    'loadWorkspaces: Failed to load workspaces:',
+                    error
+                );
+                set((state) => ({
+                    workspacesStore: {
+                        ...state.workspacesStore,
+                        isError: true,
+                        isLoading: false,
+                        hasLoaded: true,
+                    },
+                }));
+            }
+        },
+    },
     projectsStore: {
         projects: [],
         currentProject: null,
@@ -256,6 +336,20 @@ export const useStore = create<StoreState>((set: any) => ({
             set((state) => ({
                 projectsStore: { ...state.projectsStore, isError },
             })),
+        updateProjectInStore: (updatedProject) =>
+            set((state) => {
+                if (!updatedProject.uid) return state;
+                return {
+                    projectsStore: {
+                        ...state.projectsStore,
+                        projects: state.projectsStore.projects.map((p) =>
+                            p.uid === updatedProject.uid
+                                ? { ...p, ...updatedProject }
+                                : p
+                        ),
+                    },
+                };
+            }),
     },
     tagsStore: {
         tags: [],
@@ -383,12 +477,29 @@ export const useStore = create<StoreState>((set: any) => ({
             const { createTask } = await import('../utils/tasksService');
             try {
                 const newTask = await createTask(taskData);
-                set((state) => ({
-                    tasksStore: {
-                        ...state.tasksStore,
-                        tasks: [newTask, ...state.tasksStore.tasks],
-                    },
-                }));
+                set((state) => {
+                    const newState: any = {
+                        tasksStore: {
+                            ...state.tasksStore,
+                            tasks: [newTask, ...state.tasksStore.tasks],
+                        },
+                    };
+                    if (newTask.Project) {
+                        const projectUid = newTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...newTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
+                    }
+                    return newState;
+                });
                 return newTask;
             } catch (error) {
                 console.error('createTask: Failed to create task:', error);
@@ -402,14 +513,31 @@ export const useStore = create<StoreState>((set: any) => ({
             const { updateTask } = await import('../utils/tasksService');
             try {
                 const updatedTask = await updateTask(taskUid, taskData);
-                set((state) => ({
-                    tasksStore: {
-                        ...state.tasksStore,
-                        tasks: state.tasksStore.tasks.map((task) =>
-                            task.uid === taskUid ? updatedTask : task
-                        ),
-                    },
-                }));
+                set((state) => {
+                    const newState: any = {
+                        tasksStore: {
+                            ...state.tasksStore,
+                            tasks: state.tasksStore.tasks.map((task) =>
+                                task.uid === taskUid ? updatedTask : task
+                            ),
+                        },
+                    };
+                    if (updatedTask.Project) {
+                        const projectUid = updatedTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...updatedTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
+                    }
+                    return newState;
+                });
                 return updatedTask;
             } catch (error) {
                 console.error('updateTask: Failed to update task:', error);
@@ -421,6 +549,7 @@ export const useStore = create<StoreState>((set: any) => ({
         },
         deleteTask: async (taskUid) => {
             const { deleteTask } = await import('../utils/tasksService');
+            const { fetchProjects } = await import('../utils/projectsService');
             try {
                 await deleteTask(taskUid);
                 set((state) => ({
@@ -431,6 +560,17 @@ export const useStore = create<StoreState>((set: any) => ({
                         ),
                     },
                 }));
+                try {
+                    const projects = await fetchProjects();
+                    set((state) => ({
+                        projectsStore: {
+                            ...state.projectsStore,
+                            projects,
+                        },
+                    }));
+                } catch {
+                    // Don't fail the delete if project refresh fails
+                }
             } catch (error) {
                 console.error('deleteTask: Failed to delete task:', error);
                 set((state) => ({
@@ -445,14 +585,31 @@ export const useStore = create<StoreState>((set: any) => ({
             );
             try {
                 const updatedTask = await toggleTaskCompletion(taskUid);
-                set((state) => ({
-                    tasksStore: {
-                        ...state.tasksStore,
-                        tasks: state.tasksStore.tasks.map((task) =>
-                            task.uid === taskUid ? updatedTask : task
-                        ),
-                    },
-                }));
+                set((state) => {
+                    const newState: any = {
+                        tasksStore: {
+                            ...state.tasksStore,
+                            tasks: state.tasksStore.tasks.map((task) =>
+                                task.uid === taskUid ? updatedTask : task
+                            ),
+                        },
+                    };
+                    if (updatedTask.Project) {
+                        const projectUid = updatedTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...updatedTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
+                    }
+                    return newState;
+                });
                 return updatedTask;
             } catch (error) {
                 console.error(
@@ -472,14 +629,31 @@ export const useStore = create<StoreState>((set: any) => ({
                     .getState()
                     .tasksStore.tasks.find((t) => t.id === taskId);
                 const updatedTask = await toggleTaskToday(taskId, currentTask);
-                set((state) => ({
-                    tasksStore: {
-                        ...state.tasksStore,
-                        tasks: state.tasksStore.tasks.map((task) =>
-                            task.id === taskId ? updatedTask : task
-                        ),
-                    },
-                }));
+                set((state) => {
+                    const newState: any = {
+                        tasksStore: {
+                            ...state.tasksStore,
+                            tasks: state.tasksStore.tasks.map((task) =>
+                                task.id === taskId ? updatedTask : task
+                            ),
+                        },
+                    };
+                    if (updatedTask.Project) {
+                        const projectUid = updatedTask.Project.uid;
+                        if (projectUid) {
+                            newState.projectsStore = {
+                                ...state.projectsStore,
+                                projects: state.projectsStore.projects.map(
+                                    (p) =>
+                                        p.uid === projectUid
+                                            ? { ...p, ...updatedTask.Project }
+                                            : p
+                                ),
+                            };
+                        }
+                    }
+                    return newState;
+                });
                 return updatedTask;
             } catch (error) {
                 console.error(

@@ -131,3 +131,21 @@ export const fetchProjectBySlug = async (uidSlug: string): Promise<Project> => {
     await handleAuthResponse(response, 'Failed to fetch project.');
     return await response.json();
 };
+
+export const toggleProjectPin = async (
+    projectUid: string,
+    pinned: boolean
+): Promise<Project> => {
+    const response = await fetch(getApiPath(`project/${projectUid}/pin`), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify({ pinned }),
+    });
+
+    await handleAuthResponse(response, 'Failed to toggle project pin.');
+    return await response.json();
+};
