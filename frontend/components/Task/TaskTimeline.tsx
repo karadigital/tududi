@@ -15,9 +15,16 @@ import {
 interface TaskTimelineProps {
     taskUid: string | undefined;
     refreshKey?: number;
+    maxItems?: number;
+    onViewAll?: () => void;
 }
 
-const TaskTimeline: React.FC<TaskTimelineProps> = ({ taskUid, refreshKey }) => {
+const TaskTimeline: React.FC<TaskTimelineProps> = ({
+    taskUid,
+    refreshKey,
+    maxItems,
+    onViewAll,
+}) => {
     const { t } = useTranslation();
     const [events, setEvents] = useState<TaskEvent[]>([]);
     const [loading, setLoading] = useState(true);
@@ -255,47 +262,78 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({ taskUid, refreshKey }) => {
         );
     }
 
-    return (
-        <div className="max-h-[36rem] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
-            <div className="space-y-2">
-                {events.map((event) => (
-                    <div key={event.id} className="relative">
-                        {/* Event item */}
-                        <div className="py-1 relative z-10">
-                            {/* Content */}
-                            <div className="min-w-0">
-                                <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-tight">
-                                    {getEventDescription(event)}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {formatTimeAgo(event.created_at)}
-                                </div>
+    const isTruncated = maxItems && events.length > maxItems;
+    const displayedEvents = maxItems ? events.slice(0, maxItems) : events;
 
-                                {/* Additional details for certain events */}
-                                {event.event_type === 'tags_changed' &&
-                                    event.new_value && (
-                                        <div className="mt-1.5 flex flex-wrap gap-1">
-                                            {Array.isArray(event.new_value) &&
-                                                event.new_value.map(
-                                                    (
-                                                        tag: any,
-                                                        tagIndex: number
-                                                    ) => (
-                                                        <span
-                                                            key={tagIndex}
-                                                            className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
-                                                        >
-                                                            {tag.name || tag}
-                                                        </span>
-                                                    )
-                                                )}
-                                        </div>
-                                    )}
+    return (
+        <div>
+            <div
+                className={
+                    isTruncated
+                        ? ''
+                        : 'max-h-[36rem] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent'
+                }
+            >
+                <div className="space-y-2">
+                    {displayedEvents.map((event) => (
+                        <div key={event.id} className="relative">
+                            {/* Event item */}
+                            <div className="py-1 relative z-10">
+                                {/* Content */}
+                                <div className="min-w-0">
+                                    <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-tight">
+                                        {getEventDescription(event)}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {formatTimeAgo(event.created_at)}
+                                    </div>
+
+                                    {/* Additional details for certain events */}
+                                    {event.event_type === 'tags_changed' &&
+                                        event.new_value && (
+                                            <div className="mt-1.5 flex flex-wrap gap-1">
+                                                {Array.isArray(
+                                                    event.new_value
+                                                ) &&
+                                                    event.new_value.map(
+                                                        (
+                                                            tag: any,
+                                                            tagIndex: number
+                                                        ) => (
+                                                            <span
+                                                                key={tagIndex}
+                                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
+                                                            >
+                                                                {tag.name ||
+                                                                    tag}
+                                                            </span>
+                                                        )
+                                                    )}
+                                            </div>
+                                        )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
+
+            {/* Truncation Footer */}
+            {isTruncated && (
+                <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">
+                        +{events.length - maxItems} {t('common.more', 'more')}
+                    </span>
+                    {onViewAll && (
+                        <button
+                            onClick={onViewAll}
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                        >
+                            {t('common.viewAll', 'View all')}
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

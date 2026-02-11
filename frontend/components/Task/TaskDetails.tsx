@@ -1472,7 +1472,13 @@ const TaskDetails: React.FC = () => {
                                 />
                                 <TaskAttachmentsCard
                                     taskUid={task.uid}
-                                    onAttachmentsCountChange={setAttachmentCount}
+                                    onAttachmentsCountChange={
+                                        setAttachmentCount
+                                    }
+                                    maxItems={5}
+                                    onViewAll={() =>
+                                        setActivePill('attachments')
+                                    }
                                 />
                                 <TaskRecurrenceCard
                                     task={task}
@@ -1492,6 +1498,10 @@ const TaskDetails: React.FC = () => {
                                     <TaskTimeline
                                         taskUid={task.uid}
                                         refreshKey={timelineRefreshKey}
+                                        maxItems={3}
+                                        onViewAll={() =>
+                                            setActivePill('activity')
+                                        }
                                     />
                                 </div>
                             </div>
