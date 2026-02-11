@@ -18,11 +18,15 @@ import AttachmentPreview from '../../Shared/AttachmentPreview';
 interface TaskAttachmentsCardProps {
     taskUid: string;
     onAttachmentsCountChange?: (count: number) => void;
+    maxItems?: number;
+    onViewAll?: () => void;
 }
 
 const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
     taskUid,
     onAttachmentsCountChange,
+    maxItems,
+    onViewAll,
 }) => {
     const { t } = useTranslation();
     const { showSuccessToast, showErrorToast } = useToast();
@@ -241,20 +245,40 @@ const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
                 </div>
 
                 {/* Attachment Cards */}
-                {attachments.map((attachment) => (
-                    <AttachmentCard
-                        key={attachment.uid}
-                        attachment={attachment}
-                        taskUid={taskUid}
-                        onDelete={handleDelete}
-                        onDownload={handleDownload}
-                        onPreview={handlePreview}
-                        isPreviewOpen={
-                            previewAttachment?.uid === attachment.uid
-                        }
-                    />
-                ))}
+                {(maxItems ? attachments.slice(0, maxItems) : attachments).map(
+                    (attachment) => (
+                        <AttachmentCard
+                            key={attachment.uid}
+                            attachment={attachment}
+                            taskUid={taskUid}
+                            onDelete={handleDelete}
+                            onDownload={handleDownload}
+                            onPreview={handlePreview}
+                            isPreviewOpen={
+                                previewAttachment?.uid === attachment.uid
+                            }
+                        />
+                    )
+                )}
             </div>
+
+            {/* Truncation Footer */}
+            {maxItems && attachments.length > maxItems && (
+                <div className="mt-3 flex items-center justify-between text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">
+                        +{attachments.length - maxItems}{' '}
+                        {t('common.more', 'more')}
+                    </span>
+                    {onViewAll && (
+                        <button
+                            onClick={onViewAll}
+                            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                        >
+                            {t('common.viewAll', 'View all')}
+                        </button>
+                    )}
+                </div>
+            )}
 
             {/* Full Preview Modal */}
             {previewAttachment && (
