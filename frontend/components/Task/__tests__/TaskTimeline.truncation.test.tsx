@@ -71,7 +71,9 @@ describe('TaskTimeline — truncation props', () => {
         const { container } = render(<TaskTimeline taskUid={TASK_UID} />);
 
         await waitFor(() => {
-            const items = container.querySelectorAll('.py-1');
+            const items = container.querySelectorAll(
+                '[data-testid="timeline-event"]'
+            );
             expect(items).toHaveLength(10);
         });
         expect(screen.queryByText(/\+\d+ more/)).not.toBeInTheDocument();
@@ -85,7 +87,9 @@ describe('TaskTimeline — truncation props', () => {
         );
 
         await waitFor(() => {
-            const items = container.querySelectorAll('.py-1');
+            const items = container.querySelectorAll(
+                '[data-testid="timeline-event"]'
+            );
             expect(items).toHaveLength(3);
         });
     });
@@ -156,7 +160,9 @@ describe('TaskTimeline — truncation props', () => {
         );
 
         await waitFor(() => {
-            const items = container.querySelectorAll('.py-1');
+            const items = container.querySelectorAll(
+                '[data-testid="timeline-event"]'
+            );
             expect(items).toHaveLength(3);
         });
         expect(screen.queryByText(/\+\d+ more/)).not.toBeInTheDocument();
@@ -171,7 +177,9 @@ describe('TaskTimeline — truncation props', () => {
         );
 
         await waitFor(() => {
-            const items = container.querySelectorAll('.py-1');
+            const items = container.querySelectorAll(
+                '[data-testid="timeline-event"]'
+            );
             expect(items).toHaveLength(2);
         });
         expect(screen.queryByText(/\+\d+ more/)).not.toBeInTheDocument();
@@ -189,7 +197,9 @@ describe('TaskTimeline — truncation props', () => {
             expect(screen.getByText(/\+7/)).toBeInTheDocument();
         });
 
-        const scrollDiv = container.querySelector('.max-h-\\[36rem\\]');
+        const scrollDiv = container.querySelector(
+            '[data-testid="timeline-scroll-container"]'
+        );
         expect(scrollDiv).not.toBeInTheDocument();
     });
 
@@ -199,11 +209,15 @@ describe('TaskTimeline — truncation props', () => {
         const { container } = render(<TaskTimeline taskUid={TASK_UID} />);
 
         await waitFor(() => {
-            const items = container.querySelectorAll('.py-1');
+            const items = container.querySelectorAll(
+                '[data-testid="timeline-event"]'
+            );
             expect(items).toHaveLength(10);
         });
 
-        const scrollDiv = container.querySelector('.max-h-\\[36rem\\]');
+        const scrollDiv = container.querySelector(
+            '[data-testid="timeline-scroll-container"]'
+        );
         expect(scrollDiv).toBeInTheDocument();
     });
 });

@@ -262,8 +262,8 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         );
     }
 
-    const isTruncated = maxItems && events.length > maxItems;
-    const displayedEvents = maxItems ? events.slice(0, maxItems) : events;
+    const isTruncated = maxItems != null && events.length > maxItems;
+    const displayedEvents = isTruncated ? events.slice(0, maxItems) : events;
 
     return (
         <div>
@@ -273,12 +273,18 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
                         ? ''
                         : 'max-h-[36rem] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent'
                 }
+                data-testid={
+                    isTruncated ? undefined : 'timeline-scroll-container'
+                }
             >
                 <div className="space-y-2">
                     {displayedEvents.map((event) => (
                         <div key={event.id} className="relative">
                             {/* Event item */}
-                            <div className="py-1 relative z-10">
+                            <div
+                                className="py-1 relative z-10"
+                                data-testid="timeline-event"
+                            >
                                 {/* Content */}
                                 <div className="min-w-0">
                                     <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-tight">
@@ -322,7 +328,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
             {isTruncated && (
                 <div className="mt-3 flex items-center justify-between text-sm">
                     <span className="text-gray-500 dark:text-gray-400">
-                        +{events.length - maxItems} {t('common.more', 'more')}
+                        +{events.length - maxItems!} {t('common.more', 'more')}
                     </span>
                     {onViewAll && (
                         <button
