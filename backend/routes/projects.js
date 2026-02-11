@@ -17,7 +17,7 @@ const {
 } = require('../models');
 const permissionsService = require('../services/permissionsService');
 const { hasWorkspaceAccess } = require('../services/permissionsService');
-const { Op } = require('sequelize');
+const { Op, QueryTypes } = require('sequelize');
 const { extractUidFromSlug } = require('../utils/slug-utils');
 const { validateTagName } = require('../services/tagsService');
 const { uid } = require('../utils/uid');
@@ -35,6 +35,41 @@ router.use((req, res, next) => {
 });
 const { hasAccess } = require('../middleware/authorize');
 const { requireAuth } = require('../middleware/auth');
+
+// Helper to set or clear a per-user project pin (idempotent, enforces max 5)
+async function setProjectPin(projectId, userId, pinned) {
+    if (pinned) {
+        // Check if already pinned (idempotent — skip count check)
+        const alreadyPinned = await sequelize.query(
+            'SELECT 1 FROM project_pins WHERE project_id = :projectId AND user_id = :userId LIMIT 1',
+            {
+                replacements: { projectId, userId },
+                type: QueryTypes.SELECT,
+            }
+        );
+        if (alreadyPinned.length > 0) {
+            return { error: null };
+        }
+        // Enforce max 5 pins
+        const pinCount = await sequelize.query(
+            'SELECT COUNT(*) as count FROM project_pins WHERE user_id = :userId',
+            { replacements: { userId }, type: QueryTypes.SELECT }
+        );
+        if (pinCount[0].count >= 5) {
+            return { error: 'Maximum of 5 pinned projects allowed.' };
+        }
+        await sequelize.query(
+            'INSERT OR IGNORE INTO project_pins (project_id, user_id, created_at, updated_at) VALUES (:projectId, :userId, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+            { replacements: { projectId, userId } }
+        );
+    } else {
+        await sequelize.query(
+            'DELETE FROM project_pins WHERE project_id = :projectId AND user_id = :userId',
+            { replacements: { projectId, userId } }
+        );
+    }
+    return { error: null };
+}
 
 // Helper function to safely format dates
 const formatDate = (date) => {
@@ -188,12 +223,15 @@ router.get('/projects', async (req, res) => {
             whereClause.state = { [Op.in]: ['idea', 'completed'] };
         }
 
-        // Filter by pinned status
-        if (pin_to_sidebar === 'true') {
-            whereClause.pin_to_sidebar = true;
-        } else if (pin_to_sidebar === 'false') {
-            whereClause.pin_to_sidebar = false;
-        }
+        // Query pinned project IDs for the current user
+        const pinnedRows = await sequelize.query(
+            'SELECT project_id FROM project_pins WHERE user_id = :userId',
+            {
+                replacements: { userId: req.authUserId },
+                type: QueryTypes.SELECT,
+            }
+        );
+        const pinnedProjectIds = new Set(pinnedRows.map((r) => r.project_id));
 
         // Filter by area - support both numeric area_id and uid-slug area
         if (area && area !== '') {
@@ -313,7 +351,7 @@ router.get('/projects', async (req, res) => {
         }
 
         const taskStatusCounts = {};
-        const enhancedProjects = projects.map((project) => {
+        let enhancedProjects = projects.map((project) => {
             const tasks = project.Tasks || [];
             const taskStatus = {
                 total: tasks.length,
@@ -341,6 +379,20 @@ router.get('/projects', async (req, res) => {
                 is_shared: shareCount > 0,
             };
         });
+
+        // Override pin_to_sidebar with per-user pin state
+        enhancedProjects.forEach((p) => {
+            p.pin_to_sidebar = pinnedProjectIds.has(p.id);
+        });
+
+        // Filter by pinned status (post-query since it's per-user)
+        if (pin_to_sidebar === 'true') {
+            enhancedProjects = enhancedProjects.filter((p) => p.pin_to_sidebar);
+        } else if (pin_to_sidebar === 'false') {
+            enhancedProjects = enhancedProjects.filter(
+                (p) => !p.pin_to_sidebar
+            );
+        }
 
         // If grouped=true, return grouped format
         if (grouped === 'true') {
@@ -511,12 +563,25 @@ router.get(
                 shareCount = shareCountResult || 0;
             }
 
+            // Check per-user pin state
+            const pinResult = await sequelize.query(
+                'SELECT 1 FROM project_pins WHERE project_id = :projectId AND user_id = :userId LIMIT 1',
+                {
+                    replacements: {
+                        projectId: project.id,
+                        userId: req.authUserId,
+                    },
+                    type: QueryTypes.SELECT,
+                }
+            );
+
             const result = {
                 ...projectJson,
                 tags: projectJson.Tags || [],
                 Tasks: normalizedTasks,
                 Notes: normalizedNotes,
                 due_date_at: formatDate(project.due_date_at),
+                pin_to_sidebar: pinResult.length > 0,
                 user_id: project.user_id,
                 share_count: shareCount,
                 is_shared: shareCount > 0,
@@ -582,7 +647,6 @@ router.post('/project', async (req, res) => {
             description: description || '',
             area_id: area_id || null,
             workspace_id: workspace_id || null,
-            pin_to_sidebar: false,
             priority: priority || null,
             due_date_at: due_date_at || null,
             image_url: image_url || null,
@@ -606,6 +670,7 @@ router.post('/project', async (req, res) => {
         res.status(201).json({
             ...project.toJSON(),
             uid: projectUid, // Use the UID we explicitly generated
+            pin_to_sidebar: false, // New projects are never pinned
             tags: [], // Start with empty tags - they can be added later
             due_date_at: formatDate(project.due_date_at),
         });
@@ -691,8 +756,17 @@ router.patch(
                 }
                 updateData.workspace_id = workspace_id;
             }
-            if (pin_to_sidebar !== undefined)
-                updateData.pin_to_sidebar = pin_to_sidebar;
+            // pin_to_sidebar is handled via project_pins join table, not project column
+            if (pin_to_sidebar !== undefined) {
+                const pinResult = await setProjectPin(
+                    project.id,
+                    req.authUserId,
+                    pin_to_sidebar
+                );
+                if (pinResult.error) {
+                    return res.status(400).json({ error: pinResult.error });
+                }
+            }
             if (priority !== undefined) updateData.priority = priority;
             if (due_date_at !== undefined) updateData.due_date_at = due_date_at;
             if (image_url !== undefined) updateData.image_url = image_url;
@@ -724,8 +798,21 @@ router.patch(
 
             const projectJson = projectWithAssociations.toJSON();
 
+            // Compute per-user pin state for response
+            const patchPinResult = await sequelize.query(
+                'SELECT 1 FROM project_pins WHERE project_id = :projectId AND user_id = :userId LIMIT 1',
+                {
+                    replacements: {
+                        projectId: project.id,
+                        userId: req.authUserId,
+                    },
+                    type: QueryTypes.SELECT,
+                }
+            );
+
             res.json({
                 ...projectJson,
+                pin_to_sidebar: patchPinResult.length > 0,
                 tags: projectJson.Tags || [],
                 due_date_at: formatDate(projectWithAssociations.due_date_at),
             });
@@ -737,6 +824,52 @@ router.patch(
                     ? error.errors.map((e) => e.message)
                     : [error.message],
             });
+        }
+    }
+);
+
+// POST /api/project/:uid/pin — toggle per-user pin (star) state
+router.post(
+    '/project/:uid/pin',
+    hasAccess(
+        'ro',
+        'project',
+        async (req) => {
+            const uid = extractUidFromSlug(req.params.uid);
+            const project = await Project.findOne({
+                where: { uid },
+                attributes: ['uid'],
+            });
+            return project ? project.uid : null;
+        },
+        { notFoundMessage: 'Project not found.' }
+    ),
+    async (req, res) => {
+        try {
+            const project = await Project.findOne({
+                where: { uid: req.params.uid },
+            });
+
+            const { pinned } = req.body;
+
+            const pinResult = await setProjectPin(
+                project.id,
+                req.authUserId,
+                pinned
+            );
+            if (pinResult.error) {
+                return res.status(400).json({ error: pinResult.error });
+            }
+
+            const projectJson = project.toJSON();
+            res.json({
+                ...projectJson,
+                pin_to_sidebar: !!pinned,
+                due_date_at: formatDate(project.due_date_at),
+            });
+        } catch (error) {
+            logError('Error toggling project pin:', error);
+            res.status(500).json({ error: 'Internal server error' });
         }
     }
 );

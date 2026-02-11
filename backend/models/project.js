@@ -24,11 +24,6 @@ module.exports = (sequelize) => {
                 type: DataTypes.TEXT,
                 allowNull: true,
             },
-            pin_to_sidebar: {
-                type: DataTypes.BOOLEAN,
-                allowNull: false,
-                defaultValue: false,
-            },
             priority: {
                 type: DataTypes.INTEGER,
                 allowNull: true,
