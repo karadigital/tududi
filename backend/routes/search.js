@@ -8,12 +8,10 @@ const {
     User,
     sequelize,
 } = require('../models');
-const { Op, QueryTypes } = require('sequelize');
+const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 const { serializeTasks } = require('./tasks/core/serializers');
-const {
-    ownershipOrPermissionWhere,
-} = require('../services/permissionsService');
+const { actionableTasksWhere } = require('../services/permissionsService');
 const { isAdmin } = require('../services/rolesService');
 const router = express.Router();
 
@@ -191,18 +189,11 @@ router.get('/', async (req, res) => {
 
         // Search Tasks
         if (filterTypes.includes('Task')) {
-            // Get tasks user owns, is assigned to, is subscribed to, or has permission to see
-            // ownershipOrPermissionWhere handles superadmin (sees all) and department admin (sees dept members' tasks)
-            const taskPermissionWhere = await ownershipOrPermissionWhere(
-                'task',
-                userId
-            );
-            // Build conditions - permission filter applied via Op.and (empty {} for superadmin = no filter)
+            // Get tasks user owns, is assigned to, or is subscribed to
+            const actionableWhere = await actionableTasksWhere(userId);
+            // Build conditions - actionableWhere must always be applied via Op.and
             const taskConditions = {};
-            const taskExtraConditions =
-                Object.keys(taskPermissionWhere).length > 0
-                    ? [taskPermissionWhere]
-                    : []; // Superadmin: no permission filter needed
+            const taskExtraConditions = [actionableWhere]; // Always filter by actionable tasks
 
             // Exclude subtasks and recurring instances if requested
             if (excludeSubtasks === 'true') {
@@ -395,45 +386,25 @@ router.get('/', async (req, res) => {
 
         // Search Projects
         if (filterTypes.includes('Project')) {
-            // Use ownershipOrPermissionWhere to handle:
-            // - Superadmin: sees all projects (handled below)
-            // - Regular user: sees owned projects + projects in areas they're a member of
-            const projectConditions = {};
-            const projectExtraConditions = [];
-
-            if (!userIsAdmin) {
-                // For non-admins, use the permission-based filter
-                const projectPermissionWhere = await ownershipOrPermissionWhere(
-                    'project',
-                    userId
-                );
-                // Only add if not empty (empty = superadmin, but we already checked)
-                if (Object.keys(projectPermissionWhere).length > 0) {
-                    projectExtraConditions.push(projectPermissionWhere);
-                }
-            }
-            // Superadmin sees all projects - no user filter needed
+            const projectConditions = {
+                user_id: userId,
+            };
 
             if (searchQuery) {
                 const lowerQuery = searchQuery.toLowerCase();
-                projectExtraConditions.push({
-                    [Op.or]: [
-                        sequelize.where(
-                            sequelize.fn(
-                                'LOWER',
-                                sequelize.col('Project.name')
-                            ),
-                            { [Op.like]: `%${lowerQuery}%` }
+                projectConditions[Op.or] = [
+                    sequelize.where(
+                        sequelize.fn('LOWER', sequelize.col('Project.name')),
+                        { [Op.like]: `%${lowerQuery}%` }
+                    ),
+                    sequelize.where(
+                        sequelize.fn(
+                            'LOWER',
+                            sequelize.col('Project.description')
                         ),
-                        sequelize.where(
-                            sequelize.fn(
-                                'LOWER',
-                                sequelize.col('Project.description')
-                            ),
-                            { [Op.like]: `%${lowerQuery}%` }
-                        ),
-                    ],
-                });
+                        { [Op.like]: `%${lowerQuery}%` }
+                    ),
+                ];
             }
 
             if (priority) {
@@ -442,12 +413,10 @@ router.get('/', async (req, res) => {
 
             // Add due date filter if specified (projects use due_date_at field)
             if (dueDateCondition) {
-                projectConditions.due_date_at = dueDateCondition.due_date;
-            }
-
-            // Combine extra conditions with Op.and
-            if (projectExtraConditions.length > 0) {
-                projectConditions[Op.and] = projectExtraConditions;
+                const projectDueCondition = {
+                    due_date_at: dueDateCondition.due_date,
+                };
+                Object.assign(projectConditions, projectDueCondition);
             }
 
             const requireProjectTags =
@@ -504,13 +473,14 @@ router.get('/', async (req, res) => {
 
         // Search Areas
         if (filterTypes.includes('Area')) {
-            const areaConditions = {};
-            const areaExtraConditions = [];
+            const areaConditions = { [Op.and]: [] };
 
-            // Non-admin users can see areas they own OR are members of
+            // Non-admin users can only see their own areas or areas they are members of
             if (!userIsAdmin) {
-                // Get areas where user is a member
-                const memberAreaRows = await sequelize.query(
+                const { QueryTypes } = require('sequelize');
+
+                // Get area IDs where user is a member
+                const memberAreaIds = await sequelize.query(
                     `SELECT area_id FROM areas_members WHERE user_id = :userId`,
                     {
                         replacements: { userId },
@@ -518,26 +488,20 @@ router.get('/', async (req, res) => {
                         raw: true,
                     }
                 );
-                const memberAreaIds = memberAreaRows.map((row) => row.area_id);
 
-                if (memberAreaIds.length > 0) {
-                    // User can see owned areas OR member areas
-                    areaExtraConditions.push({
-                        [Op.or]: [
-                            { user_id: userId },
-                            { id: { [Op.in]: memberAreaIds } },
-                        ],
-                    });
-                } else {
-                    // No memberships, only show owned areas
-                    areaConditions.user_id = userId;
-                }
+                const areaIds = memberAreaIds.map((row) => row.area_id);
+
+                areaConditions[Op.and].push({
+                    [Op.or]: [
+                        { user_id: userId }, // Owned areas
+                        { id: { [Op.in]: areaIds } }, // Member areas
+                    ],
+                });
             }
-            // Admins see all areas (no filter)
 
             if (searchQuery) {
                 const lowerQuery = searchQuery.toLowerCase();
-                areaExtraConditions.push({
+                areaConditions[Op.and].push({
                     [Op.or]: [
                         sequelize.where(
                             sequelize.fn('LOWER', sequelize.col('Area.name')),
@@ -554,20 +518,19 @@ router.get('/', async (req, res) => {
                 });
             }
 
-            // Combine extra conditions with Op.and
-            if (areaExtraConditions.length > 0) {
-                areaConditions[Op.and] = areaExtraConditions;
-            }
+            // Use empty object if no conditions were added
+            const finalAreaConditions =
+                areaConditions[Op.and].length > 0 ? areaConditions : {};
 
             // Count total areas if pagination is requested
             if (hasPagination) {
                 totalCount += await Area.count({
-                    where: areaConditions,
+                    where: finalAreaConditions,
                 });
             }
 
             const areas = await Area.findAll({
-                where: areaConditions,
+                where: finalAreaConditions,
                 limit: limit,
                 offset: offset,
                 order: [['updated_at', 'DESC']],
