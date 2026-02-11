@@ -89,11 +89,22 @@ async function getAccess(userId, resourceType, resourceUid) {
     if (resourceType === 'project') {
         const proj = await Project.findOne({
             where: { uid: resourceUid },
-            attributes: ['user_id'],
+            attributes: ['id', 'user_id'],
             raw: true,
         });
         if (!proj) return ACCESS.NONE;
         if (proj.user_id === userId) return ACCESS.RW;
+
+        // Check if user has tasks assigned to them in this project
+        const assignedTask = await Task.findOne({
+            where: {
+                assigned_to_user_id: userId,
+                project_id: proj.id,
+            },
+            attributes: ['id'],
+            raw: true,
+        });
+        if (assignedTask) return ACCESS.RO;
     } else if (resourceType === 'task') {
         const t = await Task.findOne({
             where: { uid: resourceUid },
@@ -284,10 +295,21 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
     }
 
     // For projects, also include projects in areas the user is a member of
+    // and projects containing tasks assigned to the user
     if (resourceType === 'project') {
         // Get area IDs where user is a member
         const areaMembers = await sequelize.query(
             `SELECT area_id FROM areas_members WHERE user_id = :userId`,
+            {
+                replacements: { userId },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+
+        // Get project IDs where user has assigned tasks
+        const assignedProjectRows = await sequelize.query(
+            `SELECT DISTINCT project_id FROM tasks WHERE assigned_to_user_id = :userId AND project_id IS NOT NULL`,
             {
                 replacements: { userId },
                 type: QueryTypes.SELECT,
@@ -306,6 +328,13 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
         if (areaMembers.length > 0) {
             const areaIds = areaMembers.map((row) => row.area_id);
             conditions.push({ area_id: { [Op.in]: areaIds } }); // Projects in member areas
+        }
+
+        if (assignedProjectRows.length > 0) {
+            const assignedProjectIds = assignedProjectRows.map(
+                (row) => row.project_id
+            );
+            conditions.push({ id: { [Op.in]: assignedProjectIds } }); // Projects with tasks assigned to user
         }
 
         const result = { [Op.or]: conditions };
@@ -415,7 +444,12 @@ async function getAccessibleWorkspaceIds(userId) {
          INNER JOIN permissions perm ON perm.resource_uid = p.uid
            AND perm.resource_type = 'project'
            AND perm.user_id = :userId
-         WHERE p.workspace_id IS NOT NULL`,
+         WHERE p.workspace_id IS NOT NULL
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         INNER JOIN tasks t ON t.project_id = p.id
+         WHERE t.assigned_to_user_id = :userId AND p.workspace_id IS NOT NULL`,
         {
             replacements: { userId },
             type: QueryTypes.SELECT,
