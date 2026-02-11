@@ -180,6 +180,20 @@ Tag.belongsToMany(Task, {
     otherKey: 'task_id',
 });
 
+// Project-User pins many-to-many relationship (per-user starring)
+Project.belongsToMany(User, {
+    through: 'project_pins',
+    foreignKey: 'project_id',
+    otherKey: 'user_id',
+    as: 'PinnedByUsers',
+});
+User.belongsToMany(Project, {
+    through: 'project_pins',
+    foreignKey: 'user_id',
+    otherKey: 'project_id',
+    as: 'PinnedProjects',
+});
+
 // Task-User subscribers many-to-many relationship
 Task.belongsToMany(User, {
     through: 'tasks_subscribers',
