@@ -851,6 +851,11 @@ router.post(
             });
 
             const { pinned } = req.body;
+            if (typeof pinned !== 'boolean') {
+                return res
+                    .status(400)
+                    .json({ error: '`pinned` must be a boolean.' });
+            }
 
             const pinResult = await setProjectPin(
                 project.id,
