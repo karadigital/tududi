@@ -106,6 +106,16 @@ async function exportUserData(userId) {
             throw new Error('User not found');
         }
 
+        // Query pinned project IDs for this user
+        const pinnedRows = await sequelize.query(
+            'SELECT project_id FROM project_pins WHERE user_id = :userId',
+            {
+                replacements: { userId },
+                type: sequelize.constructor.QueryTypes.SELECT,
+            }
+        );
+        const pinnedProjectIds = new Set(pinnedRows.map((r) => r.project_id));
+
         // Fetch all user-owned entities
         const [
             areas,
@@ -197,6 +207,10 @@ async function exportUserData(userId) {
                 areas: areas.map((area) => area.toJSON()),
                 projects: projects.map((project) => {
                     const projectData = project.toJSON();
+                    // Include per-user pin state for backup
+                    projectData.pin_to_sidebar = pinnedProjectIds.has(
+                        project.id
+                    );
                     // Extract tag UIDs for relationship mapping
                     projectData.tag_uids = (project.Tags || []).map(
                         (tag) => tag.uid

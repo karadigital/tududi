@@ -654,6 +654,32 @@ describe('Projects Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.pin_to_sidebar).toBe(true);
         });
+
+        it('should allow re-pinning when at max limit (idempotent)', async () => {
+            // Pin 5 projects including the test project
+            const projects = [project];
+            for (let i = 0; i < 4; i++) {
+                projects.push(
+                    await Project.create({
+                        name: `Pin ${i}`,
+                        user_id: user.id,
+                    })
+                );
+            }
+            for (const p of projects) {
+                await agent
+                    .post(`/api/project/${p.uid}/pin`)
+                    .send({ pinned: true });
+            }
+
+            // Re-pin the first one — should succeed (idempotent, not a new pin)
+            const response = await agent
+                .post(`/api/project/${project.uid}/pin`)
+                .send({ pinned: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.pin_to_sidebar).toBe(true);
+        });
     });
 
     describe('Per-user pin isolation', () => {

@@ -36,6 +36,41 @@ router.use((req, res, next) => {
 const { hasAccess } = require('../middleware/authorize');
 const { requireAuth } = require('../middleware/auth');
 
+// Helper to set or clear a per-user project pin (idempotent, enforces max 5)
+async function setProjectPin(projectId, userId, pinned) {
+    if (pinned) {
+        // Check if already pinned (idempotent — skip count check)
+        const alreadyPinned = await sequelize.query(
+            'SELECT 1 FROM project_pins WHERE project_id = :projectId AND user_id = :userId LIMIT 1',
+            {
+                replacements: { projectId, userId },
+                type: QueryTypes.SELECT,
+            }
+        );
+        if (alreadyPinned.length > 0) {
+            return { error: null };
+        }
+        // Enforce max 5 pins
+        const pinCount = await sequelize.query(
+            'SELECT COUNT(*) as count FROM project_pins WHERE user_id = :userId',
+            { replacements: { userId }, type: QueryTypes.SELECT }
+        );
+        if (pinCount[0].count >= 5) {
+            return { error: 'Maximum of 5 pinned projects allowed.' };
+        }
+        await sequelize.query(
+            'INSERT OR IGNORE INTO project_pins (project_id, user_id, created_at, updated_at) VALUES (:projectId, :userId, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+            { replacements: { projectId, userId } }
+        );
+    } else {
+        await sequelize.query(
+            'DELETE FROM project_pins WHERE project_id = :projectId AND user_id = :userId',
+            { replacements: { projectId, userId } }
+        );
+    }
+    return { error: null };
+}
+
 // Helper function to safely format dates
 const formatDate = (date) => {
     if (!date) return null;
@@ -723,39 +758,13 @@ router.patch(
             }
             // pin_to_sidebar is handled via project_pins join table, not project column
             if (pin_to_sidebar !== undefined) {
-                if (pin_to_sidebar) {
-                    // Enforce max 5 pins
-                    const pinCount = await sequelize.query(
-                        'SELECT COUNT(*) as count FROM project_pins WHERE user_id = :userId',
-                        {
-                            replacements: { userId: req.authUserId },
-                            type: QueryTypes.SELECT,
-                        }
-                    );
-                    if (pinCount[0].count >= 5) {
-                        return res.status(400).json({
-                            error: 'Maximum of 5 pinned projects allowed.',
-                        });
-                    }
-                    await sequelize.query(
-                        'INSERT OR IGNORE INTO project_pins (project_id, user_id, created_at, updated_at) VALUES (:projectId, :userId, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-                        {
-                            replacements: {
-                                projectId: project.id,
-                                userId: req.authUserId,
-                            },
-                        }
-                    );
-                } else {
-                    await sequelize.query(
-                        'DELETE FROM project_pins WHERE project_id = :projectId AND user_id = :userId',
-                        {
-                            replacements: {
-                                projectId: project.id,
-                                userId: req.authUserId,
-                            },
-                        }
-                    );
+                const pinResult = await setProjectPin(
+                    project.id,
+                    req.authUserId,
+                    pin_to_sidebar
+                );
+                if (pinResult.error) {
+                    return res.status(400).json({ error: pinResult.error });
                 }
             }
             if (priority !== undefined) updateData.priority = priority;
@@ -843,39 +852,13 @@ router.post(
 
             const { pinned } = req.body;
 
-            if (pinned) {
-                // Enforce max 5 pins per user
-                const pinCount = await sequelize.query(
-                    'SELECT COUNT(*) as count FROM project_pins WHERE user_id = :userId',
-                    {
-                        replacements: { userId: req.authUserId },
-                        type: QueryTypes.SELECT,
-                    }
-                );
-                if (pinCount[0].count >= 5) {
-                    return res.status(400).json({
-                        error: 'Maximum of 5 pinned projects allowed.',
-                    });
-                }
-                await sequelize.query(
-                    'INSERT OR IGNORE INTO project_pins (project_id, user_id, created_at, updated_at) VALUES (:projectId, :userId, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
-                    {
-                        replacements: {
-                            projectId: project.id,
-                            userId: req.authUserId,
-                        },
-                    }
-                );
-            } else {
-                await sequelize.query(
-                    'DELETE FROM project_pins WHERE project_id = :projectId AND user_id = :userId',
-                    {
-                        replacements: {
-                            projectId: project.id,
-                            userId: req.authUserId,
-                        },
-                    }
-                );
+            const pinResult = await setProjectPin(
+                project.id,
+                req.authUserId,
+                pinned
+            );
+            if (pinResult.error) {
+                return res.status(400).json({ error: pinResult.error });
             }
 
             const projectJson = project.toJSON();
