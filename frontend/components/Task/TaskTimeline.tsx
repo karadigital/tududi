@@ -17,6 +17,7 @@ interface TaskTimelineProps {
     refreshKey?: number;
     maxItems?: number;
     onViewAll?: () => void;
+    showHeader?: boolean;
 }
 
 const TaskTimeline: React.FC<TaskTimelineProps> = ({
@@ -24,6 +25,7 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
     refreshKey,
     maxItems,
     onViewAll,
+    showHeader,
 }) => {
     const { t } = useTranslation();
     const [events, setEvents] = useState<TaskEvent[]>([]);
@@ -222,126 +224,157 @@ const TaskTimeline: React.FC<TaskTimelineProps> = ({
         return date.toLocaleDateString();
     };
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center h-32 text-gray-500 dark:text-gray-400">
-                <ClockIcon className="h-6 w-6 mb-2 animate-spin" />
-                <span className="text-sm">Loading timeline...</span>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="flex flex-col items-center justify-center h-32 text-red-500">
-                <ExclamationTriangleIcon className="h-6 w-6 mb-2" />
-                <span className="text-sm">{error}</span>
-            </div>
-        );
-    }
-
-    if (!taskUid) {
-        return (
-            <div className="flex flex-col items-center justify-center h-32 text-gray-500 dark:text-gray-400">
-                <SparklesIcon className="h-6 w-6 mb-2" />
-                <span className="text-sm text-center">
-                    Timeline will appear after saving
-                </span>
-            </div>
-        );
-    }
-
-    if (events.length === 0) {
-        return (
-            <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
-                <ClockIcon className="h-12 w-12 mb-3 opacity-50" />
-                <span className="text-sm text-center">
-                    {t('task.noActivityYet', 'No activity yet')}
-                </span>
-            </div>
-        );
-    }
-
     const isTruncated = maxItems != null && events.length > maxItems;
     const displayedEvents = isTruncated ? events.slice(0, maxItems) : events;
 
-    return (
-        <div>
-            <div
-                className={
-                    isTruncated
-                        ? ''
-                        : 'max-h-[36rem] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent'
-                }
-                data-testid={
-                    isTruncated ? undefined : 'timeline-scroll-container'
-                }
-            >
-                <div className="space-y-2">
-                    {displayedEvents.map((event) => (
-                        <div key={event.id} className="relative">
-                            {/* Event item */}
-                            <div
-                                className="py-1 relative z-10"
-                                data-testid="timeline-event"
-                            >
-                                {/* Content */}
-                                <div className="min-w-0">
-                                    <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-tight">
-                                        {getEventDescription(event)}
-                                    </div>
-                                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                        {formatTimeAgo(event.created_at)}
-                                    </div>
+    const renderContent = () => {
+        if (loading) {
+            return (
+                <div className="flex flex-col items-center justify-center h-32 text-gray-500 dark:text-gray-400">
+                    <ClockIcon className="h-6 w-6 mb-2 animate-spin" />
+                    <span className="text-sm">Loading timeline...</span>
+                </div>
+            );
+        }
 
-                                    {/* Additional details for certain events */}
-                                    {event.event_type === 'tags_changed' &&
-                                        event.new_value && (
-                                            <div className="mt-1.5 flex flex-wrap gap-1">
-                                                {Array.isArray(
-                                                    event.new_value
-                                                ) &&
-                                                    event.new_value.map(
-                                                        (
-                                                            tag: any,
-                                                            tagIndex: number
-                                                        ) => (
-                                                            <span
-                                                                key={tagIndex}
-                                                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
-                                                            >
-                                                                {tag.name ||
-                                                                    tag}
-                                                            </span>
-                                                        )
-                                                    )}
-                                            </div>
-                                        )}
+        if (error) {
+            return (
+                <div className="flex flex-col items-center justify-center h-32 text-red-500">
+                    <ExclamationTriangleIcon className="h-6 w-6 mb-2" />
+                    <span className="text-sm">{error}</span>
+                </div>
+            );
+        }
+
+        if (!taskUid) {
+            return (
+                <div className="flex flex-col items-center justify-center h-32 text-gray-500 dark:text-gray-400">
+                    <SparklesIcon className="h-6 w-6 mb-2" />
+                    <span className="text-sm text-center">
+                        Timeline will appear after saving
+                    </span>
+                </div>
+            );
+        }
+
+        if (events.length === 0) {
+            return (
+                <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+                    <ClockIcon className="h-12 w-12 mb-3 opacity-50" />
+                    <span className="text-sm text-center">
+                        {t('task.noActivityYet', 'No activity yet')}
+                    </span>
+                </div>
+            );
+        }
+
+        return (
+            <div>
+                <div
+                    className={
+                        isTruncated
+                            ? ''
+                            : 'max-h-[36rem] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent'
+                    }
+                    data-testid={
+                        isTruncated ? undefined : 'timeline-scroll-container'
+                    }
+                >
+                    <div className="space-y-2">
+                        {displayedEvents.map((event) => (
+                            <div key={event.id} className="relative">
+                                {/* Event item */}
+                                <div
+                                    className="py-1 relative z-10"
+                                    data-testid="timeline-event"
+                                >
+                                    {/* Content */}
+                                    <div className="min-w-0">
+                                        <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-tight">
+                                            {getEventDescription(event)}
+                                        </div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                            {formatTimeAgo(event.created_at)}
+                                        </div>
+
+                                        {/* Additional details for certain events */}
+                                        {event.event_type === 'tags_changed' &&
+                                            event.new_value && (
+                                                <div className="mt-1.5 flex flex-wrap gap-1">
+                                                    {Array.isArray(
+                                                        event.new_value
+                                                    ) &&
+                                                        event.new_value.map(
+                                                            (
+                                                                tag: any,
+                                                                tagIndex: number
+                                                            ) => (
+                                                                <span
+                                                                    key={
+                                                                        tagIndex
+                                                                    }
+                                                                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border border-blue-200 dark:border-blue-800"
+                                                                >
+                                                                    {tag.name ||
+                                                                        tag}
+                                                                </span>
+                                                            )
+                                                        )}
+                                                </div>
+                                            )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
 
-            {/* Truncation Footer */}
-            {isTruncated && (
-                <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">
-                        +{events.length - maxItems!} {t('common.more', 'more')}
-                    </span>
+                {/* Truncation Footer - only shown when not using header wrapper */}
+                {!showHeader && isTruncated && (
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">
+                            +{events.length - maxItems!}{' '}
+                            {t('common.more', 'more')}
+                        </span>
+                        {onViewAll && (
+                            <button
+                                onClick={onViewAll}
+                                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                            >
+                                {t('common.viewAll', 'View all')}
+                            </button>
+                        )}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    if (showHeader) {
+        return (
+            <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {t('task.activity', 'Activity')} ({events.length})
+                    </h4>
                     {onViewAll && (
                         <button
                             onClick={onViewAll}
-                            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                         >
-                            {t('common.viewAll', 'View all')}
+                            {t('task.viewAll', 'View all')} &rarr;
                         </button>
                     )}
                 </div>
-            )}
-        </div>
-    );
+
+                {/* Content */}
+                <div className="p-4">{renderContent()}</div>
+            </div>
+        );
+    }
+
+    return renderContent();
 };
 
 export default TaskTimeline;

@@ -1465,7 +1465,6 @@ const TaskDetails: React.FC = () => {
                                     }
                                     onCreateSubtask={handleCreateSubtask}
                                     showHeader={true}
-                                    showFooterLink={true}
                                     onNavigateToTab={() =>
                                         setActivePill('subtasks')
                                     }
@@ -1475,10 +1474,11 @@ const TaskDetails: React.FC = () => {
                                     onAttachmentsCountChange={
                                         setAttachmentCount
                                     }
-                                    maxItems={5}
+                                    maxItems={3}
                                     onViewAll={() =>
                                         setActivePill('attachments')
                                     }
+                                    showHeader={true}
                                 />
                                 <TaskRecurrenceCard
                                     task={task}
@@ -1493,17 +1493,18 @@ const TaskDetails: React.FC = () => {
                                     loadingIterations={loadingIterations}
                                     nextIterations={nextIterations}
                                     canEdit={!task.recurring_parent_id}
+                                    showHeader={true}
+                                    onViewAll={() =>
+                                        setActivePill('recurrence')
+                                    }
                                 />
-                                <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border-2 border-gray-50 dark:border-gray-800 p-6">
-                                    <TaskTimeline
-                                        taskUid={task.uid}
-                                        refreshKey={timelineRefreshKey}
-                                        maxItems={3}
-                                        onViewAll={() =>
-                                            setActivePill('activity')
-                                        }
-                                    />
-                                </div>
+                                <TaskTimeline
+                                    taskUid={task.uid}
+                                    refreshKey={timelineRefreshKey}
+                                    maxItems={5}
+                                    onViewAll={() => setActivePill('activity')}
+                                    showHeader={true}
+                                />
                             </div>
 
                             {/* Right Column - Project and Tags */}

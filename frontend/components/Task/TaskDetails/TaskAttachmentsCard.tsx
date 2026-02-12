@@ -20,6 +20,7 @@ interface TaskAttachmentsCardProps {
     onAttachmentsCountChange?: (count: number) => void;
     maxItems?: number;
     onViewAll?: () => void;
+    showHeader?: boolean;
 }
 
 const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
@@ -27,6 +28,7 @@ const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
     onAttachmentsCountChange,
     maxItems,
     onViewAll,
+    showHeader,
 }) => {
     const { t } = useTranslation();
     const { showSuccessToast, showErrorToast } = useToast();
@@ -174,79 +176,72 @@ const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
         );
     };
 
-    if (loading) {
-        return (
-            <div>
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                    <PaperClipIcon className="h-4 w-4 mr-2" />
-                    {t('task.attachments.title', 'Attachments')}
-                </h4>
+    const renderContent = () => {
+        if (loading) {
+            return (
                 <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border-2 border-gray-50 dark:border-gray-800 p-6">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         {t('common.loading', 'Loading...')}
                     </p>
                 </div>
-            </div>
-        );
-    }
+            );
+        }
 
-    return (
-        <div>
-            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                <PaperClipIcon className="h-4 w-4 mr-2" />
-                {t('task.attachments.title', 'Attachments')} (
-                {attachments.length})
-            </h4>
-
-            {/* Grid Layout for Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {/* Upload Card */}
-                <div
-                    className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-md relative flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
-                    style={{ minHeight: '250px', maxHeight: '250px' }}
-                    onClick={() => !uploading && fileInputRef.current?.click()}
-                >
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileSelect}
-                        disabled={uploading}
-                        accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.svg,.webp,.xls,.xlsx,.csv,.zip"
-                    />
+        return (
+            <>
+                {/* Grid Layout for Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {/* Upload Card */}
                     <div
-                        className="bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center rounded-t-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
-                        style={{ height: '140px' }}
+                        className="bg-gray-50 dark:bg-gray-900 rounded-lg shadow-md relative flex flex-col cursor-pointer hover:shadow-lg transition-shadow"
+                        style={{ minHeight: '250px', maxHeight: '250px' }}
+                        onClick={() =>
+                            !uploading && fileInputRef.current?.click()
+                        }
                     >
-                        <CloudArrowUpIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-2" />
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {uploading
-                                ? t(
-                                      'task.attachments.uploading',
-                                      'Uploading...'
-                                  )
-                                : t(
-                                      'task.attachments.clickToUpload',
-                                      'Click to upload'
-                                  )}
-                        </p>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileSelect}
+                            disabled={uploading}
+                            accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.svg,.webp,.xls,.xlsx,.csv,.zip"
+                        />
+                        <div
+                            className="bg-gray-200 dark:bg-gray-700 flex flex-col items-center justify-center rounded-t-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-colors"
+                            style={{ height: '140px' }}
+                        >
+                            <CloudArrowUpIcon className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-2" />
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                {uploading
+                                    ? t(
+                                          'task.attachments.uploading',
+                                          'Uploading...'
+                                      )
+                                    : t(
+                                          'task.attachments.clickToUpload',
+                                          'Click to upload'
+                                      )}
+                            </p>
+                        </div>
+                        <div className="p-4 flex-1 flex flex-col justify-center">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                                {t('task.attachments.maxSize', 'Max 10MB')}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
+                                {t(
+                                    'task.attachments.supportedFormats',
+                                    'PDF, images, docs & more'
+                                )}
+                            </p>
+                        </div>
                     </div>
-                    <div className="p-4 flex-1 flex flex-col justify-center">
-                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
-                            {t('task.attachments.maxSize', 'Max 10MB')}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-                            {t(
-                                'task.attachments.supportedFormats',
-                                'PDF, images, docs & more'
-                            )}
-                        </p>
-                    </div>
-                </div>
 
-                {/* Attachment Cards */}
-                {(maxItems ? attachments.slice(0, maxItems) : attachments).map(
-                    (attachment) => (
+                    {/* Attachment Cards */}
+                    {(maxItems
+                        ? attachments.slice(0, maxItems)
+                        : attachments
+                    ).map((attachment) => (
                         <AttachmentCard
                             key={attachment.uid}
                             attachment={attachment}
@@ -258,25 +253,61 @@ const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
                                 previewAttachment?.uid === attachment.uid
                             }
                         />
-                    )
-                )}
-            </div>
+                    ))}
+                </div>
 
-            {/* Truncation Footer */}
-            {maxItems && attachments.length > maxItems && (
-                <div className="mt-3 flex items-center justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">
-                        +{attachments.length - maxItems}{' '}
-                        {t('common.more', 'more')}
-                    </span>
-                    {onViewAll && (
-                        <button
-                            onClick={onViewAll}
-                            className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                        >
-                            {t('common.viewAll', 'View all')}
-                        </button>
-                    )}
+                {/* Truncation Footer - only shown when not using header wrapper */}
+                {!showHeader && maxItems && attachments.length > maxItems && (
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                        <span className="text-gray-500 dark:text-gray-400">
+                            +{attachments.length - maxItems}{' '}
+                            {t('common.more', 'more')}
+                        </span>
+                        {onViewAll && (
+                            <button
+                                onClick={onViewAll}
+                                className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                            >
+                                {t('common.viewAll', 'View all')}
+                            </button>
+                        )}
+                    </div>
+                )}
+            </>
+        );
+    };
+
+    const content = (
+        <>
+            {showHeader ? (
+                <div className="rounded-lg shadow-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                            {t('task.attachments.title', 'Attachments')} (
+                            {attachments.length})
+                        </h4>
+                        {onViewAll && (
+                            <button
+                                onClick={onViewAll}
+                                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                            >
+                                {t('task.viewAll', 'View all')} &rarr;
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4">{renderContent()}</div>
+                </div>
+            ) : (
+                <div>
+                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
+                        <PaperClipIcon className="h-4 w-4 mr-2" />
+                        {t('task.attachments.title', 'Attachments')} (
+                        {attachments.length})
+                    </h4>
+                    {renderContent()}
                 </div>
             )}
 
@@ -340,8 +371,10 @@ const TaskAttachmentsCard: React.FC<TaskAttachmentsCardProps> = ({
                     }}
                 />
             )}
-        </div>
+        </>
     );
+
+    return content;
 };
 
 export default TaskAttachmentsCard;

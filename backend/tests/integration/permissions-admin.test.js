@@ -11,6 +11,7 @@ describe('Admin Permissions - Resource Visibility', () => {
             where: { user_id: userId },
             defaults: { user_id: userId, is_admin: true },
         });
+        await Role.update({ is_admin: true }, { where: { user_id: userId } });
     }
 
     async function loginAgent(email) {
@@ -37,7 +38,7 @@ describe('Admin Permissions - Resource Visibility', () => {
     });
 
     describe('Tasks visibility', () => {
-        it('admin should only see their own tasks, not all tasks', async () => {
+        it('admin should see all tasks including other users tasks', async () => {
             // Create tasks for both users
             const adminTask = await Task.create({
                 name: 'Admin Task',
@@ -55,16 +56,14 @@ describe('Admin Permissions - Resource Visibility', () => {
 
             const taskIds = res.body.tasks.map((t) => t.id);
 
-            // Admin should see their own task
+            // Admin should see all tasks
             expect(taskIds).toContain(adminTask.id);
-
-            // Admin should NOT see other user's task (THIS IS THE KEY FIX)
-            expect(taskIds).not.toContain(regularTask.id);
+            expect(taskIds).toContain(regularTask.id);
         });
     });
 
     describe('Projects visibility', () => {
-        it('admin should only see their own projects, not all projects', async () => {
+        it('admin should see all projects including other users projects', async () => {
             // Create projects for both users
             const adminProject = await Project.create({
                 name: 'Admin Project',
@@ -85,8 +84,8 @@ describe('Admin Permissions - Resource Visibility', () => {
             // Admin should see their own project
             expect(projectIds).toContain(adminProject.id);
 
-            // Admin should NOT see other user's project (THIS IS THE KEY FIX)
-            expect(projectIds).not.toContain(regularProject.id);
+            // ASID-867: Admin should see ALL projects
+            expect(projectIds).toContain(regularProject.id);
         });
     });
 
@@ -147,51 +146,38 @@ describe('Admin Permissions - Resource Visibility', () => {
     });
 
     describe('Task metrics visibility', () => {
-        it('admin task metrics should only include own tasks', async () => {
-            // Create tasks for admin only (to avoid confusion)
+        it('admin task listing includes all tasks', async () => {
+            // Create tasks for admin
             const adminTask1 = await Task.create({
                 name: 'Admin Task 1',
                 user_id: adminUser.id,
-                is_completed: false,
             });
 
             const adminTask2 = await Task.create({
                 name: 'Admin Task 2',
                 user_id: adminUser.id,
-                is_completed: true,
             });
 
-            // Create tasks for regular user (should not appear in admin's metrics)
-            await Task.create({
+            // Create tasks for regular user
+            const regularTask1 = await Task.create({
                 name: 'Regular Task 1',
                 user_id: regularUser.id,
-                is_completed: false,
             });
 
-            await Task.create({
+            const regularTask2 = await Task.create({
                 name: 'Regular Task 2',
                 user_id: regularUser.id,
-                is_completed: false,
             });
 
-            // Admin fetches tasks
+            // Admin fetches tasks — should see all tasks
             const tasksRes = await adminAgent.get('/api/tasks');
             expect(tasksRes.status).toBe(200);
 
-            // Admin should only see their own tasks in the response
-            expect(tasksRes.body.tasks.length).toBe(2);
-
-            // Verify the admin's task IDs are present
             const taskIds = tasksRes.body.tasks.map((t) => t.id);
             expect(taskIds).toContain(adminTask1.id);
             expect(taskIds).toContain(adminTask2.id);
-
-            // Fetch metrics separately
-            const metricsRes = await adminAgent.get('/api/tasks/metrics');
-            expect(metricsRes.status).toBe(200);
-            expect(metricsRes.body.total_open_tasks).toBeDefined();
-            // Admin has 2 tasks total (other users' tasks should not be counted)
-            expect(metricsRes.body.total_open_tasks).toBeLessThanOrEqual(2);
+            expect(taskIds).toContain(regularTask1.id);
+            expect(taskIds).toContain(regularTask2.id);
         });
     });
 });

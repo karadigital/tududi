@@ -89,22 +89,56 @@ async function getAccess(userId, resourceType, resourceUid) {
     if (resourceType === 'project') {
         const proj = await Project.findOne({
             where: { uid: resourceUid },
-            attributes: ['id', 'user_id'],
+            attributes: ['id', 'user_id', 'area_id'],
             raw: true,
         });
         if (!proj) return ACCESS.NONE;
         if (proj.user_id === userId) return ACCESS.RW;
 
-        // Check if user has tasks assigned to them in this project
-        const assignedTask = await Task.findOne({
+        // Check if user is a member of the project's department
+        if (proj.area_id) {
+            const areaMembership = await sequelize.query(
+                `SELECT 1 FROM areas_members WHERE area_id = :areaId AND user_id = :userId LIMIT 1`,
+                {
+                    replacements: { areaId: proj.area_id, userId },
+                    type: QueryTypes.SELECT,
+                    raw: true,
+                }
+            );
+            if (areaMembership.length > 0) return ACCESS.RO;
+        }
+
+        // Check if user has tasks (assigned or owned) in this project
+        const connectedTask = await Task.findOne({
             where: {
-                assigned_to_user_id: userId,
                 project_id: proj.id,
+                [Op.or]: [{ assigned_to_user_id: userId }, { user_id: userId }],
             },
             attributes: ['id'],
             raw: true,
         });
-        if (assignedTask) return ACCESS.RO;
+        if (connectedTask) return ACCESS.RO;
+
+        // Check if user is a dept admin and their members have tasks in this project
+        const memberUserIds = await getDepartmentMemberUserIds(userId);
+        if (memberUserIds.length > 0) {
+            const memberTask = await Task.findOne({
+                where: {
+                    project_id: proj.id,
+                    [Op.or]: [
+                        {
+                            assigned_to_user_id: {
+                                [Op.in]: memberUserIds,
+                            },
+                        },
+                        { user_id: { [Op.in]: memberUserIds } },
+                    ],
+                },
+                attributes: ['id'],
+                raw: true,
+            });
+            if (memberTask) return ACCESS.RO;
+        }
     } else if (resourceType === 'task') {
         const t = await Task.findOne({
             where: { uid: resourceUid },
@@ -229,8 +263,11 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
 
     const isUserAdmin = await isAdmin(userUid);
 
-    // Superadmin sees all tasks
-    if (isUserAdmin && resourceType === 'task') {
+    // Superadmin sees all tasks and all projects
+    if (
+        isUserAdmin &&
+        (resourceType === 'task' || resourceType === 'project')
+    ) {
         const result = {};
         if (cache) cache.set(cacheKey, result);
         return result;
@@ -307,9 +344,9 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             }
         );
 
-        // Get project IDs where user has assigned tasks
+        // Get project IDs where user has tasks (assigned or owned)
         const assignedProjectRows = await sequelize.query(
-            `SELECT DISTINCT project_id FROM tasks WHERE assigned_to_user_id = :userId AND project_id IS NOT NULL`,
+            `SELECT DISTINCT project_id FROM tasks WHERE (assigned_to_user_id = :userId OR user_id = :userId) AND project_id IS NOT NULL`,
             {
                 replacements: { userId },
                 type: QueryTypes.SELECT,
@@ -334,7 +371,29 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             const assignedProjectIds = assignedProjectRows.map(
                 (row) => row.project_id
             );
-            conditions.push({ id: { [Op.in]: assignedProjectIds } }); // Projects with tasks assigned to user
+            conditions.push({ id: { [Op.in]: assignedProjectIds } }); // Projects with tasks assigned to or owned by user
+        }
+
+        // Department admins also see projects where their members have tasks
+        const memberUserIds = await getDepartmentMemberUserIds(userId);
+        if (memberUserIds.length > 0) {
+            const memberProjectRows = await sequelize.query(
+                `SELECT DISTINCT project_id FROM tasks
+                 WHERE (assigned_to_user_id IN (:memberUserIds) OR user_id IN (:memberUserIds))
+                 AND project_id IS NOT NULL`,
+                {
+                    replacements: { memberUserIds },
+                    type: QueryTypes.SELECT,
+                    raw: true,
+                }
+            );
+
+            if (memberProjectRows.length > 0) {
+                const memberProjectIds = memberProjectRows.map(
+                    (row) => row.project_id
+                );
+                conditions.push({ id: { [Op.in]: memberProjectIds } }); // Projects where dept members have tasks
+            }
         }
 
         const result = { [Op.or]: conditions };
