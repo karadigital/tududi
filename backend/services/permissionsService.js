@@ -334,9 +334,12 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
     // For projects, also include projects in areas the user is a member of
     // and projects containing tasks assigned to the user
     if (resourceType === 'project') {
-        // Get area IDs where user is a member
+        // Get area IDs where user is an admin (owner or admin role)
+        // Regular members only see projects via task assignment/ownership
         const areaMembers = await sequelize.query(
-            `SELECT area_id FROM areas_members WHERE user_id = :userId`,
+            `SELECT area_id FROM areas_members WHERE user_id = :userId AND role = 'admin'
+             UNION
+             SELECT id AS area_id FROM areas WHERE user_id = :userId`,
             {
                 replacements: { userId },
                 type: QueryTypes.SELECT,

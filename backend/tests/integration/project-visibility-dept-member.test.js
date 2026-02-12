@@ -86,18 +86,24 @@ describe('Department Member Project Visibility', () => {
         expect(projectUids).toContain(project.uid);
     });
 
-    it('member sees projects in their department', async () => {
+    it('member does NOT see all projects in their department that does not belong to them and there is no tasks assigned to them', async () => {
         const project = await Project.create({
             name: 'Department Project',
             user_id: projectOwner.id,
             area_id: department.id,
         });
+    
+        await Task.create({
+            name: 'Task',
+            user_id: projectOwner.id,
+            project: project.id,
+    })
 
         const res = await memberAgent.get('/api/projects');
         expect(res.status).toBe(200);
 
         const projectUids = res.body.projects.map((p) => p.uid);
-        expect(projectUids).toContain(project.uid);
+        expect(projectUids).not.toContain(project.uid);
     });
 
     it('member does NOT see project with no connection', async () => {
