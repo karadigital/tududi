@@ -511,7 +511,7 @@ async function getAccessibleWorkspaceIds(userId) {
          SELECT DISTINCT p.workspace_id
          FROM projects p
          INNER JOIN tasks t ON t.project_id = p.id
-         WHERE t.assigned_to_user_id = :userId AND p.workspace_id IS NOT NULL
+         WHERE (t.assigned_to_user_id = :userId OR t.user_id = :userId) AND p.workspace_id IS NOT NULL
          UNION
          SELECT DISTINCT p.workspace_id
          FROM projects p

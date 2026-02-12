@@ -44,12 +44,12 @@ router.get('/workspaces', async (req, res) => {
 
         // Build project count subquery — includes dept member projects
         const memberUserIds = await getDepartmentMemberUserIds(safeUserId);
+        const safeMemberIds = memberUserIds
+            .map((id) => parseInt(id, 10))
+            .filter(Number.isInteger);
         let countSubquery;
-        if (memberUserIds.length > 0) {
-            const memberIdList = memberUserIds
-                .map((id) => parseInt(id, 10))
-                .filter(Number.isInteger)
-                .join(',');
+        if (safeMemberIds.length > 0) {
+            const memberIdList = safeMemberIds.join(',');
             countSubquery = `(SELECT COUNT(DISTINCT p.id) FROM projects p WHERE p.workspace_id = "Workspace"."id" AND (p.user_id = ${safeUserId} OR p.id IN (SELECT DISTINCT t.project_id FROM tasks t WHERE (t.assigned_to_user_id IN (${memberIdList}) OR t.user_id IN (${memberIdList})) AND t.project_id IS NOT NULL)))`;
         } else {
             countSubquery = `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${safeUserId})`;
