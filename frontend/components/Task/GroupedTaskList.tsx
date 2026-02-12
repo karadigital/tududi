@@ -867,7 +867,7 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                                     return (
                                         <div
                                             key={groupName}
-                                            className="day-column w-full md:flex-1 md:min-w-64"
+                                            className="day-column w-full md:flex-1 md:min-w-64 last:md:pr-10"
                                         >
                                             {/* Day column header */}
                                             <div className="pb-3 mb-4">

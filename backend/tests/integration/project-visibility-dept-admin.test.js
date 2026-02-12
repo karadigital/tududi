@@ -96,6 +96,32 @@ describe('Department Admin Project Visibility', () => {
         expect(projectUids).toContain(project.uid);
     });
 
+    it('dept admin does NOT see projects in other department', async () => {
+        const otherDepartment = await Area.create({
+            name: 'Other Department',
+            user_id: outsider.id,
+        });
+
+        const project = await Project.create({
+            name: 'External Project With Assigned Member Task',
+            user_id: outsider.id,
+            area_id: otherDepartment.id,
+        });
+
+        await Task.create({
+            name: 'Task Assigned To Dept Member',
+            user_id: outsider.id,
+            assigned_to_user_id: outsider.id,
+            project_id: project.id,
+        });
+
+        const res = await deptAdminAgent.get('/api/projects');
+        expect(res.status).toBe(200);
+
+        const projectUids = res.body.projects.map((p) => p.uid);
+        expect(projectUids).not.toContain(project.uid);
+    });
+
     it('dept admin sees projects where dept members have tasks (owned)', async () => {
         const project = await Project.create({
             name: 'External Project With Owned Member Task',

@@ -86,18 +86,24 @@ describe('Department Member Project Visibility', () => {
         expect(projectUids).toContain(project.uid);
     });
 
-    it('member sees projects in their department', async () => {
+    it('member does NOT see department project with no task connection', async () => {
         const project = await Project.create({
             name: 'Department Project',
             user_id: projectOwner.id,
             area_id: department.id,
         });
 
+        await Task.create({
+            name: 'Task',
+            user_id: projectOwner.id,
+            project_id: project.id,
+        });
+
         const res = await memberAgent.get('/api/projects');
         expect(res.status).toBe(200);
 
         const projectUids = res.body.projects.map((p) => p.uid);
-        expect(projectUids).toContain(project.uid);
+        expect(projectUids).not.toContain(project.uid);
     });
 
     it('member does NOT see project with no connection', async () => {
@@ -114,6 +120,23 @@ describe('Department Member Project Visibility', () => {
 
         const projectUids = res.body.projects.map((p) => p.uid);
         expect(projectUids).not.toContain(unrelatedProject.uid);
+    });
+
+    it('member cannot access detail page of department project with no task connection', async () => {
+        const project = await Project.create({
+            name: 'No Task Connection Project',
+            user_id: projectOwner.id,
+            area_id: department.id,
+        });
+
+        await Task.create({
+            name: 'Owner Only Task',
+            user_id: projectOwner.id,
+            project_id: project.id,
+        });
+
+        const res = await memberAgent.get(`/api/project/${uidSlug(project)}`);
+        expect(res.status).toBe(403);
     });
 
     it('member can access detail page of project they have tasks in', async () => {
