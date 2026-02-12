@@ -122,6 +122,23 @@ describe('Department Member Project Visibility', () => {
         expect(projectUids).not.toContain(unrelatedProject.uid);
     });
 
+    it('member cannot access detail page of department project with no task connection', async () => {
+        const project = await Project.create({
+            name: 'No Task Connection Project',
+            user_id: projectOwner.id,
+            area_id: department.id,
+        });
+
+        await Task.create({
+            name: 'Owner Only Task',
+            user_id: projectOwner.id,
+            project_id: project.id,
+        });
+
+        const res = await memberAgent.get(`/api/project/${uidSlug(project)}`);
+        expect(res.status).toBe(403);
+    });
+
     it('member can access detail page of project they have tasks in', async () => {
         const project = await Project.create({
             name: 'Accessible Project',

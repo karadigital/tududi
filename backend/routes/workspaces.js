@@ -43,10 +43,13 @@ router.get('/workspaces', async (req, res) => {
         }
 
         // Build project count subquery — includes dept member projects
+        // NOTE: Sequelize.literal() in findAll attributes does not support :paramName
+        // replacements, so we must use string interpolation here. All IDs are validated
+        // via parseInt() + positive-integer check to prevent SQL injection.
         const memberUserIds = await getDepartmentMemberUserIds(safeUserId);
         const safeMemberIds = memberUserIds
             .map((id) => parseInt(id, 10))
-            .filter(Number.isInteger);
+            .filter((id) => Number.isInteger(id) && id > 0);
         let countSubquery;
         if (safeMemberIds.length > 0) {
             const memberIdList = safeMemberIds.join(',');
