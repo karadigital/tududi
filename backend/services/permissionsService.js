@@ -511,7 +511,18 @@ async function getAccessibleWorkspaceIds(userId) {
          SELECT DISTINCT p.workspace_id
          FROM projects p
          INNER JOIN tasks t ON t.project_id = p.id
-         WHERE t.assigned_to_user_id = :userId AND p.workspace_id IS NOT NULL`,
+         WHERE t.assigned_to_user_id = :userId AND p.workspace_id IS NOT NULL
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         INNER JOIN tasks t ON t.project_id = p.id
+         INNER JOIN areas_members am ON (t.assigned_to_user_id = am.user_id OR t.user_id = am.user_id)
+         WHERE p.workspace_id IS NOT NULL
+         AND am.area_id IN (
+             SELECT a2.id FROM areas a2 WHERE a2.user_id = :userId
+             UNION
+             SELECT am2.area_id FROM areas_members am2 WHERE am2.user_id = :userId AND am2.role = 'admin'
+         )`,
         {
             replacements: { userId },
             type: QueryTypes.SELECT,
@@ -536,4 +547,5 @@ module.exports = {
     canDeleteTask,
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
+    getDepartmentMemberUserIds,
 };

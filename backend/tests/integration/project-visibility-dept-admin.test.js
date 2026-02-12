@@ -96,7 +96,6 @@ describe('Department Admin Project Visibility', () => {
         expect(projectUids).toContain(project.uid);
     });
 
-
     it('dept admin does NOT see projects in other department', async () => {
         const otherDepartment = await Area.create({
             name: 'Other Department',

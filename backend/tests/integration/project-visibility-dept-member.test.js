@@ -92,12 +92,12 @@ describe('Department Member Project Visibility', () => {
             user_id: projectOwner.id,
             area_id: department.id,
         });
-    
+
         await Task.create({
             name: 'Task',
             user_id: projectOwner.id,
             project: project.id,
-    })
+        });
 
         const res = await memberAgent.get('/api/projects');
         expect(res.status).toBe(200);

@@ -6,6 +6,7 @@ const { logError } = require('../services/logService');
 const {
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
+    getDepartmentMemberUserIds,
 } = require('../services/permissionsService');
 const _ = require('lodash');
 const router = express.Router();
@@ -41,6 +42,19 @@ router.get('/workspaces', async (req, res) => {
             return res.json([]);
         }
 
+        // Build project count subquery — includes dept member projects
+        const memberUserIds = await getDepartmentMemberUserIds(safeUserId);
+        let countSubquery;
+        if (memberUserIds.length > 0) {
+            const memberIdList = memberUserIds
+                .map((id) => parseInt(id, 10))
+                .filter(Number.isInteger)
+                .join(',');
+            countSubquery = `(SELECT COUNT(DISTINCT p.id) FROM projects p WHERE p.workspace_id = "Workspace"."id" AND (p.user_id = ${safeUserId} OR p.id IN (SELECT DISTINCT t.project_id FROM tasks t WHERE (t.assigned_to_user_id IN (${memberIdList}) OR t.user_id IN (${memberIdList})) AND t.project_id IS NOT NULL)))`;
+        } else {
+            countSubquery = `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${safeUserId})`;
+        }
+
         const workspaces = await Workspace.findAll({
             where: { id: workspaceIds },
             attributes: [
@@ -48,12 +62,7 @@ router.get('/workspaces', async (req, res) => {
                 'name',
                 'creator',
                 'created_at',
-                [
-                    Sequelize.literal(
-                        `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${safeUserId})`
-                    ),
-                    'my_project_count',
-                ],
+                [Sequelize.literal(countSubquery), 'my_project_count'],
             ],
             order: [['name', 'ASC']],
         });
