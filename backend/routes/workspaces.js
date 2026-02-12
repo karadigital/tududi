@@ -1,11 +1,12 @@
 const express = require('express');
-const { Workspace, Project } = require('../models');
-const { Sequelize } = require('sequelize');
+const { Workspace, sequelize } = require('../models');
+const { QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
 const {
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
+    getDepartmentMemberUserIds,
 } = require('../services/permissionsService');
 const _ = require('lodash');
 const router = express.Router();
@@ -41,26 +42,50 @@ router.get('/workspaces', async (req, res) => {
             return res.json([]);
         }
 
-        const workspaces = await Workspace.findAll({
-            where: { id: workspaceIds },
-            attributes: [
-                'uid',
-                'name',
-                'creator',
-                'created_at',
-                [
-                    Sequelize.literal(
-                        `(SELECT COUNT(*) FROM projects WHERE projects.workspace_id = "Workspace"."id" AND projects.user_id = ${safeUserId})`
-                    ),
-                    'my_project_count',
-                ],
-            ],
-            order: [['name', 'ASC']],
+        const memberUserIds = await getDepartmentMemberUserIds(safeUserId);
+        const safeMemberIds = memberUserIds
+            .map((id) => parseInt(id, 10))
+            .filter((id) => Number.isInteger(id) && id > 0);
+
+        let query;
+        let replacements;
+        if (safeMemberIds.length > 0) {
+            query = `
+                SELECT w.uid, w.name, w.creator, w.created_at,
+                    (SELECT COUNT(DISTINCT p.id) FROM projects p
+                     WHERE p.workspace_id = w.id
+                     AND (p.user_id = :userId OR p.id IN (
+                        SELECT DISTINCT t.project_id FROM tasks t
+                        WHERE (t.assigned_to_user_id IN (:memberIds) OR t.user_id IN (:memberIds))
+                        AND t.project_id IS NOT NULL
+                     ))) AS my_project_count
+                FROM workspaces w
+                WHERE w.id IN (:workspaceIds)
+                ORDER BY w.name ASC`;
+            replacements = {
+                userId: safeUserId,
+                memberIds: safeMemberIds,
+                workspaceIds,
+            };
+        } else {
+            query = `
+                SELECT w.uid, w.name, w.creator, w.created_at,
+                    (SELECT COUNT(*) FROM projects
+                     WHERE projects.workspace_id = w.id
+                     AND projects.user_id = :userId) AS my_project_count
+                FROM workspaces w
+                WHERE w.id IN (:workspaceIds)
+                ORDER BY w.name ASC`;
+            replacements = { userId: safeUserId, workspaceIds };
+        }
+
+        const workspaces = await sequelize.query(query, {
+            replacements,
+            type: QueryTypes.SELECT,
         });
 
         const result = workspaces.map((ws) => {
-            const plain = ws.toJSON();
-            const { creator, ...rest } = plain;
+            const { creator, ...rest } = ws;
             return { ...rest, is_creator: creator === safeUserId };
         });
 

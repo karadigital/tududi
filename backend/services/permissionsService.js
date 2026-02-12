@@ -14,7 +14,12 @@ const ACCESS = { NONE: 'none', RO: 'ro', RW: 'rw', ADMIN: 'admin' };
  * @param {number} userId - The user ID to check
  * @returns {Promise<number[]>} Array of all member user IDs from those departments (including the admin)
  */
-async function getDepartmentMemberUserIds(userId) {
+async function getDepartmentMemberUserIds(userId, cache = null) {
+    const cacheKey = `dept_members_${userId}`;
+    if (cache && cache.has(cacheKey)) {
+        return cache.get(cacheKey);
+    }
+
     // Find areas where user is an admin (either as owner or as admin member)
     const adminAreas = await sequelize.query(
         `SELECT DISTINCT a.id
@@ -53,7 +58,9 @@ async function getDepartmentMemberUserIds(userId) {
         }
     );
 
-    return members.map((row) => row.user_id);
+    const result = members.map((row) => row.user_id);
+    if (cache) cache.set(cacheKey, result);
+    return result;
 }
 
 async function getSharedUidsForUser(resourceType, userId) {
@@ -95,17 +102,21 @@ async function getAccess(userId, resourceType, resourceUid) {
         if (!proj) return ACCESS.NONE;
         if (proj.user_id === userId) return ACCESS.RW;
 
-        // Check if user is a member of the project's department
+        // Check if user is a dept admin (owner or admin role) of the project's department
+        // Regular members only get access via task assignment (checked below)
         if (proj.area_id) {
-            const areaMembership = await sequelize.query(
-                `SELECT 1 FROM areas_members WHERE area_id = :areaId AND user_id = :userId LIMIT 1`,
+            const adminMembership = await sequelize.query(
+                `SELECT 1 FROM areas_members WHERE area_id = :areaId AND user_id = :userId AND role = 'admin'
+                 UNION
+                 SELECT 1 FROM areas WHERE id = :areaId AND user_id = :userId
+                 LIMIT 1`,
                 {
                     replacements: { areaId: proj.area_id, userId },
                     type: QueryTypes.SELECT,
                     raw: true,
                 }
             );
-            if (areaMembership.length > 0) return ACCESS.RO;
+            if (adminMembership.length > 0) return ACCESS.RO;
         }
 
         // Check if user has tasks (assigned or owned) in this project
@@ -320,7 +331,10 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             }
 
             // Department admins can see tasks of their department members
-            const memberUserIds = await getDepartmentMemberUserIds(userId);
+            const memberUserIds = await getDepartmentMemberUserIds(
+                userId,
+                cache
+            );
             if (memberUserIds.length > 0) {
                 conditions.push({ user_id: { [Op.in]: memberUserIds } }); // Tasks owned by department members
             }
@@ -334,9 +348,12 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
     // For projects, also include projects in areas the user is a member of
     // and projects containing tasks assigned to the user
     if (resourceType === 'project') {
-        // Get area IDs where user is a member
+        // Get area IDs where user is an admin (owner or admin role)
+        // Regular members only see projects via task assignment/ownership
         const areaMembers = await sequelize.query(
-            `SELECT area_id FROM areas_members WHERE user_id = :userId`,
+            `SELECT area_id FROM areas_members WHERE user_id = :userId AND role = 'admin'
+             UNION
+             SELECT id AS area_id FROM areas WHERE user_id = :userId`,
             {
                 replacements: { userId },
                 type: QueryTypes.SELECT,
@@ -375,7 +392,7 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
         }
 
         // Department admins also see projects where their members have tasks
-        const memberUserIds = await getDepartmentMemberUserIds(userId);
+        const memberUserIds = await getDepartmentMemberUserIds(userId, cache);
         if (memberUserIds.length > 0) {
             const memberProjectRows = await sequelize.query(
                 `SELECT DISTINCT project_id FROM tasks
@@ -508,7 +525,18 @@ async function getAccessibleWorkspaceIds(userId) {
          SELECT DISTINCT p.workspace_id
          FROM projects p
          INNER JOIN tasks t ON t.project_id = p.id
-         WHERE t.assigned_to_user_id = :userId AND p.workspace_id IS NOT NULL`,
+         WHERE (t.assigned_to_user_id = :userId OR t.user_id = :userId) AND p.workspace_id IS NOT NULL
+         UNION
+         SELECT DISTINCT p.workspace_id
+         FROM projects p
+         INNER JOIN tasks t ON t.project_id = p.id
+         INNER JOIN areas_members am ON (t.assigned_to_user_id = am.user_id OR t.user_id = am.user_id)
+         WHERE p.workspace_id IS NOT NULL
+         AND am.area_id IN (
+             SELECT a2.id FROM areas a2 WHERE a2.user_id = :userId
+             UNION
+             SELECT am2.area_id FROM areas_members am2 WHERE am2.user_id = :userId AND am2.role = 'admin'
+         )`,
         {
             replacements: { userId },
             type: QueryTypes.SELECT,
@@ -533,4 +561,5 @@ module.exports = {
     canDeleteTask,
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
+    getDepartmentMemberUserIds,
 };
