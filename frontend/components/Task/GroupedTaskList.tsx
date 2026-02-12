@@ -203,9 +203,14 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
         };
     }, [tasks, showCompletedTasks, searchQuery, shouldUseDayGrouping]);
 
-    // Filter grouped tasks for completed status and search query
+    // Filter grouped tasks for completed status, search query, and
+    // parent-level filters (assignee, recurrence) already applied to `tasks` prop
     const filteredGroupedTasks = useMemo(() => {
         if (!shouldUseDayGrouping || !groupedTasks) return {};
+
+        // Build a set of task IDs from the already-filtered tasks prop
+        // so we can intersect with grouped tasks to respect assignee/recurrence filters
+        const allowedTaskIds = new Set(tasks.map((t) => t.id));
 
         const filtered: GroupedTasks = {};
         Object.entries(groupedTasks).forEach(([groupName, groupTasks]) => {
@@ -213,13 +218,19 @@ const GroupedTaskList: React.FC<GroupedTaskListProps> = ({
                 groupTasks,
                 showCompletedTasks,
                 searchQuery
-            );
+            ).filter((task) => allowedTaskIds.has(task.id));
             if (result.length > 0) {
                 filtered[groupName] = result;
             }
         });
         return filtered;
-    }, [groupedTasks, showCompletedTasks, shouldUseDayGrouping, searchQuery]);
+    }, [
+        groupedTasks,
+        showCompletedTasks,
+        shouldUseDayGrouping,
+        searchQuery,
+        tasks,
+    ]);
 
     // Group tasks by project when requested (only applies to standalone view)
     const groupedByProject = useMemo(() => {
