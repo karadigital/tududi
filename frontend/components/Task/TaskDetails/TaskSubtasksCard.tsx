@@ -17,7 +17,6 @@ interface TaskSubtasksCardProps {
     onToggleSubtaskCompletion: (subtask: Task) => Promise<void>;
     onCreateSubtask?: (name: string) => Promise<void>;
     showHeader?: boolean;
-    showFooterLink?: boolean;
     onNavigateToTab?: () => void;
 }
 
@@ -33,7 +32,6 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
     onToggleSubtaskCompletion,
     onCreateSubtask,
     showHeader = false,
-    showFooterLink = false,
     onNavigateToTab,
 }) => {
     const { t } = useTranslation();
@@ -300,21 +298,7 @@ const TaskSubtasksCard: React.FC<TaskSubtasksCardProps> = ({
                     {isEditing ? (
                         renderEditingContent()
                     ) : subtasks.length > 0 ? (
-                        <>
-                            {renderSubtasksList()}
-                            {/* Footer link */}
-                            {showFooterLink && onNavigateToTab && (
-                                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                                    <button
-                                        onClick={onNavigateToTab}
-                                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                                    >
-                                        {t('task.viewAllSubtasks', 'View all')}{' '}
-                                        &rarr;
-                                    </button>
-                                </div>
-                            )}
-                        </>
+                        renderSubtasksList()
                     ) : (
                         /* Empty state for header mode with inline add */
                         <div>
