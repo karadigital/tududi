@@ -1,6 +1,6 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Project, Task, Area, sequelize } = require('../../models');
+const { Project, Task, Area, Workspace, sequelize } = require('../../models');
 const { QueryTypes } = require('sequelize');
 const { createTestUser } = require('../helpers/testUtils');
 
@@ -273,5 +273,165 @@ describe('Department Admin Project Visibility', () => {
 
         const unchangedTask = await Task.findByPk(memberTask.id);
         expect(unchangedTask.name).toBe('Member Task For RO Test');
+    });
+
+    describe('workspace project isolation', () => {
+        it('dept admin only sees projects in workspace where dept members have tasks', async () => {
+            const workspace = await Workspace.create({
+                name: 'Shared Workspace',
+                creator: outsider.id,
+            });
+
+            // Project A: outsider creates project, assigns task to dept member
+            const projectA = await Project.create({
+                name: 'Project With Dept Member Task',
+                user_id: outsider.id,
+                workspace_id: workspace.id,
+            });
+            await Task.create({
+                name: 'Task For Dept Member',
+                user_id: outsider.id,
+                assigned_to_user_id: deptMember.id,
+                project_id: projectA.id,
+            });
+
+            // Project B: outsider creates project, assigns task to themselves only
+            const projectB = await Project.create({
+                name: 'Project With Outsider Task Only',
+                user_id: outsider.id,
+                workspace_id: workspace.id,
+            });
+            await Task.create({
+                name: 'Task For Outsider Only',
+                user_id: outsider.id,
+                assigned_to_user_id: outsider.id,
+                project_id: projectB.id,
+            });
+
+            // Dept admin should see workspace
+            const wsRes = await deptAdminAgent.get('/api/workspaces');
+            expect(wsRes.status).toBe(200);
+            const wsUids = wsRes.body.map((w) => w.uid);
+            expect(wsUids).toContain(workspace.uid);
+
+            // Dept admin should see project A but NOT project B
+            const projRes = await deptAdminAgent.get('/api/projects');
+            expect(projRes.status).toBe(200);
+            const projectUids = projRes.body.projects.map((p) => p.uid);
+            expect(projectUids).toContain(projectA.uid);
+            expect(projectUids).not.toContain(projectB.uid);
+        });
+
+        it('workspace my_project_count reflects only accessible projects', async () => {
+            const workspace = await Workspace.create({
+                name: 'Count Test Workspace',
+                creator: outsider.id,
+            });
+
+            const projectA = await Project.create({
+                name: 'Accessible Project',
+                user_id: outsider.id,
+                workspace_id: workspace.id,
+            });
+            await Task.create({
+                name: 'Member Task',
+                user_id: outsider.id,
+                assigned_to_user_id: deptMember.id,
+                project_id: projectA.id,
+            });
+
+            const projectB = await Project.create({
+                name: 'Inaccessible Project',
+                user_id: outsider.id,
+                workspace_id: workspace.id,
+            });
+            await Task.create({
+                name: 'Outsider Task',
+                user_id: outsider.id,
+                assigned_to_user_id: outsider.id,
+                project_id: projectB.id,
+            });
+
+            const wsRes = await deptAdminAgent.get('/api/workspaces');
+            expect(wsRes.status).toBe(200);
+            const ws = wsRes.body.find((w) => w.uid === workspace.uid);
+            expect(ws).toBeDefined();
+            expect(parseInt(ws.my_project_count)).toBe(1);
+        });
+
+        it('dept admin does NOT see workspace where only outsider has tasks (separate workspaces)', async () => {
+            // Workspace 1: outsider creates project, assigns task to dept member
+            const workspace1 = await Workspace.create({
+                name: 'Workspace With Dept Task',
+                creator: outsider.id,
+            });
+            const projectA = await Project.create({
+                name: 'Project In WS1',
+                user_id: outsider.id,
+                workspace_id: workspace1.id,
+            });
+            await Task.create({
+                name: 'Task For Dept Member',
+                user_id: outsider.id,
+                assigned_to_user_id: deptMember.id,
+                project_id: projectA.id,
+            });
+
+            // Workspace 2: outsider creates project, creates task for themselves only
+            const workspace2 = await Workspace.create({
+                name: 'Workspace With Outsider Task Only',
+                creator: outsider.id,
+            });
+            const projectB = await Project.create({
+                name: 'Project In WS2',
+                user_id: outsider.id,
+                workspace_id: workspace2.id,
+            });
+            await Task.create({
+                name: 'Task For Outsider Only',
+                user_id: outsider.id,
+                assigned_to_user_id: outsider.id,
+                project_id: projectB.id,
+            });
+
+            // Dept admin should see workspace 1 but NOT workspace 2
+            const wsRes = await deptAdminAgent.get('/api/workspaces');
+            expect(wsRes.status).toBe(200);
+            const wsUids = wsRes.body.map((w) => w.uid);
+            expect(wsUids).toContain(workspace1.uid);
+            expect(wsUids).not.toContain(workspace2.uid);
+
+            // Dept admin should see project A but NOT project B
+            const projRes = await deptAdminAgent.get('/api/projects');
+            expect(projRes.status).toBe(200);
+            const projectUids = projRes.body.projects.map((p) => p.uid);
+            expect(projectUids).toContain(projectA.uid);
+            expect(projectUids).not.toContain(projectB.uid);
+        });
+
+        it('dept admin does NOT see workspace where outsider has unassigned task', async () => {
+            // Workspace with project where outsider creates task with no explicit assignment
+            const workspace = await Workspace.create({
+                name: 'Unassigned Task Workspace',
+                creator: outsider.id,
+            });
+            const project = await Project.create({
+                name: 'Project With Unassigned Task',
+                user_id: outsider.id,
+                workspace_id: workspace.id,
+            });
+            // Task with assigned_to_user_id = null (outsider didn't assign anyone)
+            await Task.create({
+                name: 'Unassigned Task',
+                user_id: outsider.id,
+                assigned_to_user_id: null,
+                project_id: project.id,
+            });
+
+            const wsRes = await deptAdminAgent.get('/api/workspaces');
+            expect(wsRes.status).toBe(200);
+            const wsUids = wsRes.body.map((w) => w.uid);
+            expect(wsUids).not.toContain(workspace.uid);
+        });
     });
 });
