@@ -15,4 +15,13 @@ async function isAdmin(userUid) {
     return !!(role && role.is_admin);
 }
 
-module.exports = { isAdmin };
+async function isAdminByUserId(userId) {
+    if (!userId) return false;
+
+    const user = await User.findByPk(userId, { attributes: ['uid'] });
+    if (!user) return false;
+
+    return isAdmin(user.uid);
+}
+
+module.exports = { isAdmin, isAdminByUserId };
