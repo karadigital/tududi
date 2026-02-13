@@ -1391,6 +1391,7 @@ const ProjectDetails: React.FC = () => {
                                             upcomingInsights={upcomingInsights}
                                             weeklyPace={weeklyPace}
                                             monthlyCompleted={monthlyCompleted}
+                                            owner={project?.Owner}
                                         />
                                     </div>
                                 </div>

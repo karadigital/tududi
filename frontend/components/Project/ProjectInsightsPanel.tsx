@@ -1,6 +1,7 @@
 import React from 'react';
 import { Task } from '../../entities/Task';
 import { TFunction } from 'i18next';
+import { TaskOwnerCard } from '../Task/TaskDetails/';
 
 interface DueBuckets {
     overdue: Task[];
@@ -40,6 +41,14 @@ interface ProjectInsightsPanelProps {
         nextThreeDays: number;
         nextWeek: number;
     };
+    owner?: {
+        id: number;
+        uid: string;
+        email: string;
+        name?: string;
+        surname?: string;
+        avatar_image?: string;
+    };
 }
 
 const ProjectInsightsPanel: React.FC<ProjectInsightsPanelProps> = ({
@@ -53,6 +62,7 @@ const ProjectInsightsPanel: React.FC<ProjectInsightsPanelProps> = ({
     weeklyPace,
     monthlyCompleted,
     upcomingInsights,
+    owner,
 }) => {
     const maxUpcoming = Math.max(...upcomingDueTrend.map((d) => d.count), 1);
 
@@ -387,6 +397,10 @@ const ProjectInsightsPanel: React.FC<ProjectInsightsPanelProps> = ({
                         )}
                     </p>
                 )}
+            </div>
+
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-5">
+                <TaskOwnerCard owner={owner} />
             </div>
         </div>
     );
