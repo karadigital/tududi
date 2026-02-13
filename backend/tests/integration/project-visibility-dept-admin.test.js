@@ -214,6 +214,45 @@ describe('Department Admin Project Visibility', () => {
         expect(taskNames).toContain('Admin Task In Project');
     });
 
+    it('dept admin can create tasks in department project', async () => {
+        const project = await Project.create({
+            name: 'Dept Project For Task Creation',
+            user_id: outsider.id,
+            area_id: department.id,
+        });
+
+        const res = await deptAdminAgent.post('/api/task').send({
+            name: 'Task Created By Dept Admin',
+            project_id: project.id,
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.name).toBe('Task Created By Dept Admin');
+        expect(res.body.project_id).toBe(project.id);
+    });
+
+    it('dept admin can create tasks in project where member has tasks', async () => {
+        const project = await Project.create({
+            name: 'Member Task Project For Creation',
+            user_id: outsider.id,
+        });
+
+        await Task.create({
+            name: 'Existing Member Task',
+            user_id: deptMember.id,
+            project_id: project.id,
+        });
+
+        const res = await deptAdminAgent.post('/api/task').send({
+            name: 'Task Created By Dept Admin Via Member',
+            project_id: project.id,
+        });
+
+        expect(res.status).toBe(201);
+        expect(res.body.name).toBe('Task Created By Dept Admin Via Member');
+        expect(res.body.project_id).toBe(project.id);
+    });
+
     it('dept admin has read-only access to tasks they do not own', async () => {
         const project = await Project.create({
             name: 'Read Only Test Project',

@@ -116,7 +116,7 @@ async function getAccess(userId, resourceType, resourceUid) {
                     raw: true,
                 }
             );
-            if (adminMembership.length > 0) return ACCESS.RO;
+            if (adminMembership.length > 0) return ACCESS.RW;
         }
 
         // Check if user has tasks (assigned or owned) in this project
@@ -128,7 +128,7 @@ async function getAccess(userId, resourceType, resourceUid) {
             attributes: ['id'],
             raw: true,
         });
-        if (connectedTask) return ACCESS.RO;
+        if (connectedTask) return ACCESS.RW;
 
         // Check if user is a dept admin and their members have tasks in this project
         const memberUserIds = await getDepartmentMemberUserIds(userId);
@@ -148,7 +148,7 @@ async function getAccess(userId, resourceType, resourceUid) {
                 attributes: ['id'],
                 raw: true,
             });
-            if (memberTask) return ACCESS.RO;
+            if (memberTask) return ACCESS.RW;
         }
     } else if (resourceType === 'task') {
         const t = await Task.findOne({
