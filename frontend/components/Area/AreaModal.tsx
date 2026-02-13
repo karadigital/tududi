@@ -172,8 +172,9 @@ const AreaModal: React.FC<AreaModalProps> = ({
             );
             handleClose();
         } catch (err) {
-            setError((err as Error).message);
-            showErrorToast(t('errors.failedToSaveArea'));
+            const message = (err as Error).message;
+            setError(message);
+            showErrorToast(message || t('errors.failedToSaveArea'));
         } finally {
             setIsSubmitting(false);
         }

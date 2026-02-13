@@ -391,7 +391,7 @@ const Layout: React.FC<LayoutProps> = ({
             if (isAuthError(error)) {
                 return;
             }
-            closeAreaModal();
+            throw error;
         }
     };
 
