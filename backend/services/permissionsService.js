@@ -120,6 +120,20 @@ async function getAccess(userId, resourceType, resourceUid) {
         });
         if (connectedTask) return ACCESS.RW;
 
+        // Check if user is subscribed to any task in this project
+        const subscribedInProject = await sequelize.query(
+            `SELECT 1 FROM tasks_subscribers ts
+             JOIN tasks t ON t.id = ts.task_id
+             WHERE ts.user_id = :userId AND t.project_id = :projectId
+             LIMIT 1`,
+            {
+                replacements: { userId, projectId: proj.id },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+        if (subscribedInProject.length > 0) return ACCESS.RO;
+
         // Check if user is a dept admin and their members have tasks in this project
         const memberUserIds = await getDepartmentMemberUserIds(userId);
         if (memberUserIds.length > 0) {
@@ -302,6 +316,26 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             if (subscribedTaskIds.length > 0) {
                 const taskIds = subscribedTaskIds.map((row) => row.task_id);
                 conditions.push({ id: { [Op.in]: taskIds } }); // Subscribed tasks
+
+                // Also include all tasks from projects where user has subscribed tasks
+                const subscribedProjectIds = await sequelize.query(
+                    `SELECT DISTINCT t.project_id FROM tasks_subscribers ts
+                     JOIN tasks t ON t.id = ts.task_id
+                     WHERE ts.user_id = :userId AND t.project_id IS NOT NULL`,
+                    {
+                        replacements: { userId },
+                        type: QueryTypes.SELECT,
+                        raw: true,
+                    }
+                );
+                if (subscribedProjectIds.length > 0) {
+                    const projectIds = subscribedProjectIds.map(
+                        (row) => row.project_id
+                    );
+                    conditions.push({
+                        project_id: { [Op.in]: projectIds },
+                    }); // All tasks in subscribed projects
+                }
             }
 
             // Department admins can see tasks of their department members
@@ -363,6 +397,24 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
                 (row) => row.project_id
             );
             conditions.push({ id: { [Op.in]: assignedProjectIds } }); // Projects with tasks assigned to or owned by user
+        }
+
+        // Projects where user is subscribed to at least one task
+        const subscribedProjectRows = await sequelize.query(
+            `SELECT DISTINCT t.project_id FROM tasks_subscribers ts
+             JOIN tasks t ON t.id = ts.task_id
+             WHERE ts.user_id = :userId AND t.project_id IS NOT NULL`,
+            {
+                replacements: { userId },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+        if (subscribedProjectRows.length > 0) {
+            const subscribedProjectIds = subscribedProjectRows.map(
+                (row) => row.project_id
+            );
+            conditions.push({ id: { [Op.in]: subscribedProjectIds } }); // Projects with subscribed tasks
         }
 
         // Department admins also see projects where their members have tasks
