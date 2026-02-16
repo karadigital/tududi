@@ -10,8 +10,10 @@ const { getAuthenticatedUserId } = require('../utils/request-utils');
 const { hasAccess } = require('../middleware/authorize');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const areaMembershipService = require('../services/areaMembershipService');
+const areaSubscriberService = require('../services/areaSubscriberService');
 const { isAdmin } = require('../services/rolesService');
 const { execAction } = require('../services/execAction');
+const { subscribeToTask } = require('../services/taskSubscriptionService');
 
 // Middleware to validate UID format before access checks
 const validateUid =
@@ -428,6 +430,167 @@ router.patch(
         } catch (error) {
             logError('Error updating member role:', error);
             res.status(500).json({ error: 'Failed to update member role' });
+        }
+    }
+);
+
+// Get area subscribers
+router.get(
+    '/departments/:uid/subscribers',
+    hasAccess('admin', 'area', (req) => req.params.uid),
+    async (req, res) => {
+        try {
+            const subscribers = await areaSubscriberService.getAreaSubscribers(
+                req.params.uid
+            );
+            res.json({ subscribers });
+        } catch (error) {
+            logError('Error fetching area subscribers:', error);
+            if (error.message === 'Area not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Failed to fetch area subscribers' });
+        }
+    }
+);
+
+// Add area subscriber
+router.post(
+    '/departments/:uid/subscribers',
+    hasAccess('admin', 'area', (req) => req.params.uid),
+    async (req, res) => {
+        try {
+            const currentUserId = getAuthenticatedUserId(req);
+            const { user_id, retroactive } = req.body;
+
+            if (!user_id) {
+                return res.status(400).json({ error: 'user_id is required' });
+            }
+
+            const area = await Area.findOne({
+                where: { uid: req.params.uid },
+            });
+            if (!area) {
+                return res.status(404).json({ error: 'Area not found' });
+            }
+
+            await areaSubscriberService.addAreaSubscriber(
+                area.id,
+                user_id,
+                currentUserId,
+                'manual'
+            );
+
+            if (retroactive) {
+                // Find all tasks owned by members of this department
+                const memberRows = await sequelize.query(
+                    `SELECT user_id FROM areas_members WHERE area_id = :areaId`,
+                    {
+                        replacements: { areaId: area.id },
+                        type: QueryTypes.SELECT,
+                    }
+                );
+                const memberIds = memberRows.map((r) => r.user_id);
+
+                if (memberIds.length > 0) {
+                    const { Task } = require('../models');
+                    const tasks = await Task.findAll({
+                        where: { user_id: memberIds },
+                        attributes: ['id'],
+                    });
+
+                    for (const task of tasks) {
+                        try {
+                            await subscribeToTask(
+                                task.id,
+                                user_id,
+                                currentUserId
+                            );
+                        } catch (err) {
+                            // Ignore 'User already subscribed' errors
+                            if (err.message !== 'User already subscribed') {
+                                logError(
+                                    `Error retroactively subscribing to task ${task.id}:`,
+                                    err
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            const updatedSubscribers =
+                await areaSubscriberService.getAreaSubscribers(req.params.uid);
+            res.json({ subscribers: updatedSubscribers });
+        } catch (error) {
+            logError('Error adding area subscriber:', error);
+
+            if (error.message === 'User is already a subscriber') {
+                return res.status(409).json({ error: error.message });
+            }
+            if (error.message === 'User not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            if (error.message === 'Area not found') {
+                return res.status(404).json({ error: error.message });
+            }
+
+            res.status(500).json({ error: 'Failed to add area subscriber' });
+        }
+    }
+);
+
+// Remove area subscriber
+router.delete(
+    '/departments/:uid/subscribers/:userId',
+    hasAccess('admin', 'area', (req) => req.params.uid),
+    async (req, res) => {
+        try {
+            const { userId } = req.params;
+
+            const area = await Area.findOne({
+                where: { uid: req.params.uid },
+            });
+            if (!area) {
+                return res.status(404).json({ error: 'Area not found' });
+            }
+
+            // Check if subscriber exists and source
+            const subscriber = await areaSubscriberService.isAreaSubscriber(
+                area.id,
+                Number(userId)
+            );
+
+            if (!subscriber) {
+                return res
+                    .status(404)
+                    .json({ error: 'User is not a subscriber' });
+            }
+
+            if (subscriber.source === 'admin_role') {
+                return res.status(400).json({
+                    error: 'Cannot remove admin-role subscribers manually',
+                });
+            }
+
+            await areaSubscriberService.removeAreaSubscriber(
+                area.id,
+                Number(userId)
+            );
+
+            const updatedSubscribers =
+                await areaSubscriberService.getAreaSubscribers(req.params.uid);
+            res.json({ subscribers: updatedSubscribers });
+        } catch (error) {
+            logError('Error removing area subscriber:', error);
+
+            if (error.message === 'User is not a subscriber') {
+                return res.status(404).json({ error: error.message });
+            }
+
+            res.status(500).json({
+                error: 'Failed to remove area subscriber',
+            });
         }
     }
 );

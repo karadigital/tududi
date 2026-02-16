@@ -1,4 +1,4 @@
-const { Area, User, sequelize } = require('../models');
+const { Area, User, AreasSubscriber, sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const { logError } = require('./logService');
 const { isAdmin } = require('./rolesService');
@@ -143,6 +143,17 @@ async function addAreaMember(areaId, userId, role = 'member', addedBy) {
             accessLevel: role === 'admin' ? 'admin' : 'rw',
         });
 
+        if (role === 'admin') {
+            try {
+                await AreasSubscriber.findOrCreate({
+                    where: { area_id: areaId, user_id: userId },
+                    defaults: { added_by: addedBy, source: 'admin_role' },
+                });
+            } catch (subError) {
+                logError('Error auto-subscribing new admin:', subError);
+            }
+        }
+
         return area;
     } catch (error) {
         logError('Error adding area member:', error);
@@ -202,6 +213,22 @@ async function removeAreaMember(areaId, userId, removedBy) {
                 }
             );
 
+            // Remove admin_role subscriber entry if exists
+            try {
+                await AreasSubscriber.destroy({
+                    where: {
+                        area_id: areaId,
+                        user_id: userId,
+                        source: 'admin_role',
+                    },
+                });
+            } catch (subError) {
+                logError(
+                    'Error removing subscriber on owner removal:',
+                    subError
+                );
+            }
+
             // Log the ownership transfer
             const { Action } = require('../models');
             await Action.create({
@@ -244,6 +271,19 @@ async function removeAreaMember(areaId, userId, removedBy) {
                 type: QueryTypes.DELETE,
             }
         );
+
+        // Remove admin_role subscriber entry if exists
+        try {
+            await AreasSubscriber.destroy({
+                where: {
+                    area_id: areaId,
+                    user_id: userId,
+                    source: 'admin_role',
+                },
+            });
+        } catch (subError) {
+            logError('Error removing subscriber on member removal:', subError);
+        }
 
         // Remove permissions via execAction
         const { execAction } = require('./execAction');
@@ -299,6 +339,33 @@ async function updateMemberRole(areaId, userId, newRole, updatedBy) {
                 },
             }
         );
+
+        if (newRole === 'admin') {
+            try {
+                await AreasSubscriber.findOrCreate({
+                    where: { area_id: areaId, user_id: userId },
+                    defaults: { added_by: updatedBy, source: 'admin_role' },
+                });
+            } catch (subError) {
+                logError('Error auto-subscribing promoted admin:', subError);
+            }
+        } else {
+            // Demoted from admin — remove admin_role subscriber entry only
+            try {
+                await AreasSubscriber.destroy({
+                    where: {
+                        area_id: areaId,
+                        user_id: userId,
+                        source: 'admin_role',
+                    },
+                });
+            } catch (subError) {
+                logError(
+                    'Error removing demoted admin from subscribers:',
+                    subError
+                );
+            }
+        }
 
         return area;
     } catch (error) {
