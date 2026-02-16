@@ -1,6 +1,6 @@
 // Note: Uses /departments URL paths (renamed from /areas for user-facing consistency)
 const express = require('express');
-const { Area, User, sequelize } = require('../models');
+const { Area, User, Task, Permission, sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
@@ -13,7 +13,6 @@ const areaMembershipService = require('../services/areaMembershipService');
 const areaSubscriberService = require('../services/areaSubscriberService');
 const { isAdmin } = require('../services/rolesService');
 const { execAction } = require('../services/execAction');
-const { subscribeToTask } = require('../services/taskSubscriptionService');
 
 // Middleware to validate UID format before access checks
 const validateUid =
@@ -482,7 +481,8 @@ router.post(
             );
 
             if (retroactive) {
-                // Find all tasks owned by members of this department
+                // Batch retroactive subscribe: single query to find tasks,
+                // filter out already-subscribed, then bulk insert
                 const memberRows = await sequelize.query(
                     `SELECT user_id FROM areas_members WHERE area_id = :areaId`,
                     {
@@ -493,24 +493,70 @@ router.post(
                 const memberIds = memberRows.map((r) => r.user_id);
 
                 if (memberIds.length > 0) {
-                    const { Task } = require('../models');
                     const tasks = await Task.findAll({
                         where: { user_id: memberIds },
-                        attributes: ['id'],
+                        attributes: ['id', 'uid'],
                     });
 
-                    for (const task of tasks) {
-                        try {
-                            await subscribeToTask(
-                                task.id,
-                                user_id,
-                                currentUserId
-                            );
-                        } catch (err) {
-                            // Ignore 'User already subscribed' errors
-                            if (err.message !== 'User already subscribed') {
+                    if (tasks.length > 0) {
+                        const taskIds = tasks.map((t) => t.id);
+
+                        // Find tasks user is already subscribed to (single query)
+                        const alreadySubscribed = await sequelize.query(
+                            `SELECT task_id FROM tasks_subscribers WHERE user_id = :userId AND task_id IN (:taskIds)`,
+                            {
+                                replacements: {
+                                    userId: user_id,
+                                    taskIds,
+                                },
+                                type: QueryTypes.SELECT,
+                            }
+                        );
+                        const alreadySubSet = new Set(
+                            alreadySubscribed.map((r) => r.task_id)
+                        );
+
+                        const newTasks = tasks.filter(
+                            (t) => !alreadySubSet.has(t.id)
+                        );
+
+                        if (newTasks.length > 0) {
+                            const transaction = await sequelize.transaction();
+                            try {
+                                // Bulk insert task subscriptions
+                                for (const t of newTasks) {
+                                    await sequelize.query(
+                                        `INSERT OR IGNORE INTO tasks_subscribers (task_id, user_id, created_at, updated_at)
+                                         VALUES (:taskId, :userId, datetime('now'), datetime('now'))`,
+                                        {
+                                            replacements: {
+                                                taskId: t.id,
+                                                userId: user_id,
+                                            },
+                                            transaction,
+                                        }
+                                    );
+                                }
+
+                                // Bulk insert permission records
+                                const permRows = newTasks.map((t) => ({
+                                    user_id: user_id,
+                                    resource_type: 'task',
+                                    resource_uid: t.uid,
+                                    access_level: 'ro',
+                                    propagation: 'subscription',
+                                    granted_by_user_id: currentUserId,
+                                }));
+                                await Permission.bulkCreate(permRows, {
+                                    transaction,
+                                    ignoreDuplicates: true,
+                                });
+
+                                await transaction.commit();
+                            } catch (err) {
+                                await transaction.rollback();
                                 logError(
-                                    `Error retroactively subscribing to task ${task.id}:`,
+                                    'Error in batch retroactive subscribe:',
                                     err
                                 );
                             }
