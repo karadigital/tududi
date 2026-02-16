@@ -1,5 +1,5 @@
 // Note: Uses /departments URL paths (renamed from /areas for user-facing consistency)
-import { Area, AreaMember } from '../entities/Area';
+import { Area, AreaMember, AreaSubscriber } from '../entities/Area';
 import { handleAuthResponse } from './authUtils';
 import { getApiPath } from '../config/paths';
 
@@ -152,4 +152,65 @@ export const updateAreaMemberRole = async (
     await handleAuthResponse(response, 'Failed to update area member role.');
     const data = await response.json();
     return data.members;
+};
+
+export const getAreaSubscribers = async (
+    areaUid: string
+): Promise<AreaSubscriber[]> => {
+    const response = await fetch(
+        getApiPath(`departments/${areaUid}/subscribers`),
+        {
+            credentials: 'include',
+            headers: { Accept: 'application/json' },
+        }
+    );
+
+    await handleAuthResponse(response, 'Failed to fetch area subscribers.');
+    const data = await response.json();
+    return data.subscribers;
+};
+
+export const addAreaSubscriber = async (
+    areaUid: string,
+    userId: number,
+    retroactive: boolean = false
+): Promise<AreaSubscriber[]> => {
+    const response = await fetch(
+        getApiPath(`departments/${areaUid}/subscribers`),
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({ user_id: userId, retroactive }),
+        }
+    );
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to add subscriber');
+    }
+
+    const data = await response.json();
+    return data.subscribers;
+};
+
+export const removeAreaSubscriber = async (
+    areaUid: string,
+    userId: number
+): Promise<AreaSubscriber[]> => {
+    const response = await fetch(
+        getApiPath(`departments/${areaUid}/subscribers/${userId}`),
+        {
+            method: 'DELETE',
+            credentials: 'include',
+            headers: { Accept: 'application/json' },
+        }
+    );
+
+    await handleAuthResponse(response, 'Failed to remove subscriber.');
+    const data = await response.json();
+    return data.subscribers;
 };

@@ -5,11 +5,14 @@ import {
     UserPlusIcon,
     XMarkIcon,
 } from '@heroicons/react/24/outline';
-import { Area, AreaMember } from '../../entities/Area';
+import { Area, AreaMember, AreaSubscriber } from '../../entities/Area';
 import {
     addAreaMember,
     removeAreaMember,
     updateAreaMemberRole,
+    getAreaSubscribers,
+    addAreaSubscriber,
+    removeAreaSubscriber,
 } from '../../utils/areasService';
 import { getApiPath } from '../../config/paths';
 import { getDefaultHeaders } from '../../utils/authUtils';
@@ -34,6 +37,15 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
     const [allUsers, setAllUsers] = useState<AreaMember[]>([]);
     const [members, setMembers] = useState<AreaMember[]>(area.Members || []);
     const [loading, setLoading] = useState(false);
+    const [subscribers, setSubscribers] = useState<AreaSubscriber[]>([]);
+    const [showRetroactiveDropdown, setShowRetroactiveDropdown] = useState<
+        number | null
+    >(null);
+    const [showAdminWarning, setShowAdminWarning] = useState<{
+        userId: number;
+        action: 'demote' | 'remove';
+        userName: string;
+    } | null>(null);
 
     // Support both snake_case (areas_members) and PascalCase (AreasMember) from API
     const getRole = (m: AreaMember) =>
@@ -51,6 +63,22 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
             fetchAllUsers();
         }
     }, [showManageModal]);
+
+    useEffect(() => {
+        if (showManageModal && area.uid) {
+            fetchSubscribers();
+        }
+    }, [showManageModal]);
+
+    const fetchSubscribers = async () => {
+        if (!area.uid) return;
+        try {
+            const subs = await getAreaSubscribers(area.uid);
+            setSubscribers(subs);
+        } catch (err) {
+            console.error('Error fetching subscribers:', err);
+        }
+    };
 
     const fetchAllUsers = async () => {
         try {
@@ -174,6 +202,109 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleAddSubscriber = async (
+        userId: number,
+        retroactive: boolean
+    ) => {
+        if (!area.uid) return;
+        setLoading(true);
+        try {
+            const updatedSubs = await addAreaSubscriber(
+                area.uid,
+                userId,
+                retroactive
+            );
+            setSubscribers(updatedSubs);
+            setShowRetroactiveDropdown(null);
+            showSuccessToast(t('area.subscriber_added', 'Subscriber added'));
+        } catch (err: any) {
+            showErrorToast(
+                err.message ||
+                    t('area.add_subscriber_failed', 'Failed to add subscriber')
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRemoveSubscriber = async (userId: number) => {
+        if (!area.uid) return;
+        setLoading(true);
+        try {
+            const updatedSubs = await removeAreaSubscriber(area.uid, userId);
+            setSubscribers(updatedSubs);
+            showSuccessToast(
+                t('area.subscriber_removed', 'Subscriber removed')
+            );
+        } catch (err: any) {
+            showErrorToast(
+                err.message ||
+                    t(
+                        'area.remove_subscriber_failed',
+                        'Failed to remove subscriber'
+                    )
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRoleChangeWithWarning = (
+        userId: number,
+        newRole: 'member' | 'admin'
+    ) => {
+        if (newRole === 'member') {
+            const sub = subscribers.find(
+                (s) =>
+                    s.id === userId &&
+                    s.AreasSubscriber?.source === 'admin_role'
+            );
+            if (sub) {
+                const userName = sub.name || sub.email;
+                setShowAdminWarning({
+                    userId,
+                    action: 'demote',
+                    userName,
+                });
+                return;
+            }
+        }
+        handleChangeRole(userId, newRole);
+    };
+
+    const handleRemoveWithWarning = (userId: number) => {
+        const member = members.find((m) => m.id === userId);
+        if (member && getRole(member) === 'admin') {
+            const sub = subscribers.find(
+                (s) =>
+                    s.id === userId &&
+                    s.AreasSubscriber?.source === 'admin_role'
+            );
+            if (sub) {
+                const userName = member.name || member.email;
+                setShowAdminWarning({
+                    userId,
+                    action: 'remove',
+                    userName,
+                });
+                return;
+            }
+        }
+        handleRemoveMember(userId);
+    };
+
+    const confirmAdminWarning = async () => {
+        if (!showAdminWarning) return;
+        if (showAdminWarning.action === 'demote') {
+            await handleChangeRole(showAdminWarning.userId, 'member');
+        } else {
+            await handleRemoveMember(showAdminWarning.userId);
+        }
+        // Refresh subscribers after role/removal change
+        await fetchSubscribers();
+        setShowAdminWarning(null);
     };
 
     const renderMemberBadge = (member: AreaMember) => (
@@ -335,7 +466,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                     <select
                                                         value={role}
                                                         onChange={(e) =>
-                                                            handleChangeRole(
+                                                            handleRoleChangeWithWarning(
                                                                 user.id,
                                                                 e.target
                                                                     .value as
@@ -363,7 +494,7 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                 <button
                                                     onClick={() =>
                                                         isMember
-                                                            ? handleRemoveMember(
+                                                            ? handleRemoveWithWarning(
                                                                   user.id
                                                               )
                                                             : handleAddMember(
@@ -393,6 +524,223 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                     );
                                 })}
                             </div>
+
+                            {/* Subscribers section */}
+                            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-4">
+                                <div className="mb-3">
+                                    <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {t('area.subscribers', 'Subscribers')}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {t(
+                                            'area.subscribers_subtitle',
+                                            'These users are automatically subscribed to new tasks in this department'
+                                        )}
+                                    </p>
+                                </div>
+
+                                {/* Current subscribers */}
+                                <div className="space-y-2 mb-3">
+                                    {subscribers.map((sub) => {
+                                        const source =
+                                            sub.AreasSubscriber?.source;
+                                        const isAdminSource =
+                                            source === 'admin_role';
+
+                                        return (
+                                            <div
+                                                key={sub.uid}
+                                                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded"
+                                            >
+                                                <div className="flex items-center space-x-3">
+                                                    {sub.avatar_image ? (
+                                                        <img
+                                                            src={getApiPath(
+                                                                sub.avatar_image
+                                                            )}
+                                                            alt={
+                                                                sub.name ||
+                                                                sub.email
+                                                            }
+                                                            className="h-8 w-8 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
+                                                            {(sub.name ||
+                                                                sub.email)[0].toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {sub.name ||
+                                                                sub.email}
+                                                        </p>
+                                                        <span
+                                                            className={`text-xs px-1.5 py-0.5 rounded ${
+                                                                isAdminSource
+                                                                    ? 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                                                                    : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
+                                                            }`}
+                                                        >
+                                                            {isAdminSource
+                                                                ? t(
+                                                                      'area.source_admin',
+                                                                      'Admin'
+                                                                  )
+                                                                : t(
+                                                                      'area.source_manual',
+                                                                      'Manual'
+                                                                  )}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                {!readOnly &&
+                                                    !isAdminSource && (
+                                                        <button
+                                                            onClick={() =>
+                                                                handleRemoveSubscriber(
+                                                                    sub.id
+                                                                )
+                                                            }
+                                                            disabled={loading}
+                                                            className="px-3 py-1 text-sm rounded bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 disabled:opacity-50"
+                                                        >
+                                                            {t(
+                                                                'common.remove',
+                                                                'Remove'
+                                                            )}
+                                                        </button>
+                                                    )}
+                                            </div>
+                                        );
+                                    })}
+                                    {subscribers.length === 0 && (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {t(
+                                                'area.no_subscribers',
+                                                'No subscribers'
+                                            )}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Add subscriber */}
+                                {!readOnly && (
+                                    <div className="space-y-2">
+                                        <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                            {t(
+                                                'area.add_subscriber',
+                                                'Add subscriber'
+                                            )}
+                                        </p>
+                                        {allUsers
+                                            .filter(
+                                                (u) =>
+                                                    !subscribers.some(
+                                                        (s) => s.uid === u.uid
+                                                    )
+                                            )
+                                            .map((user) => (
+                                                <div
+                                                    key={user.uid}
+                                                    className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+                                                >
+                                                    <div className="flex items-center space-x-3">
+                                                        {user.avatar_image ? (
+                                                            <img
+                                                                src={getApiPath(
+                                                                    user.avatar_image
+                                                                )}
+                                                                alt={
+                                                                    user.name ||
+                                                                    user.email
+                                                                }
+                                                                className="h-6 w-6 rounded-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
+                                                                {(user.name ||
+                                                                    user.email)[0].toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                        <span className="text-sm text-gray-700 dark:text-gray-200">
+                                                            {user.name ||
+                                                                user.email}
+                                                        </span>
+                                                    </div>
+                                                    <div className="relative">
+                                                        {showRetroactiveDropdown ===
+                                                        user.id ? (
+                                                            <div className="flex items-center space-x-1">
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleAddSubscriber(
+                                                                            user.id,
+                                                                            false
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        loading
+                                                                    }
+                                                                    className="px-2 py-1 text-xs rounded bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 disabled:opacity-50"
+                                                                >
+                                                                    {t(
+                                                                        'area.future_only',
+                                                                        'Future tasks only'
+                                                                    )}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        handleAddSubscriber(
+                                                                            user.id,
+                                                                            true
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        loading
+                                                                    }
+                                                                    className="px-2 py-1 text-xs rounded bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900 dark:text-green-300 dark:hover:bg-green-800 disabled:opacity-50"
+                                                                >
+                                                                    {t(
+                                                                        'area.all_tasks',
+                                                                        'All existing + future'
+                                                                    )}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() =>
+                                                                        setShowRetroactiveDropdown(
+                                                                            null
+                                                                        )
+                                                                    }
+                                                                    className="px-1 py-1 text-xs text-gray-500 hover:text-gray-700"
+                                                                >
+                                                                    <XMarkIcon className="h-4 w-4" />
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() =>
+                                                                    setShowRetroactiveDropdown(
+                                                                        user.id
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    loading
+                                                                }
+                                                                className="px-3 py-1 text-sm rounded bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 disabled:opacity-50"
+                                                            >
+                                                                {t(
+                                                                    'common.add',
+                                                                    'Add'
+                                                                )}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Modal footer */}
@@ -405,6 +753,43 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                             </button>
                         </div>
                     </div>
+                    {showAdminWarning && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
+                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                    {t(
+                                        'area.admin_warning_title',
+                                        'Remove subscriber?'
+                                    )}
+                                </h4>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                                    {t(
+                                        'area.admin_warning_message',
+                                        "Removing {{name}} as department admin will also remove them from the auto-subscribers list. They will keep existing task subscriptions but won't be auto-subscribed to new tasks. Continue?",
+                                        {
+                                            name: showAdminWarning.userName,
+                                        }
+                                    )}
+                                </p>
+                                <div className="flex justify-end space-x-3">
+                                    <button
+                                        onClick={() =>
+                                            setShowAdminWarning(null)
+                                        }
+                                        className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                                    >
+                                        {t('common.cancel', 'Cancel')}
+                                    </button>
+                                    <button
+                                        onClick={confirmAdminWarning}
+                                        className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                                    >
+                                        {t('common.continue', 'Continue')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
