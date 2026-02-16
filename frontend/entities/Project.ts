@@ -39,4 +39,12 @@ export interface Project {
     updated_at?: string;
     share_count?: number;
     is_shared?: boolean;
+    Owner?: {
+        id: number;
+        uid: string;
+        email: string;
+        name?: string;
+        surname?: string;
+        avatar_image?: string;
+    };
 }

@@ -1536,7 +1536,7 @@ const TaskDetails: React.FC = () => {
                                     onUnassign={handleUnassignTask}
                                 />
 
-                                <TaskOwnerCard task={task} />
+                                <TaskOwnerCard owner={task.Owner} />
 
                                 <TaskDueDateCard
                                     task={task}

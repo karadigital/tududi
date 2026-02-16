@@ -515,6 +515,18 @@ router.get(
                         attributes: ['id', 'name', 'uid'],
                         through: { attributes: [] },
                     },
+                    {
+                        model: User,
+                        attributes: [
+                            'id',
+                            'uid',
+                            'email',
+                            'name',
+                            'surname',
+                            'avatar_image',
+                        ],
+                        required: false,
+                    },
                 ],
             });
 
@@ -580,12 +592,14 @@ router.get(
                 tags: projectJson.Tags || [],
                 Tasks: normalizedTasks,
                 Notes: normalizedNotes,
+                Owner: projectJson.User || null,
                 due_date_at: formatDate(project.due_date_at),
                 pin_to_sidebar: pinResult.length > 0,
                 user_id: project.user_id,
                 share_count: shareCount,
                 is_shared: shareCount > 0,
             };
+            delete result.User;
 
             res.json(result);
         } catch (error) {
