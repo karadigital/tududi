@@ -326,20 +326,18 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
                 conditions.push({ id: { [Op.in]: taskIds } }); // Subscribed tasks
 
                 // Also include all tasks from projects where user has subscribed tasks
-                const subscribedProjectIds = await sequelize.query(
-                    `SELECT DISTINCT t.project_id FROM tasks_subscribers ts
-                     JOIN tasks t ON t.id = ts.task_id
-                     WHERE ts.user_id = :userId AND t.project_id IS NOT NULL`,
-                    {
-                        replacements: { userId },
-                        type: QueryTypes.SELECT,
-                        raw: true,
-                    }
-                );
-                if (subscribedProjectIds.length > 0) {
-                    const projectIds = subscribedProjectIds.map(
-                        (row) => row.project_id
-                    );
+                const subscribedTasks = await Task.findAll({
+                    where: {
+                        id: { [Op.in]: taskIds },
+                        project_id: { [Op.ne]: null },
+                    },
+                    attributes: ['project_id'],
+                    raw: true,
+                });
+                const projectIds = [
+                    ...new Set(subscribedTasks.map((t) => t.project_id)),
+                ];
+                if (projectIds.length > 0) {
                     conditions.push({
                         project_id: { [Op.in]: projectIds },
                     }); // All tasks in subscribed projects

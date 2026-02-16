@@ -1,6 +1,13 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Task, Project, Permission, Role, sequelize } = require('../../models');
+const {
+    Task,
+    Project,
+    Permission,
+    Role,
+    User,
+    sequelize,
+} = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 const {
     subscribeToTask,
@@ -64,6 +71,7 @@ describe('Subscriber project visibility', () => {
         await Task.destroy({ where: { user_id: userIds }, force: true });
         await Project.destroy({ where: { user_id: userIds }, force: true });
         await Role.destroy({ where: { user_id: userIds } });
+        await User.destroy({ where: { id: userIds }, force: true });
     });
 
     describe('project list visibility', () => {

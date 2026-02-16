@@ -937,10 +937,7 @@ router.delete(
                     await Task.update(
                         { project_id: null },
                         {
-                            where: {
-                                project_id: project.id,
-                                user_id: req.authUserId,
-                            },
+                            where: { project_id: project.id },
                             transaction,
                         }
                     );
@@ -949,10 +946,7 @@ router.delete(
                     await Note.update(
                         { project_id: null },
                         {
-                            where: {
-                                project_id: project.id,
-                                user_id: req.authUserId,
-                            },
+                            where: { project_id: project.id },
                             transaction,
                         }
                     );
