@@ -172,8 +172,10 @@ const AreaModal: React.FC<AreaModalProps> = ({
             );
             handleClose();
         } catch (err) {
-            setError((err as Error).message);
-            showErrorToast(t('errors.failedToSaveArea'));
+            const message =
+                (err as Error).message || t('errors.failedToSaveArea');
+            setError(message);
+            showErrorToast(message);
         } finally {
             setIsSubmitting(false);
         }
@@ -236,10 +238,11 @@ const AreaModal: React.FC<AreaModalProps> = ({
                 );
                 handleClose();
             } catch (err) {
-                setError((err as Error).message);
-                showErrorToast(
-                    t('errors.failedToDeleteArea', 'Failed to delete area.')
-                );
+                const message =
+                    (err as Error).message ||
+                    t('errors.failedToDeleteArea', 'Failed to delete area.');
+                setError(message);
+                showErrorToast(message);
             }
         }
     };

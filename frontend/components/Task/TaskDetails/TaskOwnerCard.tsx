@@ -1,20 +1,20 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
-import { Task } from '../../../entities/Task';
 import { getApiPath } from '../../../config/paths';
+import { OwnerInfo } from '../../../entities/Task';
 
 interface TaskOwnerCardProps {
-    task: Task;
+    owner?: OwnerInfo;
 }
 
-const TaskOwnerCard: React.FC<TaskOwnerCardProps> = ({ task }) => {
+const TaskOwnerCard: React.FC<TaskOwnerCardProps> = ({ owner }) => {
     const { t } = useTranslation();
 
     const getDisplayName = () => {
-        if (!task.Owner) return t('task.unknownOwner', 'Unknown');
+        if (!owner) return t('task.unknownOwner', 'Unknown');
 
-        const { name, surname, email } = task.Owner;
+        const { name, surname, email } = owner;
 
         if (name || surname) {
             return [name, surname].filter(Boolean).join(' ');
@@ -33,9 +33,9 @@ const TaskOwnerCard: React.FC<TaskOwnerCardProps> = ({ task }) => {
             </div>
 
             <div className="flex items-center space-x-2 px-3 py-1">
-                {task.Owner?.avatar_image ? (
+                {owner?.avatar_image ? (
                     <img
-                        src={getApiPath(task.Owner.avatar_image)}
+                        src={getApiPath(owner.avatar_image)}
                         alt={getDisplayName()}
                         className="h-6 w-6 rounded-full object-cover"
                     />

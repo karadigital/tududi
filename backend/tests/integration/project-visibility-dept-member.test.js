@@ -183,9 +183,9 @@ describe('Department Member Project Visibility', () => {
         expect(taskNames).toContain('Member Assigned Task');
     });
 
-    it('member cannot edit tasks they do not own in the project', async () => {
+    it('member can edit tasks in projects they have access to', async () => {
         const project = await Project.create({
-            name: 'Read Only Project',
+            name: 'Editable Via Access Project',
             user_id: projectOwner.id,
         });
 
@@ -206,6 +206,7 @@ describe('Department Member Project Visibility', () => {
             .patch(`/api/task/${ownerTask.uid}`)
             .send({ name: 'Updated By Member' });
 
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(200);
+        expect(res.body.name).toBe('Updated By Member');
     });
 });

@@ -1,7 +1,7 @@
 const { Op, QueryTypes } = require('sequelize');
 const { sequelize } = require('../models');
 const { Project, Task, Note, Permission } = require('../models');
-const { isAdmin } = require('./rolesService');
+const { isAdminByUserId } = require('./rolesService');
 
 const ACCESS = { NONE: 'none', RO: 'ro', RW: 'rw', ADMIN: 'admin' };
 
@@ -73,24 +73,20 @@ async function getSharedUidsForUser(resourceType, userId) {
     return Array.from(set);
 }
 
-async function getAccess(userId, resourceType, resourceUid) {
-    // Convert numeric userId to string UID for admin check
-    let userUid = userId;
-    if (typeof userId === 'number' || !isNaN(parseInt(userId))) {
-        const { User } = require('../models');
-        const user = await User.findByPk(userId, {
-            attributes: ['uid'],
-        });
-        if (user) {
-            userUid = user.uid;
-        }
-    }
+async function getAccess(
+    userId,
+    resourceType,
+    resourceUid,
+    _isSuperAdmin = null
+) {
+    const isSuperAdmin =
+        _isSuperAdmin !== null ? _isSuperAdmin : await isAdminByUserId(userId);
 
     // Superadmin gets RW access to tasks (not ADMIN, to maintain consistent behavior)
-    if (resourceType === 'task' && (await isAdmin(userUid))) return ACCESS.RW;
+    if (resourceType === 'task' && isSuperAdmin) return ACCESS.RW;
 
     // For non-task resources, superadmin gets ADMIN access
-    if (await isAdmin(userUid)) return ACCESS.ADMIN;
+    if (isSuperAdmin) return ACCESS.ADMIN;
 
     // ownership via model
     if (resourceType === 'project') {
@@ -116,7 +112,7 @@ async function getAccess(userId, resourceType, resourceUid) {
                     raw: true,
                 }
             );
-            if (adminMembership.length > 0) return ACCESS.RO;
+            if (adminMembership.length > 0) return ACCESS.RW;
         }
 
         // Check if user has tasks (assigned or owned) in this project
@@ -128,7 +124,7 @@ async function getAccess(userId, resourceType, resourceUid) {
             attributes: ['id'],
             raw: true,
         });
-        if (connectedTask) return ACCESS.RO;
+        if (connectedTask) return ACCESS.RW;
 
         // Check if user is a dept admin and their members have tasks in this project
         const memberUserIds = await getDepartmentMemberUserIds(userId);
@@ -148,8 +144,22 @@ async function getAccess(userId, resourceType, resourceUid) {
                 attributes: ['id'],
                 raw: true,
             });
-            if (memberTask) return ACCESS.RO;
+            if (memberTask) return ACCESS.RW;
         }
+
+        // Check if user is subscribed to any task in this project (RO — lowest grant)
+        const subscribedInProject = await sequelize.query(
+            `SELECT 1 FROM tasks_subscribers ts
+             JOIN tasks t ON t.id = ts.task_id
+             WHERE ts.user_id = :userId AND t.project_id = :projectId
+             LIMIT 1`,
+            {
+                replacements: { userId, projectId: proj.id },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+        if (subscribedInProject.length > 0) return ACCESS.RO;
     } else if (resourceType === 'task') {
         const t = await Task.findOne({
             where: { uid: resourceUid },
@@ -178,7 +188,8 @@ async function getAccess(userId, resourceType, resourceUid) {
                 const projectAccess = await getAccess(
                     userId,
                     'project',
-                    project.uid
+                    project.uid,
+                    isSuperAdmin
                 );
                 if (projectAccess !== ACCESS.NONE) {
                     return projectAccess; // Inherit access from project
@@ -205,7 +216,8 @@ async function getAccess(userId, resourceType, resourceUid) {
                 const projectAccess = await getAccess(
                     userId,
                     'project',
-                    project.uid
+                    project.uid,
+                    isSuperAdmin
                 );
                 if (projectAccess !== ACCESS.NONE) {
                     return projectAccess; // Inherit access from project
@@ -258,25 +270,9 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
         return cache.get(cacheKey);
     }
 
-    // Build WHERE clause for resource queries based on ownership and sharing permissions
-    // Note: isAdmin expects a UID, but we might receive a numeric ID
-    // Get the user's UID if we received a numeric ID
-    let userUid = userId;
-    if (typeof userId === 'number' || !isNaN(parseInt(userId))) {
-        const { User } = require('../models');
-        const user = await User.findByPk(userId, {
-            attributes: ['uid', 'email'],
-        });
-        if (user) {
-            userUid = user.uid;
-        }
-    }
-
-    const isUserAdmin = await isAdmin(userUid);
-
     // Superadmin sees all tasks and all projects
     if (
-        isUserAdmin &&
+        (await isAdminByUserId(userId)) &&
         (resourceType === 'task' || resourceType === 'project')
     ) {
         const result = {};
@@ -328,6 +324,24 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             if (subscribedTaskIds.length > 0) {
                 const taskIds = subscribedTaskIds.map((row) => row.task_id);
                 conditions.push({ id: { [Op.in]: taskIds } }); // Subscribed tasks
+
+                // Also include all tasks from projects where user has subscribed tasks
+                const subscribedTasks = await Task.findAll({
+                    where: {
+                        id: { [Op.in]: taskIds },
+                        project_id: { [Op.ne]: null },
+                    },
+                    attributes: ['project_id'],
+                    raw: true,
+                });
+                const projectIds = [
+                    ...new Set(subscribedTasks.map((t) => t.project_id)),
+                ];
+                if (projectIds.length > 0) {
+                    conditions.push({
+                        project_id: { [Op.in]: projectIds },
+                    }); // All tasks in subscribed projects
+                }
             }
 
             // Department admins can see tasks of their department members
@@ -389,6 +403,24 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
                 (row) => row.project_id
             );
             conditions.push({ id: { [Op.in]: assignedProjectIds } }); // Projects with tasks assigned to or owned by user
+        }
+
+        // Projects where user is subscribed to at least one task
+        const subscribedProjectRows = await sequelize.query(
+            `SELECT DISTINCT t.project_id FROM tasks_subscribers ts
+             JOIN tasks t ON t.id = ts.task_id
+             WHERE ts.user_id = :userId AND t.project_id IS NOT NULL`,
+            {
+                replacements: { userId },
+                type: QueryTypes.SELECT,
+                raw: true,
+            }
+        );
+        if (subscribedProjectRows.length > 0) {
+            const subscribedProjectIds = subscribedProjectRows.map(
+                (row) => row.project_id
+            );
+            conditions.push({ id: { [Op.in]: subscribedProjectIds } }); // Projects with subscribed tasks
         }
 
         // Department admins also see projects where their members have tasks
@@ -486,13 +518,8 @@ async function actionableTasksWhere(userId) {
  * @returns {Promise<boolean>} True if user can delete the task
  */
 async function canDeleteTask(userId, taskUid) {
-    // Get user UID for admin check
-    const { User } = require('../models');
-    const user = await User.findByPk(userId, { attributes: ['uid'] });
-    if (!user) return false;
-
     // Super admin can delete any task
-    if (await isAdmin(user.uid)) return true;
+    if (await isAdminByUserId(userId)) return true;
 
     // Check if user is the task owner
     const task = await Task.findOne({
@@ -505,7 +532,35 @@ async function canDeleteTask(userId, taskUid) {
     return task.user_id === userId;
 }
 
-async function getAccessibleWorkspaceIds(userId) {
+/**
+ * Check if a user can delete a project.
+ * Only the project owner or super admin can delete projects.
+ */
+async function canDeleteProject(userId, projectUid) {
+    if (await isAdminByUserId(userId)) return true;
+
+    const project = await Project.findOne({
+        where: { uid: projectUid },
+        attributes: ['user_id'],
+        raw: true,
+    });
+
+    if (!project) return false;
+    return project.user_id === userId;
+}
+
+async function getAccessibleWorkspaceIds(userId, isSuperAdmin = null) {
+    // Superadmin sees all workspaces
+    const isAdmin =
+        isSuperAdmin !== null ? isSuperAdmin : await isAdminByUserId(userId);
+    if (isAdmin) {
+        const allRows = await sequelize.query(`SELECT id FROM workspaces`, {
+            type: QueryTypes.SELECT,
+            raw: true,
+        });
+        return allRows.map((r) => r.id);
+    }
+
     const rows = await sequelize.query(
         `SELECT DISTINCT w.id
          FROM workspaces w
@@ -547,7 +602,11 @@ async function getAccessibleWorkspaceIds(userId) {
 }
 
 async function hasWorkspaceAccess(workspaceId, userId) {
-    const accessibleIds = await getAccessibleWorkspaceIds(userId);
+    // Superadmin can access any workspace
+    const isSuperAdmin = await isAdminByUserId(userId);
+    if (isSuperAdmin) return true;
+
+    const accessibleIds = await getAccessibleWorkspaceIds(userId, false);
     return accessibleIds.includes(workspaceId);
 }
 
@@ -559,6 +618,7 @@ module.exports = {
     ownedOrAssignedTasksWhere,
     actionableTasksWhere,
     canDeleteTask,
+    canDeleteProject,
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
     getDepartmentMemberUserIds,

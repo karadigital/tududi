@@ -63,7 +63,7 @@ describe('Task Assignment Visibility', () => {
             expect(projectUids).not.toContain(project.uid);
         });
 
-        it('should grant RO access to project when user has assigned task in it', async () => {
+        it('should grant access to project detail when user has assigned task in it', async () => {
             const project = await Project.create({
                 name: 'Owner Project',
                 user_id: owner.id,
@@ -82,6 +82,51 @@ describe('Task Assignment Visibility', () => {
             const res = await assigneeAgent.get(`/api/project/${uidSlug}`);
             expect(res.status).toBe(200);
             expect(res.body.uid).toBe(project.uid);
+        });
+
+        it('should allow assignee to create tasks in project they have access to', async () => {
+            const project = await Project.create({
+                name: 'Task Creation Project',
+                user_id: owner.id,
+            });
+
+            await Task.create({
+                name: 'Existing Assigned Task',
+                user_id: owner.id,
+                assigned_to_user_id: assignee.id,
+                project_id: project.id,
+            });
+
+            const res = await assigneeAgent.post('/api/task').send({
+                name: 'New Task By Assignee',
+                project_id: project.id,
+            });
+
+            expect(res.status).toBe(201);
+            expect(res.body.name).toBe('New Task By Assignee');
+            expect(res.body.project_id).toBe(project.id);
+        });
+
+        it('should allow task owner to create tasks in project they have access to', async () => {
+            const project = await Project.create({
+                name: 'Task Owner Creation Project',
+                user_id: owner.id,
+            });
+
+            await Task.create({
+                name: 'Task Owned By Assignee',
+                user_id: assignee.id,
+                project_id: project.id,
+            });
+
+            const res = await assigneeAgent.post('/api/task').send({
+                name: 'Another Task By Assignee',
+                project_id: project.id,
+            });
+
+            expect(res.status).toBe(201);
+            expect(res.body.name).toBe('Another Task By Assignee');
+            expect(res.body.project_id).toBe(project.id);
         });
 
         it('should only show assignee their own tasks in the project', async () => {

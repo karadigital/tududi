@@ -515,6 +515,17 @@ router.get(
                         attributes: ['id', 'name', 'uid'],
                         through: { attributes: [] },
                     },
+                    {
+                        model: User,
+                        attributes: [
+                            'uid',
+                            'email',
+                            'name',
+                            'surname',
+                            'avatar_image',
+                        ],
+                        required: false,
+                    },
                 ],
             });
 
@@ -580,12 +591,14 @@ router.get(
                 tags: projectJson.Tags || [],
                 Tasks: normalizedTasks,
                 Notes: normalizedNotes,
+                Owner: projectJson.User || null,
                 due_date_at: formatDate(project.due_date_at),
                 pin_to_sidebar: pinResult.length > 0,
                 user_id: project.user_id,
                 share_count: shareCount,
                 is_shared: shareCount > 0,
             };
+            delete result.User;
 
             res.json(result);
         } catch (error) {
@@ -898,8 +911,19 @@ router.delete(
     ),
     async (req, res) => {
         try {
+            const projectUid = extractUidFromSlug(req.params.uid);
+            const canDelete = await permissionsService.canDeleteProject(
+                req.authUserId,
+                projectUid
+            );
+            if (!canDelete) {
+                return res.status(403).json({
+                    error: 'Only the project owner can delete a project.',
+                });
+            }
+
             const project = await Project.findOne({
-                where: { uid: req.params.uid },
+                where: { uid: projectUid },
             });
 
             // Use a transaction to ensure atomicity
@@ -914,10 +938,7 @@ router.delete(
                     await Task.update(
                         { project_id: null },
                         {
-                            where: {
-                                project_id: project.id,
-                                user_id: req.authUserId,
-                            },
+                            where: { project_id: project.id },
                             transaction,
                         }
                     );
@@ -926,10 +947,7 @@ router.delete(
                     await Note.update(
                         { project_id: null },
                         {
-                            where: {
-                                project_id: project.id,
-                                user_id: req.authUserId,
-                            },
+                            where: { project_id: project.id },
                             transaction,
                         }
                     );

@@ -15,4 +15,11 @@ async function isAdmin(userUid) {
     return !!(role && role.is_admin);
 }
 
-module.exports = { isAdmin };
+async function isAdminByUserId(userId) {
+    if (!userId) return false;
+
+    const role = await Role.findOne({ where: { user_id: userId } });
+    return !!(role && role.is_admin);
+}
+
+module.exports = { isAdmin, isAdminByUserId };
