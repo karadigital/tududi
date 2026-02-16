@@ -4,7 +4,6 @@ import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { getApiPath } from '../../../config/paths';
 
 interface OwnerInfo {
-    id: number;
     uid: string;
     email: string;
     name?: string;

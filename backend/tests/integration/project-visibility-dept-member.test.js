@@ -185,7 +185,7 @@ describe('Department Member Project Visibility', () => {
 
     it('member can edit tasks in projects they have access to', async () => {
         const project = await Project.create({
-            name: 'Read Only Project',
+            name: 'Editable Via Access Project',
             user_id: projectOwner.id,
         });
 

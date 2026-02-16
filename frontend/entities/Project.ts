@@ -40,7 +40,6 @@ export interface Project {
     share_count?: number;
     is_shared?: boolean;
     Owner?: {
-        id: number;
         uid: string;
         email: string;
         name?: string;

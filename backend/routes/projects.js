@@ -518,7 +518,6 @@ router.get(
                     {
                         model: User,
                         attributes: [
-                            'id',
                             'uid',
                             'email',
                             'name',

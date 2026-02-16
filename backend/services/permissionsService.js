@@ -474,9 +474,11 @@ async function canDeleteTask(userId, taskUid) {
     return task.user_id === userId;
 }
 
-async function getAccessibleWorkspaceIds(userId) {
+async function getAccessibleWorkspaceIds(userId, isSuperAdmin = null) {
     // Superadmin sees all workspaces
-    if (await isAdminByUserId(userId)) {
+    const isAdmin =
+        isSuperAdmin !== null ? isSuperAdmin : await isAdminByUserId(userId);
+    if (isAdmin) {
         const allRows = await sequelize.query(`SELECT id FROM workspaces`, {
             type: QueryTypes.SELECT,
             raw: true,
@@ -526,9 +528,10 @@ async function getAccessibleWorkspaceIds(userId) {
 
 async function hasWorkspaceAccess(workspaceId, userId) {
     // Superadmin can access any workspace
-    if (await isAdminByUserId(userId)) return true;
+    const isSuperAdmin = await isAdminByUserId(userId);
+    if (isSuperAdmin) return true;
 
-    const accessibleIds = await getAccessibleWorkspaceIds(userId);
+    const accessibleIds = await getAccessibleWorkspaceIds(userId, false);
     return accessibleIds.includes(workspaceId);
 }
 

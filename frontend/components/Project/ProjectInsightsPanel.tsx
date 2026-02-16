@@ -399,9 +399,11 @@ const ProjectInsightsPanel: React.FC<ProjectInsightsPanelProps> = ({
                 )}
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-5">
-                <TaskOwnerCard owner={owner} />
-            </div>
+            {owner && (
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm p-5">
+                    <TaskOwnerCard owner={owner} />
+                </div>
+            )}
         </div>
     );
 };
