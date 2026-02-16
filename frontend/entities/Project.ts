@@ -1,6 +1,6 @@
 import { Area } from './Area';
 import { Tag } from './Tag';
-import { PriorityType, Task } from './Task';
+import { OwnerInfo, PriorityType, Task } from './Task';
 import { Note } from './Note';
 import { Workspace } from './Workspace';
 
@@ -39,11 +39,5 @@ export interface Project {
     updated_at?: string;
     share_count?: number;
     is_shared?: boolean;
-    Owner?: {
-        uid: string;
-        email: string;
-        name?: string;
-        surname?: string;
-        avatar_image?: string;
-    };
+    Owner?: OwnerInfo;
 }

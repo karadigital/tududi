@@ -2,14 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserCircleIcon } from '@heroicons/react/24/outline';
 import { getApiPath } from '../../../config/paths';
-
-interface OwnerInfo {
-    uid: string;
-    email: string;
-    name?: string;
-    surname?: string;
-    avatar_image?: string;
-}
+import { OwnerInfo } from '../../../entities/Task';
 
 interface TaskOwnerCardProps {
     owner?: OwnerInfo;

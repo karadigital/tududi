@@ -1,5 +1,5 @@
 import React from 'react';
-import { Task } from '../../entities/Task';
+import { OwnerInfo, Task } from '../../entities/Task';
 import { TFunction } from 'i18next';
 import { TaskOwnerCard } from '../Task/TaskDetails/';
 
@@ -41,13 +41,7 @@ interface ProjectInsightsPanelProps {
         nextThreeDays: number;
         nextWeek: number;
     };
-    owner?: {
-        uid: string;
-        email: string;
-        name?: string;
-        surname?: string;
-        avatar_image?: string;
-    };
+    owner?: OwnerInfo;
 }
 
 const ProjectInsightsPanel: React.FC<ProjectInsightsPanelProps> = ({

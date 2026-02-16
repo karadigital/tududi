@@ -2,6 +2,15 @@ import { Tag } from './Tag';
 import { Project } from './Project';
 import { Attachment } from './Attachment';
 
+export interface OwnerInfo {
+    id?: number;
+    uid: string;
+    email: string;
+    name?: string;
+    surname?: string;
+    avatar_image?: string;
+}
+
 export interface Task {
     id?: number;
     uid?: string;
@@ -49,33 +58,12 @@ export interface Task {
     habit_last_completion_at?: string;
     // Owner (creator) fields
     user_id?: number;
-    Owner?: {
-        id: number;
-        uid: string;
-        email: string;
-        name?: string;
-        surname?: string;
-        avatar_image?: string;
-    };
+    Owner?: OwnerInfo;
     // Assignment fields
     assigned_to_user_id?: number;
-    AssignedTo?: {
-        id: number;
-        uid: string;
-        email: string;
-        name?: string;
-        surname?: string;
-        avatar_image?: string;
-    };
+    AssignedTo?: OwnerInfo;
     // Subscription fields
-    Subscribers?: {
-        id: number;
-        uid: string;
-        email: string;
-        name?: string;
-        surname?: string;
-        avatar_image?: string;
-    }[];
+    Subscribers?: OwnerInfo[];
     subscriber_count?: number;
     // Subtask state flags
     isNew?: boolean; // Backend flag for new subtasks
