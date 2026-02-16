@@ -17,6 +17,8 @@ import {
 import { getApiPath } from '../../config/paths';
 import { getDefaultHeaders } from '../../utils/authUtils';
 import { useToast } from '../Shared/ToastContext';
+import UserAvatar from '../Shared/UserAvatar';
+import ConfirmDialog from '../Shared/ConfirmDialog';
 
 interface AreaMembersProps {
     area: Area;
@@ -312,17 +314,12 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
             key={member.uid}
             className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
         >
-            {member.avatar_image ? (
-                <img
-                    src={getApiPath(member.avatar_image)}
-                    alt={member.name || member.email}
-                    className="h-6 w-6 rounded-full object-cover"
-                />
-            ) : (
-                <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                    {(member.name || member.email)[0].toUpperCase()}
-                </div>
-            )}
+            <UserAvatar
+                avatarImage={member.avatar_image}
+                name={member.name}
+                email={member.email}
+                size="sm"
+            />
             <span className="text-sm text-gray-700 dark:text-gray-200">
                 {member.name || member.email}
             </span>
@@ -422,23 +419,13 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                             className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
                                         >
                                             <div className="flex items-center space-x-3">
-                                                {user.avatar_image ? (
-                                                    <img
-                                                        src={getApiPath(
-                                                            user.avatar_image
-                                                        )}
-                                                        alt={
-                                                            user.name ||
-                                                            user.email
-                                                        }
-                                                        className="h-8 w-8 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
-                                                        {(user.name ||
-                                                            user.email)[0].toUpperCase()}
-                                                    </div>
-                                                )}
+                                                <UserAvatar
+                                                    avatarImage={
+                                                        user.avatar_image
+                                                    }
+                                                    name={user.name}
+                                                    email={user.email}
+                                                />
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                         {user.name ||
@@ -553,23 +540,13 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                 className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded"
                                             >
                                                 <div className="flex items-center space-x-3">
-                                                    {sub.avatar_image ? (
-                                                        <img
-                                                            src={getApiPath(
-                                                                sub.avatar_image
-                                                            )}
-                                                            alt={
-                                                                sub.name ||
-                                                                sub.email
-                                                            }
-                                                            className="h-8 w-8 rounded-full object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
-                                                            {(sub.name ||
-                                                                sub.email)[0].toUpperCase()}
-                                                        </div>
-                                                    )}
+                                                    <UserAvatar
+                                                        avatarImage={
+                                                            sub.avatar_image
+                                                        }
+                                                        name={sub.name}
+                                                        email={sub.email}
+                                                    />
                                                     <div>
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                             {sub.name ||
@@ -646,23 +623,14 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                     className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
                                                 >
                                                     <div className="flex items-center space-x-3">
-                                                        {user.avatar_image ? (
-                                                            <img
-                                                                src={getApiPath(
-                                                                    user.avatar_image
-                                                                )}
-                                                                alt={
-                                                                    user.name ||
-                                                                    user.email
-                                                                }
-                                                                className="h-6 w-6 rounded-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                                                                {(user.name ||
-                                                                    user.email)[0].toUpperCase()}
-                                                            </div>
-                                                        )}
+                                                        <UserAvatar
+                                                            avatarImage={
+                                                                user.avatar_image
+                                                            }
+                                                            name={user.name}
+                                                            email={user.email}
+                                                            size="sm"
+                                                        />
                                                         <span className="text-sm text-gray-700 dark:text-gray-200">
                                                             {user.name ||
                                                                 user.email}
@@ -754,41 +722,22 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                         </div>
                     </div>
                     {showAdminWarning && (
-                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-                            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full mx-4 p-6">
-                                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                                    {t(
-                                        'area.admin_warning_title',
-                                        'Remove subscriber?'
-                                    )}
-                                </h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                                    {t(
-                                        'area.admin_warning_message',
-                                        "Removing {{name}} as department admin will also remove them from the auto-subscribers list. They will keep existing task subscriptions but won't be auto-subscribed to new tasks. Continue?",
-                                        {
-                                            name: showAdminWarning.userName,
-                                        }
-                                    )}
-                                </p>
-                                <div className="flex justify-end space-x-3">
-                                    <button
-                                        onClick={() =>
-                                            setShowAdminWarning(null)
-                                        }
-                                        className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                                    >
-                                        {t('common.cancel', 'Cancel')}
-                                    </button>
-                                    <button
-                                        onClick={confirmAdminWarning}
-                                        className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700"
-                                    >
-                                        {t('common.continue', 'Continue')}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <ConfirmDialog
+                            title={t(
+                                'area.admin_warning_title',
+                                'Remove subscriber?'
+                            )}
+                            message={t(
+                                'area.admin_warning_message',
+                                "Removing {{name}} as department admin will also remove them from the auto-subscribers list. They will keep existing task subscriptions but won't be auto-subscribed to new tasks. Continue?",
+                                {
+                                    name: showAdminWarning.userName,
+                                }
+                            )}
+                            onConfirm={confirmAdminWarning}
+                            onCancel={() => setShowAdminWarning(null)}
+                            confirmButtonText={t('common.continue', 'Continue')}
+                        />
                     )}
                 </div>
             )}

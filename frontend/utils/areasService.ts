@@ -188,11 +188,7 @@ export const addAreaSubscriber = async (
         }
     );
 
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to add subscriber');
-    }
-
+    await handleAuthResponse(response, 'Failed to add subscriber.');
     const data = await response.json();
     return data.subscribers;
 };
