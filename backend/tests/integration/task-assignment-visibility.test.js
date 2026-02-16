@@ -158,6 +158,48 @@ describe('Task Assignment Visibility', () => {
         });
     });
 
+    describe('Project deletion restrictions', () => {
+        it('should not allow assignee to delete project they have RW access to', async () => {
+            const project = await Project.create({
+                name: 'Non-Deletable Project',
+                user_id: owner.id,
+            });
+
+            await Task.create({
+                name: 'Assigned Task',
+                user_id: owner.id,
+                assigned_to_user_id: assignee.id,
+                project_id: project.id,
+            });
+
+            const slugged = project.name.toLowerCase().replace(/\s+/g, '-');
+            const uidSlug = `${project.uid}-${slugged}`;
+
+            const res = await assigneeAgent.delete(`/api/project/${uidSlug}`);
+            expect(res.status).toBe(403);
+
+            // Verify project still exists
+            const existing = await Project.findByPk(project.id);
+            expect(existing).not.toBeNull();
+        });
+
+        it('should allow project owner to delete their own project', async () => {
+            const project = await Project.create({
+                name: 'Deletable Project',
+                user_id: owner.id,
+            });
+
+            const slugged = project.name.toLowerCase().replace(/\s+/g, '-');
+            const uidSlug = `${project.uid}-${slugged}`;
+
+            const res = await ownerAgent.delete(`/api/project/${uidSlug}`);
+            expect(res.status).toBe(200);
+
+            const deleted = await Project.findByPk(project.id);
+            expect(deleted).toBeNull();
+        });
+    });
+
     describe('Workspace visibility via task assignment', () => {
         it('should show workspace when assignee has a task in a project in that workspace', async () => {
             const workspace = await Workspace.create({
