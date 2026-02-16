@@ -911,9 +911,10 @@ router.delete(
     ),
     async (req, res) => {
         try {
+            const projectUid = extractUidFromSlug(req.params.uid);
             const canDelete = await permissionsService.canDeleteProject(
                 req.authUserId,
-                req.params.uid
+                projectUid
             );
             if (!canDelete) {
                 return res.status(403).json({
@@ -922,7 +923,7 @@ router.delete(
             }
 
             const project = await Project.findOne({
-                where: { uid: req.params.uid },
+                where: { uid: projectUid },
             });
 
             // Use a transaction to ensure atomicity
