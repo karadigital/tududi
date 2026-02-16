@@ -73,8 +73,14 @@ async function getSharedUidsForUser(resourceType, userId) {
     return Array.from(set);
 }
 
-async function getAccess(userId, resourceType, resourceUid) {
-    const isSuperAdmin = await isAdminByUserId(userId);
+async function getAccess(
+    userId,
+    resourceType,
+    resourceUid,
+    _isSuperAdmin = null
+) {
+    const isSuperAdmin =
+        _isSuperAdmin !== null ? _isSuperAdmin : await isAdminByUserId(userId);
 
     // Superadmin gets RW access to tasks (not ADMIN, to maintain consistent behavior)
     if (resourceType === 'task' && isSuperAdmin) return ACCESS.RW;
@@ -182,7 +188,8 @@ async function getAccess(userId, resourceType, resourceUid) {
                 const projectAccess = await getAccess(
                     userId,
                     'project',
-                    project.uid
+                    project.uid,
+                    isSuperAdmin
                 );
                 if (projectAccess !== ACCESS.NONE) {
                     return projectAccess; // Inherit access from project
@@ -209,7 +216,8 @@ async function getAccess(userId, resourceType, resourceUid) {
                 const projectAccess = await getAccess(
                     userId,
                     'project',
-                    project.uid
+                    project.uid,
+                    isSuperAdmin
                 );
                 if (projectAccess !== ACCESS.NONE) {
                     return projectAccess; // Inherit access from project
@@ -526,6 +534,23 @@ async function canDeleteTask(userId, taskUid) {
     return task.user_id === userId;
 }
 
+/**
+ * Check if a user can delete a project.
+ * Only the project owner or super admin can delete projects.
+ */
+async function canDeleteProject(userId, projectUid) {
+    if (await isAdminByUserId(userId)) return true;
+
+    const project = await Project.findOne({
+        where: { uid: projectUid },
+        attributes: ['user_id'],
+        raw: true,
+    });
+
+    if (!project) return false;
+    return project.user_id === userId;
+}
+
 async function getAccessibleWorkspaceIds(userId, isSuperAdmin = null) {
     // Superadmin sees all workspaces
     const isAdmin =
@@ -595,6 +620,7 @@ module.exports = {
     ownedOrAssignedTasksWhere,
     actionableTasksWhere,
     canDeleteTask,
+    canDeleteProject,
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
     getDepartmentMemberUserIds,

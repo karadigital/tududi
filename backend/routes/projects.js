@@ -911,6 +911,16 @@ router.delete(
     ),
     async (req, res) => {
         try {
+            const canDelete = await permissionsService.canDeleteProject(
+                req.authUserId,
+                req.params.uid
+            );
+            if (!canDelete) {
+                return res.status(403).json({
+                    error: 'Only the project owner can delete a project.',
+                });
+            }
+
             const project = await Project.findOne({
                 where: { uid: req.params.uid },
             });

@@ -42,7 +42,6 @@ interface ProjectInsightsPanelProps {
         nextWeek: number;
     };
     owner?: {
-        id: number;
         uid: string;
         email: string;
         name?: string;
