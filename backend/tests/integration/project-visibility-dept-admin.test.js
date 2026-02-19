@@ -275,6 +275,23 @@ describe('Department Admin Project Visibility', () => {
         expect(unchangedTask.name).toBe('Member Task For RO Test');
     });
 
+    it('dept admin cannot delete project they have RW access to but do not own', async () => {
+        const project = await Project.create({
+            name: 'Non-Deletable Dept Project',
+            user_id: outsider.id,
+            area_id: department.id,
+        });
+
+        const slugged = project.name.toLowerCase().replace(/\s+/g, '-');
+        const uidSlug = `${project.uid}-${slugged}`;
+
+        const res = await deptAdminAgent.delete(`/api/project/${uidSlug}`);
+        expect(res.status).toBe(403);
+
+        const existing = await Project.findByPk(project.id);
+        expect(existing).not.toBeNull();
+    });
+
     describe('workspace project isolation', () => {
         it('dept admin only sees projects in workspace where dept members have tasks', async () => {
             const workspace = await Workspace.create({

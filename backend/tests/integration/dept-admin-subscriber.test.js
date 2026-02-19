@@ -58,6 +58,20 @@ describe('Department Admin Auto-Subscription', () => {
             }
         );
 
+        // Add admin to subscribers (mirrors auto-subscribe on admin role)
+        await sequelize.query(
+            `INSERT INTO areas_subscribers (area_id, user_id, added_by, source, created_at, updated_at)
+             VALUES (:areaId, :userId, :userId, 'admin_role', :now, :now)`,
+            {
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin.id,
+                    now: new Date(),
+                },
+                type: QueryTypes.INSERT,
+            }
+        );
+
         // Add member to department
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
@@ -125,6 +139,13 @@ describe('Department Admin Auto-Subscription', () => {
             );
         }
 
+        await sequelize.query(
+            `DELETE FROM areas_subscribers WHERE area_id = :areaId`,
+            {
+                replacements: { areaId: area.id },
+                type: QueryTypes.DELETE,
+            }
+        );
         await sequelize.query(
             `DELETE FROM areas_members WHERE area_id = :areaId`,
             {
@@ -251,6 +272,20 @@ describe('Department Admin Auto-Subscription', () => {
             }
         );
 
+        // Add second admin to subscribers
+        await sequelize.query(
+            `INSERT INTO areas_subscribers (area_id, user_id, added_by, source, created_at, updated_at)
+             VALUES (:areaId, :userId, :userId, 'admin_role', :now, :now)`,
+            {
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin2.id,
+                    now: new Date(),
+                },
+                type: QueryTypes.INSERT,
+            }
+        );
+
         // Create task as member
         const taskRes = await memberAgent
             .post('/api/task')
@@ -284,6 +319,20 @@ describe('Department Admin Auto-Subscription', () => {
         await sequelize.query(
             `INSERT INTO areas_members (area_id, user_id, role, created_at, updated_at)
              VALUES (:areaId, :userId, 'admin', :now, :now)`,
+            {
+                replacements: {
+                    areaId: area.id,
+                    userId: deptAdmin2.id,
+                    now: new Date(),
+                },
+                type: QueryTypes.INSERT,
+            }
+        );
+
+        // Add second admin to subscribers
+        await sequelize.query(
+            `INSERT INTO areas_subscribers (area_id, user_id, added_by, source, created_at, updated_at)
+             VALUES (:areaId, :userId, :userId, 'admin_role', :now, :now)`,
             {
                 replacements: {
                     areaId: area.id,

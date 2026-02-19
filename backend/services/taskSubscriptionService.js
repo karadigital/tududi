@@ -4,6 +4,7 @@ const {
     Permission,
     Notification,
     AreasMember,
+    AreasSubscriber,
 } = require('../models');
 const { logError } = require('./logService');
 const {
@@ -449,7 +450,6 @@ async function notifySubscribersAboutStatusChange(task, changedBy) {
  */
 async function subscribeDepartmentAdmins(taskId, taskOwnerId) {
     try {
-        // 1. Get owner's department
         const membership = await AreasMember.findOne({
             where: { user_id: taskOwnerId },
         });
@@ -458,30 +458,25 @@ async function subscribeDepartmentAdmins(taskId, taskOwnerId) {
             return;
         }
 
-        // 2. Find all admins in that department
-        const admins = await AreasMember.findAll({
-            where: {
-                area_id: membership.area_id,
-                role: 'admin',
-            },
+        const subscribers = await AreasSubscriber.findAll({
+            where: { area_id: membership.area_id },
         });
 
-        if (!admins || admins.length === 0) {
+        if (!subscribers || subscribers.length === 0) {
             return;
         }
 
-        // 3. Subscribe each admin (skip if they are the task owner)
-        for (const admin of admins) {
-            if (admin.user_id === taskOwnerId) {
+        for (const subscriber of subscribers) {
+            if (subscriber.user_id === taskOwnerId) {
                 continue;
             }
 
             try {
-                await subscribeToTask(taskId, admin.user_id, taskOwnerId);
+                await subscribeToTask(taskId, subscriber.user_id, taskOwnerId);
             } catch (error) {
                 if (error.message !== 'User already subscribed') {
                     logError(
-                        `Error subscribing dept admin ${admin.user_id} to task ${taskId}:`,
+                        `Error subscribing user ${subscriber.user_id} to task ${taskId}:`,
                         error
                     );
                 }
