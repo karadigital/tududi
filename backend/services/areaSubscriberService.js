@@ -50,21 +50,15 @@ async function addAreaSubscriber(areaId, userId, addedBy, source = 'manual') {
         const user = await User.findByPk(userId);
         if (!user) throw new Error('User not found');
 
-        // Check for existing subscription
-        const existing = await AreasSubscriber.findOne({
+        // Atomic find-or-create to avoid TOCTOU race between check and insert
+        const [subscriber, created] = await AreasSubscriber.findOrCreate({
             where: { area_id: areaId, user_id: userId },
+            defaults: { added_by: addedBy, source },
         });
 
-        if (existing) {
+        if (!created) {
             throw new Error('User is already a subscriber');
         }
-
-        const subscriber = await AreasSubscriber.create({
-            area_id: areaId,
-            user_id: userId,
-            added_by: addedBy,
-            source,
-        });
 
         return subscriber;
     } catch (error) {

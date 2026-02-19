@@ -36,7 +36,7 @@ const UserAvatar: React.FC<UserAvatarProps> = ({
         <div
             className={`${classes.container} rounded-full bg-blue-500 flex items-center justify-center text-white ${classes.text}`}
         >
-            {displayName[0].toUpperCase()}
+            {displayName?.[0]?.toUpperCase() ?? '?'}
         </div>
     );
 };
