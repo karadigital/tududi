@@ -11,6 +11,9 @@ jest.mock('../../models', () => {
             findOne: jest.fn(),
             findAll: jest.fn(),
         },
+        AreasSubscriber: {
+            findAll: jest.fn(),
+        },
         Task: {
             findByPk: jest.fn(),
         },
@@ -23,7 +26,13 @@ jest.mock('../../models', () => {
     };
 });
 
-const { AreasMember, Task, User, Permission } = require('../../models');
+const {
+    AreasMember,
+    AreasSubscriber,
+    Task,
+    User,
+    Permission,
+} = require('../../models');
 
 describe('subscribeDepartmentAdmins', () => {
     beforeEach(() => {
@@ -32,8 +41,8 @@ describe('subscribeDepartmentAdmins', () => {
 
     it('should subscribe all department admins to a task', async () => {
         AreasMember.findOne.mockResolvedValue({ area_id: 1, user_id: 10 });
-        AreasMember.findAll.mockResolvedValue([
-            { area_id: 1, user_id: 99, role: 'admin' },
+        AreasSubscriber.findAll.mockResolvedValue([
+            { area_id: 1, user_id: 99 },
         ]);
 
         const mockTask = {
@@ -56,16 +65,16 @@ describe('subscribeDepartmentAdmins', () => {
         expect(AreasMember.findOne).toHaveBeenCalledWith({
             where: { user_id: 10 },
         });
-        expect(AreasMember.findAll).toHaveBeenCalledWith({
-            where: { area_id: 1, role: 'admin' },
+        expect(AreasSubscriber.findAll).toHaveBeenCalledWith({
+            where: { area_id: 1 },
         });
         expect(mockTask.addSubscriber).toHaveBeenCalled();
     });
 
     it('should skip subscription when owner is the department admin', async () => {
         AreasMember.findOne.mockResolvedValue({ area_id: 1, user_id: 10 });
-        AreasMember.findAll.mockResolvedValue([
-            { area_id: 1, user_id: 10, role: 'admin' },
+        AreasSubscriber.findAll.mockResolvedValue([
+            { area_id: 1, user_id: 10 },
         ]);
 
         const mockTask = {
@@ -92,15 +101,15 @@ describe('subscribeDepartmentAdmins', () => {
 
         await subscribeDepartmentAdmins(5, 10);
 
-        expect(AreasMember.findAll).not.toHaveBeenCalled();
+        expect(AreasSubscriber.findAll).not.toHaveBeenCalled();
         expect(mockTask.addSubscriber).not.toHaveBeenCalled();
     });
 
     it('should subscribe multiple admins when department has more than one', async () => {
         AreasMember.findOne.mockResolvedValue({ area_id: 1, user_id: 10 });
-        AreasMember.findAll.mockResolvedValue([
-            { area_id: 1, user_id: 99, role: 'admin' },
-            { area_id: 1, user_id: 100, role: 'admin' },
+        AreasSubscriber.findAll.mockResolvedValue([
+            { area_id: 1, user_id: 99 },
+            { area_id: 1, user_id: 100 },
         ]);
 
         const mockTask = {
@@ -121,5 +130,20 @@ describe('subscribeDepartmentAdmins', () => {
         await subscribeDepartmentAdmins(5, 10);
 
         expect(mockTask.addSubscriber).toHaveBeenCalledTimes(2);
+    });
+
+    it('should do nothing when department has no subscribers', async () => {
+        AreasMember.findOne.mockResolvedValue({ area_id: 1, user_id: 10 });
+        AreasSubscriber.findAll.mockResolvedValue([]);
+
+        const mockTask = {
+            id: 5,
+            addSubscriber: jest.fn(),
+        };
+        Task.findByPk.mockResolvedValue(mockTask);
+
+        await subscribeDepartmentAdmins(5, 10);
+
+        expect(mockTask.addSubscriber).not.toHaveBeenCalled();
     });
 });

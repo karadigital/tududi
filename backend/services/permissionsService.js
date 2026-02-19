@@ -77,7 +77,8 @@ async function getAccess(
     userId,
     resourceType,
     resourceUid,
-    _isSuperAdmin = null
+    _isSuperAdmin = null,
+    cache = null
 ) {
     const isSuperAdmin =
         _isSuperAdmin !== null ? _isSuperAdmin : await isAdminByUserId(userId);
@@ -127,7 +128,7 @@ async function getAccess(
         if (connectedTask) return ACCESS.RW;
 
         // Check if user is a dept admin and their members have tasks in this project
-        const memberUserIds = await getDepartmentMemberUserIds(userId);
+        const memberUserIds = await getDepartmentMemberUserIds(userId, cache);
         if (memberUserIds.length > 0) {
             const memberTask = await Task.findOne({
                 where: {
@@ -174,7 +175,7 @@ async function getAccess(
 
         // Check if user is a department admin and the task owner is in their department
         // Department admins have read-only access to tasks in their department
-        const memberUserIds = await getDepartmentMemberUserIds(userId);
+        const memberUserIds = await getDepartmentMemberUserIds(userId, cache);
         if (memberUserIds.includes(t.user_id)) return ACCESS.RO;
 
         // Check if user has access through the parent project
@@ -189,7 +190,8 @@ async function getAccess(
                     userId,
                     'project',
                     project.uid,
-                    isSuperAdmin
+                    isSuperAdmin,
+                    cache
                 );
                 if (projectAccess !== ACCESS.NONE) {
                     return projectAccess; // Inherit access from project
@@ -217,7 +219,8 @@ async function getAccess(
                     userId,
                     'project',
                     project.uid,
-                    isSuperAdmin
+                    isSuperAdmin,
+                    cache
                 );
                 if (projectAccess !== ACCESS.NONE) {
                     return projectAccess; // Inherit access from project

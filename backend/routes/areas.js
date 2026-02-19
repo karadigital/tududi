@@ -1,6 +1,6 @@
 // Note: Uses /departments URL paths (renamed from /areas for user-facing consistency)
 const express = require('express');
-const { Area, User, sequelize } = require('../models');
+const { Area, User, Task, Permission, sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
@@ -10,6 +10,7 @@ const { getAuthenticatedUserId } = require('../utils/request-utils');
 const { hasAccess } = require('../middleware/authorize');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const areaMembershipService = require('../services/areaMembershipService');
+const areaSubscriberService = require('../services/areaSubscriberService');
 const { isAdmin } = require('../services/rolesService');
 const { execAction } = require('../services/execAction');
 
@@ -428,6 +429,221 @@ router.patch(
         } catch (error) {
             logError('Error updating member role:', error);
             res.status(500).json({ error: 'Failed to update member role' });
+        }
+    }
+);
+
+// Get area subscribers
+router.get(
+    '/departments/:uid/subscribers',
+    hasAccess('admin', 'area', (req) => req.params.uid),
+    async (req, res) => {
+        try {
+            const subscribers = await areaSubscriberService.getAreaSubscribers(
+                req.params.uid
+            );
+            res.json({ subscribers });
+        } catch (error) {
+            logError('Error fetching area subscribers:', error);
+            if (error.message === 'Area not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Failed to fetch area subscribers' });
+        }
+    }
+);
+
+// Add area subscriber
+router.post(
+    '/departments/:uid/subscribers',
+    hasAccess('admin', 'area', (req) => req.params.uid),
+    async (req, res) => {
+        try {
+            const currentUserId = getAuthenticatedUserId(req);
+            const { user_id, retroactive } = req.body;
+
+            if (!user_id) {
+                return res.status(400).json({ error: 'user_id is required' });
+            }
+
+            const area = await Area.findOne({
+                where: { uid: req.params.uid },
+            });
+            if (!area) {
+                return res.status(404).json({ error: 'Area not found' });
+            }
+
+            await areaSubscriberService.addAreaSubscriber(
+                area.id,
+                user_id,
+                currentUserId,
+                'manual'
+            );
+
+            let retroactiveWarning = null;
+
+            if (retroactive) {
+                // Batch retroactive subscribe: single query to find tasks,
+                // filter out already-subscribed, then bulk insert
+                const memberRows = await sequelize.query(
+                    `SELECT user_id FROM areas_members WHERE area_id = :areaId`,
+                    {
+                        replacements: { areaId: area.id },
+                        type: QueryTypes.SELECT,
+                    }
+                );
+                const memberIds = memberRows.map((r) => r.user_id);
+
+                if (memberIds.length > 0) {
+                    const tasks = await Task.findAll({
+                        where: { user_id: memberIds },
+                        attributes: ['id', 'uid'],
+                    });
+
+                    if (tasks.length > 0) {
+                        const taskIds = tasks.map((t) => t.id);
+
+                        // Find tasks user is already subscribed to (single query)
+                        const alreadySubscribed = await sequelize.query(
+                            `SELECT task_id FROM tasks_subscribers WHERE user_id = :userId AND task_id IN (:taskIds)`,
+                            {
+                                replacements: {
+                                    userId: user_id,
+                                    taskIds,
+                                },
+                                type: QueryTypes.SELECT,
+                            }
+                        );
+                        const alreadySubSet = new Set(
+                            alreadySubscribed.map((r) => r.task_id)
+                        );
+
+                        const newTasks = tasks.filter(
+                            (t) => !alreadySubSet.has(t.id)
+                        );
+
+                        if (newTasks.length > 0) {
+                            const transaction = await sequelize.transaction();
+                            try {
+                                // Bulk insert task subscriptions
+                                for (const t of newTasks) {
+                                    await sequelize.query(
+                                        `INSERT OR IGNORE INTO tasks_subscribers (task_id, user_id, created_at, updated_at)
+                                         VALUES (:taskId, :userId, datetime('now'), datetime('now'))`,
+                                        {
+                                            replacements: {
+                                                taskId: t.id,
+                                                userId: user_id,
+                                            },
+                                            transaction,
+                                        }
+                                    );
+                                }
+
+                                // Bulk insert permission records
+                                const permRows = newTasks.map((t) => ({
+                                    user_id: user_id,
+                                    resource_type: 'task',
+                                    resource_uid: t.uid,
+                                    access_level: 'ro',
+                                    propagation: 'subscription',
+                                    granted_by_user_id: currentUserId,
+                                }));
+                                await Permission.bulkCreate(permRows, {
+                                    transaction,
+                                    ignoreDuplicates: true,
+                                });
+
+                                await transaction.commit();
+                            } catch (err) {
+                                await transaction.rollback();
+                                logError(
+                                    'Error in batch retroactive subscribe:',
+                                    err
+                                );
+                                retroactiveWarning = `Retroactive subscription failed for ${newTasks.length} tasks`;
+                            }
+                        }
+                    }
+                }
+            }
+
+            const updatedSubscribers =
+                await areaSubscriberService.getAreaSubscribers(req.params.uid);
+            const response = { subscribers: updatedSubscribers };
+            if (retroactiveWarning) {
+                response.warning = retroactiveWarning;
+            }
+            res.json(response);
+        } catch (error) {
+            logError('Error adding area subscriber:', error);
+
+            if (error.message === 'User is already a subscriber') {
+                return res.status(409).json({ error: error.message });
+            }
+            if (error.message === 'User not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            if (error.message === 'Area not found') {
+                return res.status(404).json({ error: error.message });
+            }
+
+            res.status(500).json({ error: 'Failed to add area subscriber' });
+        }
+    }
+);
+
+// Remove area subscriber
+router.delete(
+    '/departments/:uid/subscribers/:userId',
+    hasAccess('admin', 'area', (req) => req.params.uid),
+    async (req, res) => {
+        try {
+            const { userId } = req.params;
+
+            const area = await Area.findOne({
+                where: { uid: req.params.uid },
+            });
+            if (!area) {
+                return res.status(404).json({ error: 'Area not found' });
+            }
+
+            // Check if subscriber exists and source
+            const subscriber = await areaSubscriberService.isAreaSubscriber(
+                area.id,
+                Number(userId)
+            );
+
+            if (!subscriber) {
+                return res
+                    .status(404)
+                    .json({ error: 'User is not a subscriber' });
+            }
+
+            if (subscriber.source === 'admin_role') {
+                return res.status(400).json({
+                    error: 'Cannot remove admin-role subscribers manually',
+                });
+            }
+
+            await areaSubscriberService.removeAreaSubscriber(
+                area.id,
+                Number(userId)
+            );
+
+            const updatedSubscribers =
+                await areaSubscriberService.getAreaSubscribers(req.params.uid);
+            res.json({ subscribers: updatedSubscribers });
+        } catch (error) {
+            logError('Error removing area subscriber:', error);
+
+            if (error.message === 'User is not a subscriber') {
+                return res.status(404).json({ error: error.message });
+            }
+
+            res.status(500).json({
+                error: 'Failed to remove area subscriber',
+            });
         }
     }
 );

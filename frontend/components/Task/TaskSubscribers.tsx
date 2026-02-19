@@ -5,6 +5,7 @@ import { Task } from '../../entities/Task';
 import { subscribeToTask, unsubscribeFromTask } from '../../utils/tasksService';
 import { getApiPath } from '../../config/paths';
 import { getDefaultHeaders } from '../../utils/authUtils';
+import UserAvatar from '../Shared/UserAvatar';
 
 interface TaskSubscribersProps {
     task: Task;
@@ -146,22 +147,12 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                                 key={subscriber.uid}
                                 className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
                             >
-                                {subscriber.avatar_image ? (
-                                    <img
-                                        src={getApiPath(
-                                            subscriber.avatar_image
-                                        )}
-                                        alt={
-                                            subscriber.name || subscriber.email
-                                        }
-                                        className="h-6 w-6 rounded-full object-cover"
-                                    />
-                                ) : (
-                                    <div className="h-6 w-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                                        {(subscriber.name ||
-                                            subscriber.email)[0].toUpperCase()}
-                                    </div>
-                                )}
+                                <UserAvatar
+                                    avatarImage={subscriber.avatar_image}
+                                    name={subscriber.name}
+                                    email={subscriber.email}
+                                    size="sm"
+                                />
                                 <span className="text-sm text-gray-700 dark:text-gray-200">
                                     {subscriber.name || subscriber.email}
                                 </span>
@@ -226,23 +217,13 @@ const TaskSubscribers: React.FC<TaskSubscribersProps> = ({
                                             className="flex items-center justify-between p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
                                         >
                                             <div className="flex items-center space-x-3">
-                                                {user.avatar_image ? (
-                                                    <img
-                                                        src={getApiPath(
-                                                            user.avatar_image
-                                                        )}
-                                                        alt={
-                                                            user.name ||
-                                                            user.email
-                                                        }
-                                                        className="h-8 w-8 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm">
-                                                        {(user.name ||
-                                                            user.email)[0].toUpperCase()}
-                                                    </div>
-                                                )}
+                                                <UserAvatar
+                                                    avatarImage={
+                                                        user.avatar_image
+                                                    }
+                                                    name={user.name}
+                                                    email={user.email}
+                                                />
                                                 <div>
                                                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                         {user.name ||
