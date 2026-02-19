@@ -130,11 +130,17 @@ describe('AreaMembers - Subscribers UI', () => {
             await openModal();
 
             await waitFor(() => {
-                expect(screen.getByText('Manual User')).toBeInTheDocument();
-                expect(screen.getByText('Admin User')).toBeInTheDocument();
+                // Subscribers appear in both main view and modal
+                expect(
+                    screen.getAllByText('Manual User').length
+                ).toBeGreaterThanOrEqual(1);
+                expect(
+                    screen.getAllByText('Admin User').length
+                ).toBeGreaterThanOrEqual(1);
             });
 
-            expect(screen.getByText('Manual')).toBeInTheDocument();
+            // "Manual" badge no longer shown; only "Admin" badge remains
+            expect(screen.queryByText('Manual')).not.toBeInTheDocument();
             expect(screen.getByText('Admin')).toBeInTheDocument();
         });
 
@@ -279,7 +285,10 @@ describe('AreaMembers - Subscribers UI', () => {
             await openModal();
 
             await waitFor(() => {
-                expect(screen.getByText('Manual Sub')).toBeInTheDocument();
+                // Subscriber appears in both main view and modal
+                expect(
+                    screen.getAllByText('Manual Sub').length
+                ).toBeGreaterThanOrEqual(1);
             });
 
             // The Remove button in subscribers section
@@ -315,7 +324,10 @@ describe('AreaMembers - Subscribers UI', () => {
             await openModal();
 
             await waitFor(() => {
-                expect(screen.getByText('Admin Only Sub')).toBeInTheDocument();
+                // Subscriber appears in both main view and modal
+                expect(
+                    screen.getAllByText('Admin Only Sub').length
+                ).toBeGreaterThanOrEqual(1);
             });
 
             // There should be no Remove button in the subscribers section

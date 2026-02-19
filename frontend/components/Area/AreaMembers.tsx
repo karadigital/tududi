@@ -67,10 +67,10 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
     }, [showManageModal]);
 
     useEffect(() => {
-        if (showManageModal && area.uid) {
+        if (area.uid) {
             fetchSubscribers();
         }
-    }, [showManageModal]);
+    }, [area.uid]);
 
     const fetchSubscribers = async () => {
         if (!area.uid) return;
@@ -382,6 +382,33 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                 )}
             </div>
 
+            {/* Subscribers list */}
+            {subscribers.length > 0 && (
+                <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                        {t('area.subscribers', 'Subscribers')}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {subscribers.map((sub) => (
+                            <div
+                                key={sub.uid}
+                                className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full px-3 py-1"
+                            >
+                                <UserAvatar
+                                    avatarImage={sub.avatar_image}
+                                    name={sub.name}
+                                    email={sub.email}
+                                    size="sm"
+                                />
+                                <span className="text-sm text-gray-700 dark:text-gray-200">
+                                    {sub.name || sub.email}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {/* Manage members modal */}
             {showManageModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -552,23 +579,14 @@ const AreaMembers: React.FC<AreaMembersProps> = ({
                                                             {sub.name ||
                                                                 sub.email}
                                                         </p>
-                                                        <span
-                                                            className={`text-xs px-1.5 py-0.5 rounded ${
-                                                                isAdminSource
-                                                                    ? 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
-                                                                    : 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                                                            }`}
-                                                        >
-                                                            {isAdminSource
-                                                                ? t(
-                                                                      'area.source_admin',
-                                                                      'Admin'
-                                                                  )
-                                                                : t(
-                                                                      'area.source_manual',
-                                                                      'Manual'
-                                                                  )}
-                                                        </span>
+                                                        {isAdminSource && (
+                                                            <span className="text-xs px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+                                                                {t(
+                                                                    'area.source_admin',
+                                                                    'Admin'
+                                                                )}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </div>
                                                 {!readOnly &&
