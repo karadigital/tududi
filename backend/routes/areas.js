@@ -480,6 +480,8 @@ router.post(
                 'manual'
             );
 
+            let retroactiveWarning = null;
+
             if (retroactive) {
                 // Batch retroactive subscribe: single query to find tasks,
                 // filter out already-subscribed, then bulk insert
@@ -559,6 +561,7 @@ router.post(
                                     'Error in batch retroactive subscribe:',
                                     err
                                 );
+                                retroactiveWarning = `Retroactive subscription failed for ${newTasks.length} tasks`;
                             }
                         }
                     }
@@ -567,7 +570,11 @@ router.post(
 
             const updatedSubscribers =
                 await areaSubscriberService.getAreaSubscribers(req.params.uid);
-            res.json({ subscribers: updatedSubscribers });
+            const response = { subscribers: updatedSubscribers };
+            if (retroactiveWarning) {
+                response.warning = retroactiveWarning;
+            }
+            res.json(response);
         } catch (error) {
             logError('Error adding area subscriber:', error);
 
