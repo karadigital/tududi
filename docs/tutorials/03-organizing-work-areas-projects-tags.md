@@ -10,41 +10,39 @@
 
 By the end of this tutorial, you will be able to:
 
-- Understand the organizational hierarchy: Areas, Projects, and Tasks
+- Understand how work is organized: Areas, Projects, and Tasks
 - Navigate to your department's Area and its Projects
 - Create tasks within the correct Project
-- Use Project states to communicate initiative health
-- Use Tags for cross-cutting organization
+- Use Project states to show how an initiative is progressing
+- Use Tags to label and find related work across projects
 - Add Notes to Projects for shared documentation
 
 ---
 
 ## The Organizational Hierarchy
 
-Tududi organizes work in a clear hierarchy. Think of it as:
+Tududi organizes work in layers, just like your company does:
 
-```
-Area (Department)
-  └── Project (Initiative or Deliverable)
-        ├── Task (A unit of work)
-        │     └── Subtask (A smaller unit within a task)
-        └── Note (Documentation or reference)
-```
+- You work in a **Department** (called an "Area" in Tududi)
+- Your department runs **Initiatives** (called "Projects")
+- Each initiative has individual **Tasks** — the actual work people do
+- Tasks can have smaller **Subtasks** within them
+- Projects can have **Notes** — written documentation attached to them
 
 ### How This Maps to Your Company
 
-| Tududi Concept | Company Equivalent | Example |
-|----------------|-------------------|---------|
-| **Area** | Department or business unit | Marketing, Engineering, Finance, Operations |
-| **Project** | Initiative, campaign, or deliverable | "Q1 Product Launch", "Website Redesign", "Annual Budget" |
-| **Task** | A specific unit of work | "Write launch email copy", "Design homepage mockup" |
-| **Tag** | Cross-cutting label | `#urgent`, `#client-acme`, `#review-needed` |
+| In Tududi | What It Means | Example |
+|-----------|--------------|---------|
+| **Area** | Your department or business unit | Marketing, Engineering, Finance |
+| **Project** | A big initiative your team is working on | "Q1 Product Launch", "Website Redesign" |
+| **Task** | A specific piece of work someone needs to do | "Write launch email copy", "Design homepage mockup" |
+| **Tag** | A label you can add to any task to organize it | `#urgent`, `#client-acme`, `#review-needed` |
 
 ---
 
 ## Areas: Your Departments
 
-Areas represent the top level of organization. Your administrator has likely already created Areas matching your company structure.
+Areas represent the top level of organization — they map to your company's departments. Your administrator has likely already created Areas matching your company structure. You typically don't need to create Areas yourself.
 
 ### Finding Your Area
 
@@ -83,15 +81,15 @@ Projects are the core unit of organized work. Every meaningful piece of work sho
 
 Projects have states that communicate their health to the team:
 
-| State | Meaning |
-|-------|---------|
-| **Idea** | Concept stage — not yet committed to |
-| **Planned** | Approved and scheduled, but work hasn't started |
-| **In Progress** | Actively being worked on |
-| **Blocked** | Stalled — waiting on a dependency or decision |
-| **Completed** | All work is done |
+| State | What It Means | When to Set It |
+|-------|--------------|----------------|
+| **Idea** | Concept stage — not yet approved | When the project is just a proposal or suggestion |
+| **Planned** | Approved and scheduled, but work hasn't started | When your team has agreed to do it and set a timeline |
+| **In Progress** | Actively being worked on | When someone has started working on tasks in this project |
+| **Blocked** | Stalled — waiting on something outside your control | When the project can't move forward until a decision is made or a dependency is resolved |
+| **Completed** | All work is done | When all tasks are finished and the project is wrapped up |
 
-**Tip:** Keep your project states up to date. Managers use these to get a quick read on initiative health across the department.
+**Tip:** Keep your project states up to date. Your manager uses these to get a quick read on how initiatives are going across the department. If a project has been "In Progress" for months with no activity, update it to reflect reality.
 
 ### Creating a Task Within a Project
 
@@ -121,13 +119,13 @@ You can pin up to **5 projects** at a time.
 
 ---
 
-## Tags: Cross-Cutting Organization
+## Tags: Labels That Work Across Projects
 
-While Areas and Projects provide a hierarchical structure, **Tags** let you slice across that hierarchy.
+Areas and Projects organize your work top-down (Department > Project > Task). But sometimes you need to find related work that spans multiple projects. That's what **Tags** are for — they're labels you can attach to any task, regardless of which project it belongs to.
 
 ### When to Use Tags
 
-Tags are useful for categorizing work that spans multiple projects:
+Tags are useful when work relates to something that doesn't fit neatly into one project:
 
 - `#urgent` — Needs immediate attention regardless of project
 - `#client-acme` — All tasks related to a specific client
@@ -151,7 +149,7 @@ You can add multiple tags to a single task.
 2. You'll see all your tags listed
 3. Click a tag to see every task and note with that tag applied
 
-This gives you a cross-project view of related work — very useful for tracking things like "all tasks for Client X" across multiple projects and areas.
+This lets you see all related work in one place — very useful for tracking things like "all tasks for Client X" across multiple projects and departments.
 
 ### Company Tag Conventions
 
@@ -170,8 +168,9 @@ Notes let you attach documentation, meeting minutes, reference material, or any 
 
 ### Creating a Note
 
-1. Open a Project and switch to the **Notes** tab
-2. Create a new note
+1. Open a Project by clicking its name in the sidebar
+2. You'll see two tabs near the top of the project page: **Tasks** and **Notes**. Click the **Notes** tab
+3. Create a new note
 3. Fill in:
    - **Title** — A clear, descriptive name
    - **Content** — The body text (supports markdown)
@@ -236,11 +235,11 @@ Let's say you're on the Marketing team working on a product launch:
 
 ## Common Mistakes to Avoid
 
-- **Don't create tasks without a Project.** Orphan tasks get lost. Every task should live in a Project.
-- **Don't create duplicate Projects.** Check if a Project already exists before creating a new one.
-- **Don't overuse Tags.** 5-10 company-wide standard tags are more useful than 100 personal ones.
-- **Do keep Project states updated.** A Project stuck on "In Progress" for months loses credibility.
-- **Do use Notes for decisions.** When the team agrees on something in a meeting, document it in a Project Note.
+- **Always put tasks in a Project.** Tasks without a project are hard to find later. If you're not sure which project a task belongs to, ask your team lead.
+- **Check before creating a new Project.** Look in the sidebar to see if one already exists. Duplicate projects cause confusion.
+- **Agree on standard tags as a team.** A small set of 5-10 company-wide tags (like `#urgent`, `#blocked`, `#review-needed`) is more useful than everyone creating their own. Check with your team before making new tags.
+- **Keep Project states accurate.** Update the state when things change. A project that says "In Progress" but has had no activity for months misleads everyone.
+- **Use Notes to record decisions.** When the team agrees on something in a meeting, write it down in a Project Note so there's a clear record.
 
 ---
 

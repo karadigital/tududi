@@ -81,11 +81,11 @@ Build a custom View (see Tutorial 8) specifically for management:
 
 ---
 
-## Tracking Project Health
+## Tracking How Projects Are Going
 
 ### Project States at a Glance
 
-Every project has a state. As a manager, your job is to ensure these states are accurate and that blocked or stalled projects get attention.
+Every project has a state (Idea, Planned, In Progress, Blocked, Completed). As a manager, your job is to make sure these states are accurate and that stalled projects get attention.
 
 | State | What It Tells You | Your Action |
 |-------|-------------------|-------------|
@@ -104,11 +104,13 @@ When you open a Project, the metrics panel gives you a quick health check:
 - **Overdue tasks** — Are we falling behind?
 - **In Progress tasks** — Is work actively happening?
 
-A healthy project has a growing completed count, few overdue items, and a steady stream of in-progress work. Red flags include:
+**What a healthy project looks like:** A growing number of completed tasks, very few overdue items, and several tasks in progress.
 
-- Many overdue tasks
-- No in-progress tasks (stalled)
-- All tasks are "Not Started" weeks after kickoff
+**Warning signs to watch for:**
+
+- **5+ overdue tasks** — Something is wrong. Are requirements unclear? Is someone blocked? Pull the team together to discuss.
+- **No tasks in progress** — Nobody is actively working. Check if the team knows this project has started and if tasks are clearly assigned.
+- **All tasks "Not Started" weeks after kickoff** — The project hasn't truly launched. Confirm that the team has what they need to begin.
 
 ### Pinning Key Projects
 
@@ -157,7 +159,7 @@ When viewing tasks within a project or across All Tasks:
 | Many tasks are "Not Started" for weeks | Stalled or unclear | Check if requirements are clear; check for blockers |
 | Many tasks overdue for same person | Capacity issue | One-on-one to understand constraints; adjust deadlines |
 | No tasks in "In Progress" | Nobody is working | Investigate — is the team blocked? Do they know what to pick up next? |
-| All tasks assigned to one person | Single point of failure | Cross-train, delegate, distribute |
+| All tasks assigned to one person | Risk: if that person is unavailable, nothing moves | Spread the work across the team so others can cover |
 
 ---
 
@@ -183,13 +185,15 @@ Configure your notifications to get the signals you need without drowning in noi
 
 ### Task Summary Emails
 
-Set up a **daily** or **weekday** Task Summary email (Profile Settings > Task Summary):
+Set up a daily or weekday Task Summary email. Go to your profile picture (bottom-left of sidebar) > **Profile Settings** > **Task Summary** section:
 
 - Get a morning digest of tasks due today, overdue items, and recent assignments
 - Scan it in 60 seconds with your morning coffee
 - No need to log into Tududi to get a pulse check
 
-### Subscriptions for Key Tasks
+### Subscribing to Key Tasks
+
+Subscribing lets you monitor a task assigned to someone else. You'll get notified when it changes, but you're not responsible for doing the work (see Tutorial 4 for more on subscriptions).
 
 For tasks that are critical but assigned to others:
 
@@ -206,9 +210,9 @@ Use this for:
 
 ## Running Team Meetings with Tududi
 
-### Weekly Team Standup
+### Weekly Team Standup (15 minutes)
 
-Instead of going around the room asking "What are you working on?", use Tududi:
+Instead of going around the room asking "What are you working on?", use Tududi to make the meeting faster and more focused:
 
 1. Open the main **Project** for your team
 2. **Group by: Assignee**
@@ -261,10 +265,10 @@ This cuts meeting time because everyone can see the status before the meeting st
 
 ### When Things Fall Behind
 
-1. **Start with curiosity, not blame.** Check the task event timeline — what's the history? Were there scope changes, blocks, or dependencies?
+1. **Start with curiosity, not blame.** Check the task's change history (see Tutorial 9) — what happened? Were there scope changes, blockers, or dependency issues?
 2. **Look for patterns.** If one person is consistently overdue, it's likely a workload issue, not a motivation issue
 3. **Adjust the system, not just the person.** Maybe priorities need rebalancing, or work needs redistribution
-4. **Use Defer Until.** If a task can't be done now, defer it to a realistic date rather than leaving it overdue
+4. **Use Defer Until** (see Tutorial 2). If a task can't be done now, set a defer date to hide it until a realistic future date rather than leaving it overdue. A deferred task is honest; an overdue task causes unnecessary stress
 
 ---
 
@@ -303,13 +307,13 @@ Combine what you've learned to build a complete management view:
 
 | I want to... | Do this... |
 |--------------|-----------|
-| See all of someone's tasks | Assignee filter in any task list |
-| See team distribution | Group by: Assignee in a project |
-| Check project health | Open project → metrics panel |
-| Know when delegated work is done | Subscribe to the task, or enable "Assigned task completed" notifications |
-| Track overdue items | Create a "Team Overdue" view with Due: Overdue |
-| Prepare for a one-on-one | Filter by the person's name, sort by status |
-| Run a standup | Open project, Group by Assignee, walk through statuses |
+| See all of someone's tasks | Open a project or All Tasks, then use the **Assignee filter** dropdown at the top to select their name |
+| See how work is distributed | Open a project, then choose **Group by: Assignee** from the sorting controls at the top |
+| Check if a project is on track | Open the project and look at the **metrics panel** on the left (total, completed, overdue, in progress) |
+| Know when a delegated task is done | Open the task and click **Subscribe**, or enable "Assigned task completed" email notifications in your Profile Settings |
+| Track overdue items across my team | Create a custom View (Tutorial 8) with Due set to Overdue, and pin it to your sidebar |
+| Prepare for a one-on-one | Open a project, use the Assignee filter to select that person, then sort by Status |
+| Run a team standup | Open the project, choose Group by: Assignee, and walk through each person's In Progress and Blocked items |
 
 ---
 

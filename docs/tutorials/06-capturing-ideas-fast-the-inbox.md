@@ -11,7 +11,7 @@
 By the end of this tutorial, you will be able to:
 
 - Quickly capture thoughts and ideas without leaving your current work
-- Use shorthand syntax for automatic categorization
+- Use shortcuts like #tags and +projects for automatic categorization
 - Process inbox items into tasks, notes, or projects
 - Build a daily inbox-review habit
 
@@ -67,9 +67,9 @@ Notice these are informal, quick, and don't require you to decide on priority, d
 
 ---
 
-## Shorthand Syntax
+## Quick Auto-Tagging with Special Characters
 
-Tududi's Inbox understands special characters that automatically categorize your items:
+You can save time by adding tags and project references directly in your text. Tududi recognizes special characters and automatically applies them for you:
 
 ### Tags with #
 
@@ -101,15 +101,15 @@ This captures an item tagged with `client-acme` and `high-priority`, associated 
 
 ---
 
-## AI-Assisted Categorization
+## Automatic Suggestions
 
-When you save an inbox item, Tududi can analyze the text and suggest:
+After you save an inbox item, Tududi automatically reviews the text and may suggest:
 
-- **Whether it's a Task or a Note** — Action items are suggested as tasks; reference information is suggested as notes
-- **Suggested tags** — Based on the content
-- **Suggested project** — If the content matches an existing project
+- **Whether it's a Task or a Note** — If it sounds like an action item ("Schedule...", "Send..."), it suggests creating a task. If it sounds like information ("Meeting notes from..."), it suggests creating a note.
+- **Suggested tags** — Based on keywords in the content
+- **Suggested project** — If the text matches an existing project name
 
-These are suggestions only — you make the final decision when processing the item.
+You'll see these suggestions when you open the item later to process it. They're just recommendations to save you time — you're always in control of the final decision.
 
 ---
 
@@ -137,7 +137,7 @@ When you convert an inbox item to a task:
 1. Click **Convert to Task**
 2. A task creation form appears, pre-filled with:
    - The inbox item text as the task name
-   - Any parsed tags already applied
+   - Any tags you included (using #) already applied
    - Any suggested project already selected
 3. Add additional details: priority, due date, assignee
 4. Save the task
@@ -154,11 +154,13 @@ When the item is more informational than actionable:
 
 ### Inbox Item Statuses
 
-| Status | Meaning |
-|--------|---------|
-| **Added** | New item, not yet reviewed |
-| **Processed** | Converted to a task, note, or project |
-| **Archived** | Reviewed but no action needed |
+Each inbox item moves through these stages:
+
+| Status | Meaning | How It Gets Here |
+|--------|---------|-----------------|
+| **Added** | New item, not yet reviewed | Automatically set when you first capture something |
+| **Processed** | Converted to a task, note, or project | Set automatically when you convert the item |
+| **Archived** | Reviewed but no action needed | Set when you decide the item isn't worth converting |
 
 ---
 
@@ -189,7 +191,7 @@ Add this to your morning routine (right after checking your Today view):
    - **Note?** Convert it, attach to a project
    - **Not needed?** Delete it
    - **Not sure yet?** Leave it for tomorrow (but don't leave things more than 2-3 days)
-4. Aim for **Inbox Zero** — an empty inbox means everything has been captured and categorized
+4. Aim for an **empty inbox** — that means every item has been reviewed and either converted into a task/note or deleted. An empty inbox keeps things fresh and prevents important ideas from getting buried
 
 ### Tips for Effective Inbox Processing
 
@@ -207,7 +209,7 @@ When should you use the Inbox vs. creating a task directly?
 | Situation | Use |
 |-----------|-----|
 | In a meeting, quick capture needed | **Inbox** |
-| You know the exact project, priority, and due date | **Direct task creation** (Ctrl+Shift+T) |
+| You know the exact project, priority, and due date | **Direct task creation** (use Ctrl+Shift+T on Windows or Cmd+Shift+T on Mac) |
 | Vague idea that needs refinement | **Inbox** |
 | Assigned a clear action item by your manager | **Direct task creation** |
 | Brainstorming session, lots of quick ideas | **Inbox** (rapid fire) |

@@ -27,7 +27,9 @@ If this is your first time logging in, you may be prompted to verify your email 
 
 ## Step 2: Set Up Your Profile
 
-Before diving in, take a moment to personalize your experience. Click on your **avatar** (or initials) in the bottom-left corner of the sidebar, then select **Profile Settings**.
+Before diving in, take a moment to personalize your experience. This step is optional but recommended — you can always return to these settings later.
+
+Click on your **profile picture** (or your initials, if you haven't uploaded a photo yet) at the very bottom of the left sidebar. Then select **Profile Settings**.
 
 You'll see a settings page with several tabs. Focus on the **General** tab for now:
 
@@ -38,8 +40,8 @@ You'll see a settings page with several tabs. Focus on the **General** tab for n
 
 ### Appearance
 
-- Choose between **Light** and **Dark** mode using the sun/moon toggle buttons
-- Pick whichever is most comfortable for your eyes
+- Choose between **Light** mode (bright background) and **Dark** mode (dark background) using the sun/moon toggle buttons
+- Light mode works well in bright offices; Dark mode is easier on the eyes in dim environments. You can change this anytime
 
 ### Language
 
@@ -88,9 +90,9 @@ At the bottom of the sidebar:
 
 This is where your tasks, projects, and other content appear. It changes based on what you select in the sidebar.
 
-### Task Details Panel (Right)
+### Task Details (Right)
 
-When you click on a task, a detail panel opens showing all its information — description, due date, priority, tags, subtasks, and more.
+When you click on a task, a detail panel opens on the right side of the screen showing all of the task's information — description, due date, priority, tags, subtasks, and more. This is where you'll edit and manage individual tasks.
 
 ---
 
@@ -107,9 +109,9 @@ Let's create a task to get familiar with the workflow.
 
 ### Option B: Full Task Modal (More Detail)
 
-1. Click the **+ Create New** button at the bottom of the sidebar
-2. Select **Task** (or use the keyboard shortcut **Ctrl+Shift+T**)
-3. A task creation modal opens with these fields:
+1. Click the **+ Create New** button at the bottom of the left sidebar
+2. Select **Task** from the menu (or use the keyboard shortcut **Ctrl+Shift+T** on Windows, **Cmd+Shift+T** on Mac)
+3. A pop-up form opens with these fields:
    - **Task Name** (required) — Give your task a clear, descriptive name
    - **Priority** — Choose from No Priority, Low, Medium, or High
    - **Due Date** — When should this be done?
@@ -152,26 +154,26 @@ Your tasks are organized into collapsible sections:
 
 Click the section headers to expand or collapse them.
 
-### Dashboard Widgets
+### Dashboard Extras
 
-Depending on your settings, you may also see:
+Depending on how your admin has configured Tududi, you may also see some of these optional sections. Don't worry if some are missing — they may not be enabled for your account:
 
-- **Weekly Completion Chart** — A visual of your task completions over the week
+- **Weekly Completion Chart** — A visual graph of how many tasks you completed each day this week
 - **Daily Quote** — A motivational quote to start your day
-- **Metrics Dashboard** — Statistics about your task completion rates
-- **Next Task Suggestion** — An AI-powered recommendation for what to work on next
+- **Metrics Dashboard** — Numbers showing your task completion rates and trends
+- **Next Task Suggestion** — A recommendation for what to work on next, based on your priorities and due dates
 
-You can customize which widgets appear by clicking the **gear icon** at the top of the Today view.
+You can show or hide these sections by clicking the **gear icon** (settings) in the top-right area of the Today view.
 
 ---
 
 ## Quick Reference: Keyboard Shortcuts
 
-| Action | Shortcut |
-|--------|----------|
-| Create new Task | Ctrl+Shift+T |
-| Create new Project | Ctrl+Shift+P |
-| Create new Area | Ctrl+Shift+A |
+| Action | Windows/Linux | Mac |
+|--------|--------------|-----|
+| Create new Task | Ctrl+Shift+T | Cmd+Shift+T |
+| Create new Project | Ctrl+Shift+P | Cmd+Shift+P |
+| Create new Area | Ctrl+Shift+A | Cmd+Shift+A |
 
 ---
 

@@ -49,7 +49,7 @@ You'll only receive notifications for tasks and projects you own, are assigned t
 
 ### Accessing Notifications
 
-Look for the **bell icon** in the interface header. If you have unread notifications, a **badge** shows the count.
+Look for the **bell icon** in the top-right area of the screen. If you have unread notifications, you'll see a small number on the icon (e.g., "3") showing how many you haven't read yet.
 
 ### Reading Notifications
 
@@ -59,11 +59,11 @@ Look for the **bell icon** in the interface header. If you have unread notificat
    - **Title** — What happened (e.g., "Task Assigned")
    - **Message** — Details about the event
    - **Timestamp** — When it occurred
-   - **Level indicator** — Color-coded by severity:
-     - **Blue (Info)** — General updates
-     - **Yellow (Warning)** — Approaching deadlines
-     - **Red (Error)** — Overdue items or issues
-     - **Green (Success)** — Completions and positive updates
+   - **Color indicator** — You don't need to memorize these, they're just visual hints:
+     - **Blue** — General information (e.g., a task was updated)
+     - **Yellow** — Heads up: a deadline is approaching
+     - **Red** — Needs attention: something is overdue
+     - **Green** — Good news: something was completed
 
 ### Managing Notifications
 
@@ -86,7 +86,7 @@ Tududi can reach you through multiple channels. Each can be turned on or off ind
 | **In-App** | Notifications appear in the bell icon dropdown within Tududi |
 | **Email** | Notifications are sent to your registered email address |
 | **Push** | Browser or mobile push notifications |
-| **Telegram** | Notifications sent via Telegram bot (requires setup — see Tutorial 12) |
+| **Telegram** | Notifications sent via the Telegram messaging app (optional — most staff don't need this) |
 
 ---
 
@@ -96,50 +96,46 @@ This is the most important part of this tutorial. Taking 5 minutes to configure 
 
 ### Accessing Notification Settings
 
-1. Click your **avatar** in the bottom-left of the sidebar
+1. Click your **profile picture** at the very bottom of the left sidebar
 2. Select **Profile Settings**
-3. Click the **Notifications** tab (bell icon)
+3. Click the **Notifications** tab (look for the bell icon in the tab row)
 
-### The Notification Matrix
+### The Notification Settings Page
 
-You'll see a matrix where each **row** is a notification type and each **column** is a channel. Toggle each combination on or off:
+You'll see a grid where each row is a type of notification (e.g., "Task Assigned") and each column is a delivery channel (In-App, Email, Push, Telegram). Use the toggles to turn each combination on or off.
 
-```
-                        In-App    Email    Push    Telegram
-Due Tasks                 [x]      [x]     [ ]      [ ]
-Overdue Tasks             [x]      [x]     [x]      [ ]
-Due Projects              [x]      [ ]     [ ]      [ ]
-Overdue Projects          [x]      [x]     [ ]      [ ]
-Task Assigned             [x]      [x]     [ ]      [ ]
-Task Completed            [x]      [ ]     [ ]      [ ]
-Defer Until Reminder      [x]      [ ]     [ ]      [ ]
-...
-```
+### Recommended Starting Configuration
 
-### Recommended Configuration for Most Staff
+For your first week, keep it simple. You can always adjust later:
 
-| Notification Type | In-App | Email | Push | Telegram |
-|-------------------|--------|-------|------|----------|
-| Task assigned to you | On | On | Off | Off |
-| Task unassigned | On | Off | Off | Off |
-| Assigned task completed | On | On | Off | Off |
-| Task due soon | On | Off | Off | Off |
-| Task overdue | On | On | On | Off |
-| Project due soon | On | Off | Off | Off |
-| Project overdue | On | On | Off | Off |
-| Defer until reminder | On | Off | Off | Off |
+**Turn ON email for these (so you never miss them):**
+- Task assigned to you
+- Task overdue
+- Project overdue
+- Assigned task completed
 
-**The principle:** Use **in-app** for everything so you see it when you're working. Add **email** for things you must not miss (overdue, assignments). Reserve **push** for truly critical alerts only.
+**Keep as in-app only (you'll see these when you open Tududi):**
+- Task unassigned
+- Task due soon
+- Project due soon
+- Defer until reminder
+- Status changes
+
+**Leave OFF for now:**
+- Push notifications (except for task overdue, if you want urgent alerts)
+- Telegram (unless your admin has set it up)
+
+**The principle:** Start with in-app for everything (it's on by default). Add email only for things you absolutely cannot miss. After a week, adjust based on what you actually need.
 
 ---
 
 ## Task Summary Emails
 
-Instead of getting individual email notifications for every task event, you can receive a **digest** — a summary of your tasks sent at a regular interval.
+Instead of getting a separate email for every task event, you can receive a single **summary email** — a digest of all your tasks sent at a regular interval. Many staff find this more useful than individual notifications.
 
 ### Setting Up Task Summaries
 
-1. Go to **Profile Settings**
+1. Click your **profile picture** at the bottom of the left sidebar, then select **Profile Settings**
 2. Find the **Task Summary** section
 3. **Enable** task summary emails
 4. Choose your **frequency**:
@@ -199,11 +195,11 @@ Too many notifications are worse than none — you'll start ignoring all of them
 
 | I want to... | Do this... |
 |--------------|-----------|
-| See my notifications | Click the bell icon in the header |
-| Mark all as read | Click "Mark All as Read" at the top of the notification panel |
-| Stop email notifications for a type | Profile Settings > Notifications > Toggle off Email for that type |
-| Get a daily task digest | Profile Settings > Task Summary > Enable > Set to Daily |
-| Stop all push notifications | Profile Settings > Notifications > Toggle off all Push columns |
+| See my notifications | Click the **bell icon** in the top-right of the screen |
+| Mark all as read | Open the bell dropdown, then click **"Mark All as Read"** at the top |
+| Change which notifications I get by email | Profile picture (bottom-left) > Profile Settings > Notifications tab > toggle Email on/off for each type |
+| Get a daily task digest email | Profile picture (bottom-left) > Profile Settings > Task Summary > Enable > set frequency to Daily |
+| Stop all push notifications | Profile picture (bottom-left) > Profile Settings > Notifications tab > turn off all toggles in the Push column |
 
 ---
 

@@ -19,6 +19,10 @@ By the end of this tutorial, you will be able to:
 
 ---
 
+**Prerequisites:** This tutorial assumes you've completed Tutorials 1-3 and know how to create tasks and navigate projects.
+
+---
+
 ## Task Assignment
 
 Task assignment is how work gets distributed in Tududi. When you assign a task to someone, you're saying: "This is your responsibility to complete."
@@ -38,7 +42,7 @@ The assignee is now responsible for the task. They'll be notified immediately (s
 When you assign a task to someone:
 
 - The **assignee receives a notification** that a task has been assigned to them
-- The assignee **automatically gets write access** to the task — they can edit, update status, and complete it
+- The assignee **can immediately edit the task** — they can update the status, add details, and mark it complete
 - The task appears in the **assignee's task views** (Today, Upcoming, All Tasks)
 - **You remain the owner** of the task — assignment doesn't transfer ownership
 
@@ -64,15 +68,15 @@ While task assignment handles individual work items, **Project sharing** gives c
 
 ### Sharing a Project
 
-1. Open the Project you want to share
-2. Look for the **sharing or permissions settings**
+1. Open the Project you want to share by clicking its name in the sidebar
+2. Look for the **Share** button or gear/settings icon on the project page
 3. Search for and select the colleague you want to share with
 4. Choose the **permission level**:
 
-| Permission | What They Can Do |
-|-----------|-----------------|
-| **Read** | View the project and its tasks, but cannot edit |
-| **Read-Write** | View, create, edit, and complete tasks within the project |
+| Permission | What They Can Do | When to Use |
+|-----------|-----------------|-------------|
+| **Read** | View the project and its tasks, but cannot make changes | When someone needs to see progress but doesn't do the work (e.g., a stakeholder or your manager) |
+| **Read-Write** | View, create, edit, and complete tasks within the project | When someone will actively work on the project with you |
 
 5. Confirm the share
 
@@ -99,21 +103,26 @@ They will immediately lose visibility into the Project and its tasks.
 
 ---
 
-## Task Subscriptions
+## Task Subscriptions: Monitoring Without Owning
 
-Sometimes you don't own or work on a task, but you need to stay informed about its progress. That's what **subscriptions** are for.
+There are two ways to stay connected to a task:
+
+1. **Being assigned** — You're responsible for doing the work
+2. **Subscribing** — You just want to be notified when the task changes, but you're not the one doing it
+
+Subscriptions are perfect when you need awareness without responsibility.
 
 ### Subscribing to a Task
 
-1. Open the task you want to monitor
+1. Open the task you want to monitor by clicking its name
 2. Click the **Subscribe** button
-3. You'll now receive notifications when the task is updated
+3. You'll now receive notifications when the task's status changes, when it's completed, or when it's updated
 
 ### When to Use Subscriptions
 
-- You've **delegated** a task and want to know when it's done
-- A task in another team **blocks your work** and you want to know when it's complete
-- You're a **stakeholder** who needs to track progress without being the assignee
+- You've **asked someone else to do a task** and want to know when it's done
+- A task in another team **affects your work** and you need to know when it's complete
+- You're a **stakeholder** who needs to track progress but you're not the one doing the work
 
 ### Unsubscribing
 
@@ -126,37 +135,35 @@ If you no longer need updates:
 
 ## Area Memberships
 
-Areas (departments) have their own membership system that controls who can see and interact with the Area's projects.
+Areas (your department groupings from Tutorial 3) also control who can see what. Your administrator manages Area memberships — you typically don't need to change these yourself.
 
 ### Understanding Area Roles
 
-| Role | Capabilities |
-|------|-------------|
-| **Member** | Can view the Area, see its Projects, and work on tasks within shared Projects |
-| **Admin** | Everything a Member can do, plus: manage Area settings, add/remove members, create Projects |
+| Role | What You Can Do |
+|------|----------------|
+| **Member** | View the Area, see its Projects, and work on tasks you've been given access to |
+| **Admin** | Everything a Member can do, plus: manage Area settings, add/remove members, and create new Projects |
 
-Your Area membership is typically set up by your administrator or Area admin. If you need access to an Area you can't see, contact your administrator.
+If you need access to an Area you can't see, contact your administrator or Area admin.
 
 ---
 
-## The Permission System
+## Understanding Who Can See What
 
-Tududi has a layered permission system. Understanding it helps you know who can see and do what.
+You don't need to memorize the permission system, but it helps to understand the basics so you know what your colleagues can and can't see.
 
-### How Permissions Work
+### The Simple Version
 
-1. **Ownership** — You always have full control over tasks and projects you created
-2. **Assignment** — When you're assigned a task, you automatically get write access to it
-3. **Project sharing** — Shared projects grant the specified level of access to all tasks within
-4. **Area membership** — Being a member of an Area gives you access to its Projects (based on sharing settings)
+- **You created it?** You have full control over it.
+- **You were assigned a task?** You can edit and complete that specific task.
+- **A project was shared with you?** You can see everything in that project (and edit it, if you were given Read-Write access).
+- **You're a member of an Area?** You can see the projects in that Area.
 
-### Permission Inheritance
+### How Access Flows
 
-Permissions can cascade:
-
-- A **Project shared** with you gives you access to all tasks in that Project
-- **Task assignment** gives you access to that specific task even if you don't have access to the broader Project
-- **Area membership** gives you visibility into the Area's Projects
+- If someone shares a **Project** with you, you can see all the tasks inside it
+- If someone assigns you a **single task**, you can work on that task even if you don't have access to the rest of the project
+- Being a member of an **Area** gives you visibility into that department's projects
 
 ---
 
@@ -202,10 +209,10 @@ Permissions can cascade:
 
 ### Running a Team Meeting
 
-1. Open your Project
-2. Use **Group by: Assignee** to see who's working on what
-3. Use **Sort by: Status** to focus on In Progress and Blocked items
-4. Review **overdue tasks** and agree on new dates
+1. Open your Project by clicking its name in the sidebar
+2. In the task list, find the sorting/grouping controls at the top and choose **Group by: Assignee** — this splits the task list into sections, one per team member
+3. Choose **Sort by: Status** to see In Progress and Blocked items first
+4. Review **overdue tasks** as a team and agree on new dates
 5. Create new tasks for action items from the meeting and assign them on the spot
 
 ---

@@ -77,13 +77,13 @@ When you view a parent task, you can see the overall progress based on how many 
 
 ### Completing the Parent
 
-When all subtasks are done, remember to mark the **parent task** as complete as well. The parent doesn't auto-complete — this is intentional, because sometimes you need a final review step after all subtasks are done.
+When all subtasks are done, remember to mark the **parent task** as complete as well. The parent task doesn't automatically complete itself when all subtasks are done — this is intentional. You might need to do a final review or quality check after all the pieces are finished before calling the whole thing "done."
 
 ---
 
-## Task Event Timeline
+## Task Change History
 
-Every task in Tududi maintains a complete **event history** — a timeline of every change made to it. This is especially valuable for complex tasks with multiple contributors.
+Every task in Tududi automatically keeps a complete record of every change made to it — who changed what, and when. You don't need to do anything to enable this; it happens in the background. This is especially valuable when multiple people work on the same task, so you can always see what happened.
 
 ### What's Tracked
 
@@ -97,18 +97,18 @@ Every task in Tududi maintains a complete **event history** — a timeline of ev
 | **Recurrence changes** | Pattern modifications |
 | **Completion** | When completed, by whom, time to completion |
 
-### Viewing the Timeline
+### Viewing the Change History
 
-1. Open any task
-2. Look for the **events/history** section
-3. Scroll through the chronological list of changes
+1. Open any task by clicking on its name
+2. In the task detail panel on the right, scroll down to find the **history/events** section
+3. Scroll through the chronological list of changes — newest at the top
 
-### Why the Timeline Matters
+### Why This Matters
 
-- **Accountability:** See who changed what and when
-- **Debugging:** Understand why a due date was moved or a priority was changed
-- **Audit trail:** For compliance or review purposes, every change is logged
-- **Handoffs:** When someone takes over a task, they can read the full history
+- **Clarity:** If someone asks "why was the due date changed?", you can look it up instead of guessing
+- **Handoffs:** When someone new takes over a task, they can read the full history to understand what's happened so far
+- **Accountability:** Everyone can see who made changes and when
+- **Record keeping:** If your company needs to document who did what for compliance or review purposes, the change history serves as an automatic record
 
 ---
 
@@ -118,10 +118,10 @@ For tasks that involve documents, images, or other files, use **attachments** to
 
 ### Uploading an Attachment
 
-1. Open the task
-2. Find the **Attachments** section
-3. Upload your file
-4. The file is stored with its original filename, size, and type displayed
+1. Open the task by clicking on its name
+2. In the task detail panel, scroll down past the description to find the **Attachments** section
+3. Click the upload area to select a file from your computer
+4. The file is uploaded and displayed with its original filename, size, and type
 
 ### What You Can Attach
 
@@ -140,9 +140,9 @@ For tasks that involve documents, images, or other files, use **attachments** to
 
 | Content Type | Use |
 |-------------|-----|
-| A specific file (contract, mockup, spreadsheet) | **Attachment** on the task |
-| Written information (meeting notes, requirements, specs) | **Note** on the project |
-| A brief instruction or context | **Task description** (the content/note field on the task itself) |
+| A file like a contract, mockup, or spreadsheet | **Attachment** — upload it to the specific task that needs it |
+| Written information like meeting notes, requirements, or specs | **Project Note** — create it under the Project's Notes tab so the whole team can find it (see Tutorial 3) |
+| A brief instruction or quick context for one task | **Task description** — write it in the text area below the task name |
 
 ---
 

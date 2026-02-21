@@ -22,7 +22,7 @@ By the end of this tutorial, you will be able to:
 
 Views are **saved filter combinations**. Instead of manually filtering your task list every time you want to see "high priority tasks due this week," you save that filter as a View and access it with a single click.
 
-Think of them as **bookmarks for task queries**.
+Think of them as **bookmarks** — just like you bookmark a web page so you don't have to type the URL every time, a View saves your filter setup so you don't have to re-apply it every time.
 
 ---
 
@@ -63,9 +63,9 @@ You can pin multiple views for quick navigation.
 
 ---
 
-## View Recipes: Common Scenarios
+## Ready-to-Use View Examples
 
-Here are ready-to-use view configurations for common work scenarios:
+Here are view configurations that work well in a corporate setting. You can recreate any of these:
 
 ### "Urgent This Week"
 
@@ -160,12 +160,12 @@ Deleted views are removed permanently. If you accidentally delete one, you'll ne
 
 ### Keep It Focused
 
-Each view should answer **one question**:
+Each view should answer **one specific question**. For example:
 
-- "What's overdue?" (not "What's overdue and also what's due this week and also what's high priority")
-- "What client work is pending?" (not "All my work for every client plus internal work")
+- **Good:** "What's overdue?" — Specific, actionable, I know what to do with the results
+- **Too broad:** "Show me everything" — That's just the All Tasks view, and it's not helpful
 
-If a view gets too broad, split it into multiple focused views.
+If a view feels too cluttered, it's probably trying to answer too many questions at once. Split it into two or three focused views.
 
 ### Name Clearly
 
@@ -188,10 +188,10 @@ Delete views you don't use. A cluttered views list is as bad as a cluttered task
 
 ### Share Configurations with Your Team
 
-While views themselves are personal, you can share the "recipe" with your team:
+While views themselves are personal (only you see your views), you can share the setup with your team so they can create the same view:
 
-- "I created a view with Priority=High and Due=This Week — try it!"
-- Teams that use the same tags (e.g., `#blocked`, `#review-needed`) benefit most from similar views
+- "I created a view called 'Urgent This Week' with Priority set to High and Due Date set to This Week — try creating one like it!"
+- Teams that use the same tags (e.g., `#blocked`, `#review-needed`) benefit most from using similar views
 
 ---
 

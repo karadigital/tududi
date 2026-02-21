@@ -81,7 +81,7 @@ When you create a recurring task:
 
 1. The **first instance** is the task you created, with the due date you set
 2. When you complete it, the **next instance** is automatically generated with the new due date
-3. Each instance is linked to the **parent pattern** — you can see the connection
+3. Each instance is linked to the **original recurring setup** (called the "parent") — so Tududi knows they're all part of the same repeating task
 
 ### Editing the Recurrence Pattern
 
@@ -89,9 +89,9 @@ You can modify the recurrence settings from **any instance**:
 
 1. Open any instance of the recurring task
 2. Change the recurrence settings (type, interval, days, etc.)
-3. Save — the changes apply to the **parent pattern** and all future instances
+3. Save — the changes apply to the original recurring setup and all future instances
 
-This means you don't have to find the "original" task to make changes.
+This means you don't have to find the very first task to make changes — edit from whichever instance is in front of you.
 
 ### Ending a Recurring Task
 
@@ -155,8 +155,10 @@ Habits focus on **streaks and consistency** rather than individual task completi
 
 | Mode | How It Works |
 |------|-------------|
-| **Calendar** | Streak is based on calendar days/weeks/months (did you do it on Monday? On Tuesday?) |
-| **Scheduled** | Streak is based on the interval between completions |
+| **Calendar** | Streak counts based on calendar days/weeks/months. For a daily habit, did you do it Monday? Tuesday? Wednesday? Each calendar day counts separately |
+| **Scheduled** | Streak counts based on the time between completions. More forgiving if you don't do it on the exact same day each time |
+
+**Recommendation:** Start with **Calendar** mode — it's the most intuitive. Switch to Scheduled if you find Calendar too rigid for your habit.
 
 ### Logging a Completion
 
@@ -175,8 +177,8 @@ Click on a habit to see its detail page:
 - **Current Streak** — How many consecutive periods you've maintained
 - **Best Streak** — Your all-time record
 - **Total Completions** — How many times you've completed this habit
-- **90-Day Heatmap** — A visual calendar showing completions over the last 90 days (darker = more completions)
-- **14-Day Bar Chart** — A bar chart showing your completions over the last 2 weeks
+- **90-Day Calendar View** — A visual calendar of the last 90 days where completed days are highlighted. Darker colors mean more completions. This makes it easy to spot patterns — for example, you might notice you consistently skip Fridays
+- **14-Day Bar Chart** — A bar chart showing how often you completed the habit each of the last 14 days
 
 ### The Habits Dashboard
 
@@ -230,7 +232,7 @@ The main Habits page shows overview cards:
 
 - **Start small.** Track 2-3 habits, not 10. You can add more once the first ones stick.
 - **Use Flexible mode initially.** A broken streak on Day 3 because of a sick day is demoralizing. Flexible mode gives breathing room.
-- **Check the heatmap weekly.** The visual pattern tells you more than the streak number — you can see trends and gaps.
+- **Check the 90-day calendar view weekly.** The visual pattern tells you more than the streak number — you can see trends and gaps.
 - **Don't confuse habits with tasks.** If you find yourself adding due dates and descriptions to a habit, it should probably be a recurring task instead.
 
 ---

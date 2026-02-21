@@ -20,7 +20,7 @@ By the end of this tutorial, you will be able to:
 
 ## Understanding Task Priorities
 
-Every task can have a priority level. Use them consistently across your team:
+Priorities help you and your team focus on what matters most. When you have 20 tasks, priorities tell you which ones to tackle first. Use them consistently across your team:
 
 | Priority | When to Use |
 |----------|------------|
@@ -31,10 +31,10 @@ Every task can have a priority level. Use them consistently across your team:
 
 ### Setting a Priority
 
-1. Open a task by clicking on it
-2. Find the **Priority** section
-3. Select from the dropdown: No Priority / Low / Medium / High
-4. The task will be color-coded accordingly (gray / yellow / red)
+1. Open a task by clicking on its name anywhere you see it (Today view, Upcoming, All Tasks, etc.)
+2. In the task detail panel that opens on the right side of the screen, find the **Priority** dropdown
+3. Select from the options: No Priority / Low / Medium / High
+4. The task will be color-coded so you can spot priorities at a glance — gray for Low, yellow for Medium, red for High
 
 ---
 
@@ -103,9 +103,9 @@ Each morning (or the evening before), spend 2-3 minutes:
 
 ---
 
-## Using "Defer Until" to Reduce Noise
+## Using "Defer Until" to Hide Tasks You Can't Act On Yet
 
-Some tasks exist but can't be acted on yet. Maybe you're waiting for a meeting next Thursday, or a deliverable isn't needed until next month. **Defer Until** hides the task from your views until the date you specify.
+Sometimes a task exists but you can't work on it right now. Maybe you're waiting for a client to send you a document, or a deliverable isn't needed until next month. The **Defer Until** feature temporarily hides the task from all your views and automatically brings it back on a date you choose. This keeps your task list focused on what you can actually act on today.
 
 ### Setting a Defer Date
 
@@ -126,19 +126,20 @@ The task vanishes from your active views and reappears automatically on the defe
 
 ---
 
-## Adding Descriptions and Notes to Tasks
+## Adding Descriptions to Tasks
 
-Tasks aren't just titles. Use the **content/note** field to add context that helps you (or whoever the task is assigned to) understand what needs to be done.
+Tasks aren't just titles. Use the **task description** field to add context that helps you (or whoever the task is assigned to) understand what needs to be done.
+
+> **Note:** "Task descriptions" are different from "Project Notes" (which you'll learn about in Tutorial 3). A task description is the detail text on a single task. A Project Note is a separate document attached to a project.
 
 ### Writing a Task Description
 
-1. Open the task
-2. Find the **content area** below the task name
-3. Switch between **Edit** and **Preview** modes
-4. Write your description using markdown formatting:
-   - `**bold**` for emphasis
-   - `- bullet points` for lists
-   - `[link text](url)` for links
+1. Open the task by clicking on its name
+2. In the task detail panel, find the **text area below the task name** — this is the description field
+3. You can switch between **Edit** mode (where you type) and **Preview** mode (where you see the formatted result)
+4. Write your description. You can use simple formatting:
+   - Surround text with double asterisks for **bold** (e.g., type `**important**` to get **important**)
+   - Start a line with a dash and space for bullet points (e.g., `- item one`)
 5. Save the task
 
 ### What to Include in a Description
@@ -156,7 +157,7 @@ Tududi gives you several ways to look at your tasks. Each view serves a differen
 
 ### Today
 
-Your **daily cockpit**. Shows overdue tasks, tasks due today, your manually planned items, and completed tasks. Start and end your day here.
+Your **home base**. Shows overdue tasks, tasks due today, your manually planned items, and completed tasks. Start and end your day here.
 
 ### Upcoming
 
@@ -164,7 +165,7 @@ A **forward-looking** view. Tasks are grouped by due date so you can see what's 
 
 ### All Tasks
 
-The **complete inventory**. Every task you have access to, with powerful filtering and sorting options:
+The **complete list**. Every task you have access to, with filtering and sorting options:
 
 - **Filter by status:** Active, Completed, or All
 - **Sort by:** Status, Created date, Due date, or Priority
