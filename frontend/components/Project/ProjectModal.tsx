@@ -8,6 +8,7 @@ import { useToast } from '../Shared/ToastContext';
 import TagInput from '../Tag/TagInput';
 import PriorityDropdown from '../Shared/PriorityDropdown';
 import AreaDropdown from '../Shared/AreaDropdown';
+import { getCurrentUser } from '../../utils/userUtils';
 import DatePicker from '../Shared/DatePicker';
 import ProjectStateDropdown from '../Shared/ProjectStateDropdown';
 import { PriorityType } from '../../entities/Task';
@@ -44,7 +45,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         project || {
             name: '',
             description: '',
-            area_id: null,
+            area_id: getCurrentUser()?.area_id ?? null,
             state: 'idea',
             tags: [],
             priority: null,
@@ -127,7 +128,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
             setFormData({
                 name: '',
                 description: '',
-                area_id: null,
+                area_id: getCurrentUser()?.area_id ?? null,
                 state: 'idea',
                 tags: [],
                 priority: null,
@@ -324,10 +325,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     const hasUnsavedChanges = () => {
         if (!project) {
             // New project - check if any field has been filled
+            const defaultAreaId = getCurrentUser()?.area_id ?? null;
             return (
                 formData.name.trim() !== '' ||
                 formData.description?.trim() !== '' ||
-                formData.area_id !== null ||
+                formData.area_id !== defaultAreaId ||
                 formData.state !== 'idea' ||
                 tags.length > 0 ||
                 formData.priority !== null ||

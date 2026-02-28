@@ -13,6 +13,7 @@ const {
     User,
     Permission,
     Workspace,
+    AreasMember,
     sequelize,
 } = require('../models');
 const permissionsService = require('../services/permissionsService');
@@ -648,6 +649,17 @@ router.post('/project', async (req, res) => {
                 return res
                     .status(403)
                     .json({ error: 'Access denied to this workspace.' });
+            }
+        }
+
+        // Auto-assign creator's department if no area_id provided
+        if (!area_id) {
+            const membership = await AreasMember.findOne({
+                where: { user_id: req.authUserId },
+                attributes: ['area_id'],
+            });
+            if (membership) {
+                area_id = membership.area_id;
             }
         }
 

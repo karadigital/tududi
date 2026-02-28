@@ -9,4 +9,5 @@ export interface User {
     timezone: string;
     avatarUrl?: string;
     is_admin?: boolean;
+    area_id?: number | null;
 }

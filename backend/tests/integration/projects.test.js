@@ -4,6 +4,7 @@ const {
     Project,
     User,
     Area,
+    AreasMember,
     Task,
     Note,
     Permission,
@@ -75,6 +76,51 @@ describe('Projects Routes', () => {
             const response = await agent.post('/api/project').send(projectData);
 
             expect(response.status).toBe(400);
+        });
+
+        it('should auto-assign area from user department when no area_id provided', async () => {
+            await AreasMember.create({
+                area_id: area.id,
+                user_id: user.id,
+                role: 'member',
+            });
+
+            const response = await agent.post('/api/project').send({
+                name: 'Auto Area Project',
+            });
+
+            expect(response.status).toBe(201);
+            expect(response.body.area_id).toBe(area.id);
+        });
+
+        it('should use explicit area_id even when user has a department', async () => {
+            const otherArea = await Area.create({
+                name: 'Other Area',
+                user_id: user.id,
+            });
+
+            await AreasMember.create({
+                area_id: area.id,
+                user_id: user.id,
+                role: 'member',
+            });
+
+            const response = await agent.post('/api/project').send({
+                name: 'Explicit Area Project',
+                area_id: otherArea.id,
+            });
+
+            expect(response.status).toBe(201);
+            expect(response.body.area_id).toBe(otherArea.id);
+        });
+
+        it('should leave area_id null when user has no department', async () => {
+            const response = await agent.post('/api/project').send({
+                name: 'No Area Project',
+            });
+
+            expect(response.status).toBe(201);
+            expect(response.body.area_id).toBeNull();
         });
     });
 

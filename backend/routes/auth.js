@@ -1,5 +1,5 @@
 const express = require('express');
-const { User } = require('../models');
+const { User, AreasMember } = require('../models');
 const { isAdmin } = require('../services/rolesService');
 const { logError } = require('../services/logService');
 const { getConfig } = require('../config/config');
@@ -210,6 +210,10 @@ router.get('/current_user', async (req, res) => {
             });
             if (user) {
                 const admin = await isAdmin(user.uid);
+                const membership = await AreasMember.findOne({
+                    where: { user_id: req.session.userId },
+                    attributes: ['area_id'],
+                });
                 return res.json({
                     user: {
                         uid: user.uid,
@@ -221,6 +225,7 @@ router.get('/current_user', async (req, res) => {
                         timezone: user.timezone,
                         avatar_image: user.avatar_image,
                         is_admin: admin,
+                        area_id: membership ? membership.area_id : null,
                     },
                 });
             }
