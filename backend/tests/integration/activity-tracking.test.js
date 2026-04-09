@@ -61,4 +61,21 @@ describe('User Activity Tracking', () => {
             ).rejects.toThrow();
         });
     });
+
+    describe('ActivityReportRecipient model', () => {
+        it('should create a recipient record', async () => {
+            const user = await createTestUser({
+                email: 'recipient-admin@example.com',
+            });
+            const { ActivityReportRecipient } = require('../../models');
+            const recipient = await ActivityReportRecipient.create({
+                email: 'report@example.com',
+                enabled: true,
+                added_by: user.id,
+            });
+            expect(recipient.id).toBeDefined();
+            expect(recipient.email).toBe('report@example.com');
+            expect(recipient.enabled).toBe(true);
+        });
+    });
 });
