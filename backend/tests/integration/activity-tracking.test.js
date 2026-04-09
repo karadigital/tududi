@@ -144,4 +144,152 @@ describe('User Activity Tracking', () => {
             expect(healthActivities.length).toBe(0);
         });
     });
+
+    describe('Activity admin API', () => {
+        let adminUser, adminAgent, regularUser;
+
+        beforeEach(async () => {
+            adminUser = await createTestUser({
+                email: 'activity-admin@example.com',
+            });
+            adminAgent = await loginAgent('activity-admin@example.com');
+            await Role.destroy({ where: {} });
+            await makeAdminDirect(adminUser.id);
+
+            regularUser = await createTestUser({
+                email: 'activity-regular@example.com',
+            });
+
+            // Seed some activity data
+            const now = new Date();
+            await UserActivity.create({
+                user_id: adminUser.id,
+                date: '2026-04-08',
+                activity_type: 'active',
+                first_seen_at: now,
+                last_seen_at: now,
+                action_counts: { tasks_created: 3 },
+            });
+            await UserActivity.create({
+                user_id: regularUser.id,
+                date: '2026-04-08',
+                activity_type: 'passive',
+                first_seen_at: now,
+                last_seen_at: now,
+                action_counts: {},
+            });
+        });
+
+        describe('GET /api/admin/activity', () => {
+            it('should require admin', async () => {
+                const agent = await loginAgent('activity-regular@example.com');
+                const res = await agent.get(
+                    '/api/admin/activity?startDate=2026-04-08&endDate=2026-04-08'
+                );
+                expect(res.status).toBe(403);
+            });
+
+            it('should return activity summary for date range', async () => {
+                const res = await adminAgent.get(
+                    '/api/admin/activity?startDate=2026-04-08&endDate=2026-04-08'
+                );
+                expect(res.status).toBe(200);
+                expect(res.body.summary).toBeDefined();
+                expect(res.body.users).toBeDefined();
+                expect(res.body.summary.active).toBeGreaterThanOrEqual(1);
+                expect(res.body.summary.passive).toBeGreaterThanOrEqual(1);
+            });
+        });
+
+        describe('GET /api/admin/activity/trends', () => {
+            it('should return trend data', async () => {
+                const res = await adminAgent.get(
+                    '/api/admin/activity/trends?days=7'
+                );
+                expect(res.status).toBe(200);
+                expect(Array.isArray(res.body)).toBe(true);
+                expect(res.body.length).toBeLessThanOrEqual(7);
+            });
+        });
+    });
+
+    describe('Activity Report Recipients API', () => {
+        let adminUser, adminAgent;
+
+        beforeEach(async () => {
+            adminUser = await createTestUser({
+                email: 'recipient-admin2@example.com',
+            });
+            adminAgent = await loginAgent('recipient-admin2@example.com');
+            await Role.destroy({ where: {} });
+            await makeAdminDirect(adminUser.id);
+        });
+
+        describe('POST /api/admin/activity-report/recipients', () => {
+            it('should add a recipient', async () => {
+                const res = await adminAgent
+                    .post('/api/admin/activity-report/recipients')
+                    .send({ email: 'daily@example.com' });
+                expect(res.status).toBe(201);
+                expect(res.body.email).toBe('daily@example.com');
+                expect(res.body.enabled).toBe(true);
+            });
+
+            it('should reject missing email', async () => {
+                const res = await adminAgent
+                    .post('/api/admin/activity-report/recipients')
+                    .send({});
+                expect(res.status).toBe(400);
+            });
+        });
+
+        describe('GET /api/admin/activity-report/recipients', () => {
+            it('should list recipients', async () => {
+                const { ActivityReportRecipient } = require('../../models');
+                await ActivityReportRecipient.create({
+                    email: 'list-test@example.com',
+                    added_by: adminUser.id,
+                });
+                const res = await adminAgent.get(
+                    '/api/admin/activity-report/recipients'
+                );
+                expect(res.status).toBe(200);
+                expect(Array.isArray(res.body)).toBe(true);
+                expect(
+                    res.body.some((r) => r.email === 'list-test@example.com')
+                ).toBe(true);
+            });
+        });
+
+        describe('PUT /api/admin/activity-report/recipients/:id', () => {
+            it('should update enabled status', async () => {
+                const { ActivityReportRecipient } = require('../../models');
+                const recipient = await ActivityReportRecipient.create({
+                    email: 'toggle@example.com',
+                    added_by: adminUser.id,
+                });
+                const res = await adminAgent
+                    .put(
+                        `/api/admin/activity-report/recipients/${recipient.id}`
+                    )
+                    .send({ enabled: false });
+                expect(res.status).toBe(200);
+                expect(res.body.enabled).toBe(false);
+            });
+        });
+
+        describe('DELETE /api/admin/activity-report/recipients/:id', () => {
+            it('should delete a recipient', async () => {
+                const { ActivityReportRecipient } = require('../../models');
+                const recipient = await ActivityReportRecipient.create({
+                    email: 'delete-me@example.com',
+                    added_by: adminUser.id,
+                });
+                const res = await adminAgent.delete(
+                    `/api/admin/activity-report/recipients/${recipient.id}`
+                );
+                expect(res.status).toBe(204);
+            });
+        });
+    });
 });
