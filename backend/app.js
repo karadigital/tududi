@@ -14,6 +14,9 @@ const {
     activityTracker,
     startFlushTimer,
 } = require('./middleware/activityTracker');
+const {
+    initializeActivityReportCron,
+} = require('./services/activityReportService');
 const { setConfig, getConfig } = require('./config/config');
 const config = getConfig();
 const API_VERSION = process.env.API_VERSION || 'v1';
@@ -260,6 +263,9 @@ async function startServer() {
 
         // Start activity tracker flush timer
         startFlushTimer();
+
+        // Initialize daily activity report cron
+        initializeActivityReportCron();
 
         const server = app.listen(config.port, config.host, () => {
             console.log(`Server running on port ${config.port}`);

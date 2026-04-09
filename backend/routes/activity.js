@@ -280,4 +280,22 @@ router.delete(
     }
 );
 
+// POST /api/admin/activity-report/send - manual trigger
+router.post('/admin/activity-report/send', requireAdmin, async (req, res) => {
+    try {
+        const {
+            sendDailyReport,
+        } = require('../services/activityReportService');
+        const date = req.body.date || undefined;
+        const result = await sendDailyReport(date);
+        res.json({
+            message: `Report generated for ${result.date}`,
+            ...result,
+        });
+    } catch (err) {
+        logError('Error sending activity report:', err);
+        res.status(500).json({ error: 'Failed to send report' });
+    }
+});
+
 module.exports = router;
