@@ -10,6 +10,10 @@ const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const { sequelize } = require('./models');
 const { initializeTelegramPolling } = require('./services/telegramInitializer');
 const taskScheduler = require('./services/taskScheduler');
+const {
+    activityTracker,
+    startFlushTimer,
+} = require('./middleware/activityTracker');
 const { setConfig, getConfig } = require('./config/config');
 const config = getConfig();
 const API_VERSION = process.env.API_VERSION || 'v1';
@@ -170,6 +174,7 @@ const registerApiRoutes = (basePath) => {
     app.use(basePath, require('./routes/feature-flags'));
 
     app.use(basePath, requireAuth);
+    app.use(basePath, activityTracker);
     app.use(basePath, require('./routes/tasks'));
     app.use(`${basePath}/habits`, require('./routes/habits'));
     app.use(basePath, require('./routes/projects'));
@@ -251,6 +256,9 @@ async function startServer() {
 
         // Initialize task scheduler
         await taskScheduler.initialize();
+
+        // Start activity tracker flush timer
+        startFlushTimer();
 
         const server = app.listen(config.port, config.host, () => {
             console.log(`Server running on port ${config.port}`);

@@ -78,4 +78,70 @@ describe('User Activity Tracking', () => {
             expect(recipient.enabled).toBe(true);
         });
     });
+
+    describe('Activity tracking middleware', () => {
+        let user, agent;
+
+        beforeEach(async () => {
+            user = await createTestUser({
+                email: 'middleware-user@example.com',
+            });
+            agent = await loginAgent('middleware-user@example.com');
+        });
+
+        it('should create a passive activity record on GET request', async () => {
+            await agent.get('/api/tasks');
+            // Wait briefly for async tracking
+            await new Promise((r) => setTimeout(r, 100));
+            const activities = await UserActivity.findAll({
+                where: { user_id: user.id },
+            });
+            expect(activities.length).toBe(1);
+            expect(activities[0].activity_type).toBe('passive');
+        });
+
+        it('should upgrade to active on POST to tracked resource', async () => {
+            // First a GET to create passive record
+            await agent.get('/api/tasks');
+            await new Promise((r) => setTimeout(r, 100));
+
+            // Now a POST to tasks (create a task)
+            await agent.post('/api/tasks').send({
+                title: 'Test task for activity',
+                status: 0,
+                priority: 1,
+            });
+            await new Promise((r) => setTimeout(r, 100));
+
+            const activities = await UserActivity.findAll({
+                where: { user_id: user.id },
+            });
+            expect(activities.length).toBe(1);
+            expect(activities[0].activity_type).toBe('active');
+        });
+
+        it('should increment action_counts on write operations', async () => {
+            await agent.post('/api/tasks').send({
+                title: 'Count test task',
+                status: 0,
+                priority: 1,
+            });
+            await new Promise((r) => setTimeout(r, 100));
+
+            const activity = await UserActivity.findOne({
+                where: { user_id: user.id },
+            });
+            expect(activity.action_counts.tasks_created).toBe(1);
+        });
+
+        it('should not track activity for unauthenticated requests', async () => {
+            await request(app).get('/api/health');
+            const activities = await UserActivity.findAll();
+            // No activity records should exist for health check
+            const healthActivities = activities.filter(
+                (a) => a.user_id === null
+            );
+            expect(healthActivities.length).toBe(0);
+        });
+    });
 });
