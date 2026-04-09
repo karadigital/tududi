@@ -292,4 +292,54 @@ describe('User Activity Tracking', () => {
             });
         });
     });
+
+    describe('User deletion cleanup', () => {
+        it('should delete activity records when user is deleted', async () => {
+            const adminUser = await createTestUser({
+                email: 'cleanup-admin@example.com',
+            });
+            const adminAgent = await loginAgent('cleanup-admin@example.com');
+            await Role.destroy({ where: {} });
+            await makeAdminDirect(adminUser.id);
+
+            const targetUser = await createTestUser({
+                email: 'cleanup-target@example.com',
+            });
+
+            const now = new Date();
+            await UserActivity.create({
+                user_id: targetUser.id,
+                date: '2026-04-08',
+                activity_type: 'active',
+                first_seen_at: now,
+                last_seen_at: now,
+                action_counts: { tasks_created: 1 },
+            });
+
+            const { ActivityReportRecipient } = require('../../models');
+            await ActivityReportRecipient.create({
+                email: 'cleanup-target@example.com',
+                added_by: targetUser.id,
+            });
+
+            // Delete the user
+            const res = await adminAgent.delete(
+                `/api/admin/users/${targetUser.id}`
+            );
+            expect(res.status).toBe(204);
+
+            // Verify activity records are gone
+            const activities = await UserActivity.findAll({
+                where: { user_id: targetUser.id },
+            });
+            expect(activities.length).toBe(0);
+
+            // Verify recipient added_by is set to null (not deleted)
+            const recipients = await ActivityReportRecipient.findAll({
+                where: { email: 'cleanup-target@example.com' },
+            });
+            expect(recipients.length).toBe(1);
+            expect(recipients[0].added_by).toBeNull();
+        });
+    });
 });

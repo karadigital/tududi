@@ -16,6 +16,8 @@ const {
     ApiToken,
     Notification,
     RecurringCompletion,
+    UserActivity,
+    ActivityReportRecipient,
 } = require('../models');
 const { isAdmin } = require('../services/rolesService');
 const { logError } = require('../services/logService');
@@ -304,6 +306,11 @@ router.delete('/admin/users/:id', requireAdmin, async (req, res) => {
         });
         await Action.destroy({ where: { actor_user_id: id }, transaction });
         await Action.destroy({ where: { target_user_id: id }, transaction });
+        await UserActivity.destroy({ where: { user_id: id }, transaction });
+        await ActivityReportRecipient.update(
+            { added_by: null },
+            { where: { added_by: id }, transaction }
+        );
         await Role.destroy({ where: { user_id: id }, transaction });
         await user.destroy({ transaction });
 
