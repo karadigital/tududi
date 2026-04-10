@@ -689,7 +689,7 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                             </button>
                         </div>
                         <div
-                            className="p-4"
+                            className="bg-white p-4"
                             dangerouslySetInnerHTML={{
                                 __html: reportHtml,
                             }}
