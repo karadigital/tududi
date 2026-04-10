@@ -8,12 +8,18 @@ const FLUSH_INTERVAL_MS = 60000; // 60 seconds
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Route prefixes that count as "active" when written to (POST/PUT/DELETE)
+// Write routes use singular (e.g., POST /task, PATCH /task/:uid)
+// Read routes use plural (e.g., GET /tasks)
 const TRACKED_RESOURCES = [
     '/tasks',
+    '/task',
     '/projects',
+    '/project',
     '/departments',
     '/notes',
+    '/note',
     '/tags',
+    '/tag',
 ];
 
 // Map route prefix + method to action_counts key
@@ -23,9 +29,10 @@ function getActionKey(path, method) {
 
     for (const prefix of TRACKED_RESOURCES) {
         if (normalized.startsWith(prefix)) {
-            const resource = prefix
-                .replace('/', '')
-                .replace('departments', 'areas');
+            // Normalize to plural resource name for consistent action keys
+            let resource = prefix.replace('/', '');
+            resource = resource.replace('departments', 'areas');
+            if (!resource.endsWith('s')) resource += 's';
             if (method === 'POST') return `${resource}_created`;
             if (method === 'PUT' || method === 'PATCH')
                 return `${resource}_updated`;
