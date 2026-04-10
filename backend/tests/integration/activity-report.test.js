@@ -91,6 +91,12 @@ describe('Activity Report', () => {
                 action_counts: { tasks_created: 2 },
             });
 
+            await ActivityReportRecipient.create({
+                email: 'report-recipient@example.com',
+                added_by: adminUser.id,
+                enabled: true,
+            });
+
             const res = await adminAgent
                 .post('/api/admin/activity-report/send')
                 .send({ date: '2026-04-08' });

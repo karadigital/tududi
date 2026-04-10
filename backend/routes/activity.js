@@ -97,6 +97,7 @@ router.get('/admin/activity', requireActivityAccess, async (req, res) => {
         const passiveCount = latestActivities.filter(
             (a) => a.activity_type === 'passive'
         ).length;
+        // Note: totalUsers is the current count, not the historical count for this date
         const inactiveCount = totalUsers - activeCount - passiveCount;
 
         // Build user list for the latest date
@@ -136,7 +137,15 @@ router.get(
     requireActivityAccess,
     async (req, res) => {
         try {
-            const days = parseInt(req.query.days, 10) || 30;
+            const days =
+                req.query.days !== undefined
+                    ? parseInt(req.query.days, 10)
+                    : 30;
+            if (Number.isNaN(days)) {
+                return res
+                    .status(400)
+                    .json({ error: 'Invalid days parameter' });
+            }
 
             // Exclude internal domain users
             const allUsers = await User.findAll({
@@ -183,6 +192,7 @@ router.get(
                 date,
                 active: counts.active,
                 passive: counts.passive,
+                // Note: totalUsers is the current count, not the historical count for this date
                 inactive: totalUsers - counts.active - counts.passive,
             }));
 
@@ -233,12 +243,22 @@ router.post(
                     .json({ error: 'Valid email is required' });
             }
 
-            const userId = req.currentUser?.id || req.session?.userId;
-            const recipient = await ActivityReportRecipient.create({
-                email,
-                added_by: userId,
-            });
-            res.status(201).json(recipient);
+            const normalizedEmail = email.trim().toLowerCase();
+            const userId = req.currentUser?.id;
+            try {
+                const recipient = await ActivityReportRecipient.create({
+                    email: normalizedEmail,
+                    added_by: userId,
+                });
+                res.status(201).json(recipient);
+            } catch (createErr) {
+                if (createErr.name === 'SequelizeUniqueConstraintError') {
+                    return res
+                        .status(409)
+                        .json({ error: 'Recipient already exists' });
+                }
+                throw createErr;
+            }
         } catch (err) {
             logError('Error adding recipient:', err);
             res.status(500).json({ error: 'Internal server error' });
@@ -272,7 +292,7 @@ router.put(
                         .status(400)
                         .json({ error: 'Valid email is required' });
                 }
-                recipient.email = req.body.email;
+                recipient.email = req.body.email.trim().toLowerCase();
             }
             await recipient.save();
             res.json(recipient);
@@ -331,7 +351,7 @@ router.post('/admin/activity-report/send', requireAdmin, async (req, res) => {
         const {
             sendDailyReport,
         } = require('../services/activityReportService');
-        const date = req.body.date || undefined;
+        const date = req.body.date || moment().format('YYYY-MM-DD');
         if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
             return res
                 .status(400)

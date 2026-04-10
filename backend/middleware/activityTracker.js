@@ -22,13 +22,20 @@ const TRACKED_RESOURCES = [
     '/tag',
 ];
 
+function matchesPrefix(path, prefix) {
+    if (!path.startsWith(prefix)) return false;
+    if (path.length === prefix.length) return true;
+    const next = path[prefix.length];
+    return next === '/' || next === '?';
+}
+
 // Map route prefix + method to action_counts key
 function getActionKey(path, method) {
     // Normalize: strip /api/v1 or /api prefix
     const normalized = path.replace(/^\/api\/v1/, '').replace(/^\/api/, '');
 
     for (const prefix of TRACKED_RESOURCES) {
-        if (normalized.startsWith(prefix)) {
+        if (matchesPrefix(normalized, prefix)) {
             // Normalize to plural resource name for consistent action keys
             let resource = prefix.replace('/', '');
             resource = resource.replace('departments', 'areas');
@@ -49,7 +56,9 @@ function isWriteMethod(method) {
 function isTrackedWriteRequest(path, method) {
     if (!isWriteMethod(method)) return false;
     const normalized = path.replace(/^\/api\/v1/, '').replace(/^\/api/, '');
-    return TRACKED_RESOURCES.some((prefix) => normalized.startsWith(prefix));
+    return TRACKED_RESOURCES.some((prefix) =>
+        matchesPrefix(normalized, prefix)
+    );
 }
 
 async function flushToDb(userId, dateStr, entry) {
@@ -112,8 +121,8 @@ function startFlushTimer() {
                 const [userIdStr, dateStr] = key.split(':');
                 await flushToDb(parseInt(userIdStr, 10), dateStr, entry);
             }
-            // Expire old entries
-            if (now - entry.createdAt > CACHE_TTL_MS) {
+            // Expire old entries only if clean
+            if (now - entry.createdAt > CACHE_TTL_MS && !entry.dirty) {
                 toDelete.push(key);
             }
         }
@@ -127,11 +136,22 @@ function startFlushTimer() {
     if (flushTimer.unref) flushTimer.unref();
 }
 
-function stopFlushTimer() {
+async function drainCache() {
+    for (const [key, entry] of cache.entries()) {
+        if (entry.dirty) {
+            const [userIdStr, dateStr] = key.split(':');
+            await flushToDb(parseInt(userIdStr, 10), dateStr, entry);
+        }
+    }
+    cache.clear();
+}
+
+async function stopFlushTimer() {
     if (flushTimer) {
         clearInterval(flushTimer);
         flushTimer = null;
     }
+    await drainCache();
 }
 
 async function activityTracker(req, res, next) {
@@ -202,6 +222,7 @@ module.exports = {
     activityTracker,
     startFlushTimer,
     stopFlushTimer,
+    drainCache,
     // Exported for testing
     _cache: cache,
     _getActionKey: getActionKey,

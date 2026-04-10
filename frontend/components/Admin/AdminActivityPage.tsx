@@ -130,6 +130,7 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
     // Report send state
     const [reportDate, setReportDate] = useState(formatDate(new Date()));
     const [reportHtml, setReportHtml] = useState<string | null>(null);
+    const [sendingReport, setSendingReport] = useState(false);
 
     // Load trends
     const loadTrends = useCallback(async () => {
@@ -202,9 +203,18 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
     }, [loadRecipients]);
 
     const handleAddRecipient = async () => {
-        if (!newRecipientEmail.includes('@')) return;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newRecipientEmail.trim())) {
+            showErrorToast(
+                t(
+                    'admin.activity.invalidEmail',
+                    'Please enter a valid email address'
+                )
+            );
+            return;
+        }
         try {
-            await addReportRecipient(newRecipientEmail);
+            await addReportRecipient(newRecipientEmail.trim().toLowerCase());
             setNewRecipientEmail('');
             await loadRecipients();
             showSuccessToast(
@@ -266,6 +276,8 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
     };
 
     const handleSendReport = async () => {
+        if (sendingReport) return;
+        setSendingReport(true);
         try {
             const result = await sendActivityReport(reportDate);
             setReportHtml(null);
@@ -274,8 +286,20 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
             showErrorToast(
                 t('admin.activity.failedToSendReport', 'Failed to send report')
             );
+        } finally {
+            setSendingReport(false);
         }
     };
+
+    // Close preview modal on Escape key
+    useEffect(() => {
+        if (!reportHtml) return;
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setReportHtml(null);
+        };
+        document.addEventListener('keydown', handler);
+        return () => document.removeEventListener('keydown', handler);
+    }, [reportHtml]);
 
     // Filter users for daily tab
     const filteredUsers: ActivityUser[] = dailyData
@@ -455,6 +479,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                         onChange={(e) =>
                                             setReportDate(e.target.value)
                                         }
+                                        aria-label={t(
+                                            'admin.activity.reportDate',
+                                            'Report date'
+                                        )}
                                         className="rounded-md border px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                     />
                                     <button
@@ -481,6 +509,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                     placeholder={t(
                                         'admin.activity.addRecipientPlaceholder',
                                         'Enter email address'
+                                    )}
+                                    aria-label={t(
+                                        'admin.activity.recipientEmail',
+                                        'Recipient email address'
                                     )}
                                     className="flex-1 rounded-md border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                                     onKeyDown={(e) => {
@@ -521,6 +553,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                                                 r.enabled
                                                             )
                                                         }
+                                                        aria-label={t(
+                                                            'admin.activity.toggleRecipient',
+                                                            `Toggle recipient ${r.email}`
+                                                        )}
                                                         className="peer sr-only"
                                                     />
                                                     <div className="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full dark:bg-gray-600"></div>
@@ -531,6 +567,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                                             r.id
                                                         )
                                                     }
+                                                    aria-label={t(
+                                                        'admin.activity.deleteRecipient',
+                                                        'Delete recipient'
+                                                    )}
                                                     className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
                                                 >
                                                     <TrashIcon className="h-4 w-4" />
@@ -561,6 +601,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                             type="date"
                             value={dailyDate}
                             onChange={(e) => setDailyDate(e.target.value)}
+                            aria-label={t(
+                                'admin.activity.selectDate',
+                                'Select date'
+                            )}
                             className="rounded-md border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         />
                         <div className="flex gap-1">
@@ -688,11 +732,17 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                     onClick={() => setReportHtml(null)}
                 >
                     <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="report-preview-title"
                         className="relative mx-4 max-h-[90vh] w-full max-w-3xl overflow-auto rounded-lg bg-white shadow-xl"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="sticky top-0 flex items-center justify-between border-b bg-gray-50 px-4 py-3">
-                            <h3 className="font-semibold text-gray-900">
+                            <h3
+                                id="report-preview-title"
+                                className="font-semibold text-gray-900"
+                            >
                                 {t(
                                     'admin.activity.reportPreview',
                                     'Report Preview'
@@ -700,11 +750,18 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                             </h3>
                             <button
                                 onClick={() => setReportHtml(null)}
+                                aria-label={t(
+                                    'admin.activity.closePreview',
+                                    'Close preview'
+                                )}
                                 className="rounded p-1 text-gray-500 hover:bg-gray-200"
                             >
                                 &times;
                             </button>
                         </div>
+                        {/* Report HTML is generated server-side with escapeHtml() on all user content.
+                            This endpoint requires admin auth. dangerouslySetInnerHTML is intentional
+                            to render the formatted email report preview. */}
                         <div
                             className="bg-white p-4 text-gray-900"
                             dangerouslySetInnerHTML={{
@@ -714,7 +771,8 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                         <div className="sticky bottom-0 flex justify-end border-t bg-gray-50 px-4 py-3">
                             <button
                                 onClick={handleSendReport}
-                                className="flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700"
+                                disabled={sendingReport}
+                                className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-sm text-white ${sendingReport ? 'cursor-not-allowed bg-green-400' : 'bg-green-600 hover:bg-green-700'}`}
                             >
                                 <PaperAirplaneIcon className="h-4 w-4" />
                                 {t(
