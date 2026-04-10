@@ -285,12 +285,15 @@ router.post('/admin/activity-report/send', requireAdmin, async (req, res) => {
     try {
         const {
             sendDailyReport,
+            generateReportHtml,
         } = require('../services/activityReportService');
         const date = req.body.date || undefined;
         const result = await sendDailyReport(date);
+        const html = await generateReportHtml(result.date);
         res.json({
             message: `Report generated for ${result.date}`,
             ...result,
+            html,
         });
     } catch (err) {
         logError('Error sending activity report:', err);

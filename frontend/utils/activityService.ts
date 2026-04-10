@@ -136,7 +136,12 @@ export const deleteReportRecipient = async (id: number): Promise<void> => {
 
 export const sendActivityReport = async (
     date?: string
-): Promise<{ message: string; sent: number; errors: number }> => {
+): Promise<{
+    message: string;
+    sent: number;
+    errors: number;
+    html?: string;
+}> => {
     const response = await fetch(getApiPath('admin/activity-report/send'), {
         method: 'POST',
         credentials: 'include',

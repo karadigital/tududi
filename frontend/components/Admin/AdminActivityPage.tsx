@@ -119,6 +119,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
     const [newRecipientEmail, setNewRecipientEmail] = useState('');
     const [loadingRecipients, setLoadingRecipients] = useState(false);
 
+    // Report send state
+    const [reportDate, setReportDate] = useState(formatDate(new Date()));
+    const [reportHtml, setReportHtml] = useState<string | null>(null);
+
     // Load trends
     const loadTrends = useCallback(async () => {
         setLoadingTrends(true);
@@ -241,8 +245,20 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
 
     const handleSendReport = async () => {
         try {
-            const result = await sendActivityReport();
-            showSuccessToast(result.message);
+            const result = await sendActivityReport(reportDate);
+            if (result.html) {
+                setReportHtml(result.html);
+            }
+            if (result.sent > 0) {
+                showSuccessToast(result.message);
+            } else {
+                showSuccessToast(
+                    t(
+                        'admin.activity.reportPreviewReady',
+                        'Report preview ready'
+                    )
+                );
+            }
         } catch {
             showErrorToast(
                 t('admin.activity.failedToSendReport', 'Failed to send report')
@@ -421,16 +437,26 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                         'Report Recipients'
                                     )}
                                 </h2>
-                                <button
-                                    onClick={handleSendReport}
-                                    className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
-                                >
-                                    <PaperAirplaneIcon className="h-4 w-4" />
-                                    {t(
-                                        'admin.activity.sendNow',
-                                        'Send Report Now'
-                                    )}
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={reportDate}
+                                        onChange={(e) =>
+                                            setReportDate(e.target.value)
+                                        }
+                                        className="rounded-md border px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    />
+                                    <button
+                                        onClick={handleSendReport}
+                                        className="flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                                    >
+                                        <PaperAirplaneIcon className="h-4 w-4" />
+                                        {t(
+                                            'admin.activity.sendNow',
+                                            'Send Report Now'
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Add recipient */}
@@ -641,6 +667,34 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                             </table>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Report preview modal */}
+            {reportHtml && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="relative mx-4 max-h-[90vh] w-full max-w-3xl overflow-auto rounded-lg bg-white shadow-xl dark:bg-gray-800">
+                        <div className="sticky top-0 flex items-center justify-between border-b bg-white px-4 py-3 dark:border-gray-700 dark:bg-gray-800">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                                {t(
+                                    'admin.activity.reportPreview',
+                                    'Report Preview'
+                                )}
+                            </h3>
+                            <button
+                                onClick={() => setReportHtml(null)}
+                                className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <div
+                            className="p-4"
+                            dangerouslySetInnerHTML={{
+                                __html: reportHtml,
+                            }}
+                        />
+                    </div>
                 </div>
             )}
         </div>
