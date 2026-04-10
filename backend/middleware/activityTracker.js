@@ -53,26 +53,34 @@ function isTrackedWriteRequest(path, method) {
 }
 
 async function flushToDb(userId, dateStr, entry) {
+    const version = entry.version;
+    const snapshot = {
+        activityType: entry.activityType,
+        firstSeenAt: entry.firstSeenAt,
+        lastSeenAt: entry.lastSeenAt,
+        actionCounts: { ...entry.actionCounts },
+    };
+
     try {
         const [activity, created] = await UserActivity.findOrCreate({
             where: { user_id: userId, date: dateStr },
             defaults: {
                 user_id: userId,
                 date: dateStr,
-                activity_type: entry.activityType,
-                first_seen_at: entry.firstSeenAt,
-                last_seen_at: entry.lastSeenAt,
-                action_counts: entry.actionCounts,
+                activity_type: snapshot.activityType,
+                first_seen_at: snapshot.firstSeenAt,
+                last_seen_at: snapshot.lastSeenAt,
+                action_counts: snapshot.actionCounts,
             },
         });
 
         if (!created) {
             const updates = {
-                last_seen_at: entry.lastSeenAt,
-                action_counts: entry.actionCounts,
+                last_seen_at: snapshot.lastSeenAt,
+                action_counts: snapshot.actionCounts,
             };
             if (
-                entry.activityType === 'active' &&
+                snapshot.activityType === 'active' &&
                 activity.activity_type !== 'active'
             ) {
                 updates.activity_type = 'active';
@@ -80,7 +88,9 @@ async function flushToDb(userId, dateStr, entry) {
             await activity.update(updates);
         }
 
-        entry.dirty = false;
+        if (entry.version === version) {
+            entry.dirty = false;
+        }
         entry.lastFlush = Date.now();
     } catch (err) {
         logError(err, 'Failed to flush activity to DB');
@@ -155,6 +165,7 @@ async function activityTracker(req, res, next) {
             lastSeenAt: now,
             actionCounts: {},
             dirty: true,
+            version: 0,
             createdAt: Date.now(),
             lastFlush: 0,
         };
@@ -175,11 +186,13 @@ async function activityTracker(req, res, next) {
                 (entry.actionCounts[actionKey] || 0) + 1;
         }
         entry.dirty = true;
+        entry.version++;
 
         // Immediately flush on write operations for accuracy
         await flushToDb(userId, dateStr, entry);
     } else {
         entry.dirty = true;
+        entry.version++;
     }
 
     next();

@@ -128,6 +128,15 @@ function formatActionCounts(counts) {
     return parts.join(', ') || '\u2014';
 }
 
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function getUserDisplayName(user) {
     if (user.name && user.surname) return `${user.name} ${user.surname}`;
     if (user.name) return user.name;
@@ -141,8 +150,8 @@ async function generateReportHtml(dateStr) {
 
     const userRow = (user, status, actionCounts) => `
         <tr>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${getUserDisplayName(user.User || user)}</td>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${(user.User || user).email}</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${escapeHtml(getUserDisplayName(user.User || user))}</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${escapeHtml((user.User || user).email)}</td>
             <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">
                 <span style="padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold;
                     background: ${status === 'Active' ? '#dcfce7' : status === 'Passive' ? '#fef9c3' : '#f3f4f6'};
@@ -150,7 +159,7 @@ async function generateReportHtml(dateStr) {
                     ${status}
                 </span>
             </td>
-            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${formatActionCounts(actionCounts)}</td>
+            <td style="padding: 8px 12px; border-bottom: 1px solid #eee;">${escapeHtml(formatActionCounts(actionCounts))}</td>
         </tr>`;
 
     const activeRows = data.active.users
@@ -209,7 +218,7 @@ async function generateReportHtml(dateStr) {
     </table>
 
     <p style="margin-top: 24px; color: #9ca3af; font-size: 13px;">
-        <a href="${frontendUrl}/admin/activity" style="color: #3b82f6;">View full dashboard</a>
+        <a href="${escapeHtml(frontendUrl)}/admin/activity" style="color: #3b82f6;">View full dashboard</a>
     </p>
 </body>
 </html>`;

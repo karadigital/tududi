@@ -1,11 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const {
-    User,
-    UserActivity,
-    ActivityReportRecipient,
-    Role,
-} = require('../models');
+const { User, UserActivity, ActivityReportRecipient } = require('../models');
 const { requireAdmin } = require('../middleware/requireAdmin');
 const { logError } = require('../services/logService');
 const { Op } = require('sequelize');
@@ -269,6 +264,14 @@ router.put(
                 recipient.enabled = req.body.enabled;
             }
             if (req.body.email !== undefined) {
+                if (
+                    typeof req.body.email !== 'string' ||
+                    !req.body.email.includes('@')
+                ) {
+                    return res
+                        .status(400)
+                        .json({ error: 'Valid email is required' });
+                }
                 recipient.email = req.body.email;
             }
             await recipient.save();
@@ -329,6 +332,11 @@ router.post('/admin/activity-report/send', requireAdmin, async (req, res) => {
             sendDailyReport,
         } = require('../services/activityReportService');
         const date = req.body.date || undefined;
+        if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return res
+                .status(400)
+                .json({ error: 'Invalid date format. Use YYYY-MM-DD' });
+        }
         const result = await sendDailyReport(date);
         res.json({
             message: `Report sent for ${result.date}`,
