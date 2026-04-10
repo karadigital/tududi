@@ -689,24 +689,12 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                     'Report Preview'
                                 )}
                             </h3>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={handleSendReport}
-                                    className="flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700"
-                                >
-                                    <PaperAirplaneIcon className="h-4 w-4" />
-                                    {t(
-                                        'admin.activity.sendToRecipients',
-                                        'Send to Recipients'
-                                    )}
-                                </button>
-                                <button
-                                    onClick={() => setReportHtml(null)}
-                                    className="rounded p-1 text-gray-500 hover:bg-gray-200"
-                                >
-                                    &times;
-                                </button>
-                            </div>
+                            <button
+                                onClick={() => setReportHtml(null)}
+                                className="rounded p-1 text-gray-500 hover:bg-gray-200"
+                            >
+                                &times;
+                            </button>
                         </div>
                         <div
                             className="bg-white p-4 text-gray-900"
@@ -714,6 +702,18 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                 __html: reportHtml,
                             }}
                         />
+                        <div className="sticky bottom-0 flex justify-end border-t bg-gray-50 px-4 py-3">
+                            <button
+                                onClick={handleSendReport}
+                                className="flex items-center gap-1 rounded-md bg-green-600 px-3 py-1.5 text-sm text-white hover:bg-green-700"
+                            >
+                                <PaperAirplaneIcon className="h-4 w-4" />
+                                {t(
+                                    'admin.activity.sendToRecipients',
+                                    'Send to Recipients'
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
