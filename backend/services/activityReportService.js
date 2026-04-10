@@ -7,8 +7,8 @@ const { Op } = require('sequelize');
 const { getConfig } = require('../config/config');
 
 const REPORT_TIMEZONE = 'Australia/Sydney';
-// 8:00 AM Sydney time daily
-const CRON_EXPRESSION = '0 8 * * *';
+// 8:00 AM Sydney time, Monday to Friday only
+const CRON_EXPRESSION = '0 8 * * 1-5';
 
 let cronJob = null;
 
@@ -215,13 +215,21 @@ async function generateReportHtml(dateStr) {
 </html>`;
 }
 
+function getLastWorkday() {
+    const now = moment.tz(REPORT_TIMEZONE);
+    const dayOfWeek = now.isoWeekday(); // 1=Monday, 7=Sunday
+    // Monday → report on Friday (subtract 3 days)
+    // Sunday → Friday (subtract 2), Saturday → Friday (subtract 1)
+    // Otherwise → yesterday
+    if (dayOfWeek === 1) return now.subtract(3, 'days').format('YYYY-MM-DD');
+    if (dayOfWeek === 7) return now.subtract(2, 'days').format('YYYY-MM-DD');
+    if (dayOfWeek === 6) return now.subtract(1, 'days').format('YYYY-MM-DD');
+    return now.subtract(1, 'day').format('YYYY-MM-DD');
+}
+
 async function sendDailyReport(dateStr) {
     if (!dateStr) {
-        // Report on yesterday (Sydney time)
-        dateStr = moment
-            .tz(REPORT_TIMEZONE)
-            .subtract(1, 'day')
-            .format('YYYY-MM-DD');
+        dateStr = getLastWorkday();
     }
 
     const recipients = await ActivityReportRecipient.findAll({
