@@ -286,6 +286,18 @@ const Navbar: React.FC<NavbarProps> = ({
                                         {t('admin.manageUsers', 'Manage users')}
                                     </Link>
                                 )}
+                                {currentUser?.is_admin === true && (
+                                    <Link
+                                        to="/admin/activity"
+                                        className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        onClick={() => setIsDropdownOpen(false)}
+                                    >
+                                        {t(
+                                            'admin.userActivity',
+                                            'User Activity'
+                                        )}
+                                    </Link>
+                                )}
                                 {/* <Link
                                     to="/about"
                                     className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"

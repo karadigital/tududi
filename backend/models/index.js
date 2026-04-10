@@ -91,6 +91,10 @@ const Backup = require('./backup')(sequelize);
 const AreasMember = require('./areas_member')(sequelize);
 const AreasSubscriber = require('./areas_subscriber')(sequelize);
 const Workspace = require('./workspace')(sequelize);
+const UserActivity = require('./user_activity')(sequelize);
+const ActivityReportRecipient = require('./activity_report_recipient')(
+    sequelize
+);
 
 User.hasMany(Area, { foreignKey: 'user_id' });
 Area.belongsTo(User, { foreignKey: 'user_id' });
@@ -275,6 +279,20 @@ TaskAttachment.belongsTo(Task, { foreignKey: 'task_id' });
 User.hasMany(Backup, { foreignKey: 'user_id', as: 'Backups' });
 Backup.belongsTo(User, { foreignKey: 'user_id', as: 'User' });
 
+// UserActivity associations
+User.hasMany(UserActivity, { foreignKey: 'user_id', as: 'Activities' });
+UserActivity.belongsTo(User, { foreignKey: 'user_id', as: 'User' });
+
+// ActivityReportRecipient associations
+User.hasMany(ActivityReportRecipient, {
+    foreignKey: 'added_by',
+    as: 'AddedRecipients',
+});
+ActivityReportRecipient.belongsTo(User, {
+    foreignKey: 'added_by',
+    as: 'AddedBy',
+});
+
 module.exports = {
     sequelize,
     User,
@@ -298,4 +316,6 @@ module.exports = {
     AreasMember,
     AreasSubscriber,
     Workspace,
+    UserActivity,
+    ActivityReportRecipient,
 };
