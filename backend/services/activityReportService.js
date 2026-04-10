@@ -13,7 +13,16 @@ const CRON_EXPRESSION = '0 8 * * *';
 let cronJob = null;
 
 async function getActivityDataForDate(dateStr) {
-    const totalUsers = await User.count();
+    const EXCLUDED_DOMAIN = '@karadigital.co';
+
+    const isExcluded = (email) => email && email.endsWith(EXCLUDED_DOMAIN);
+
+    const allUsers = await User.findAll({
+        attributes: ['id', 'email', 'name', 'surname'],
+    });
+    const reportUsers = allUsers.filter((u) => !isExcluded(u.email));
+    const reportUserIds = new Set(reportUsers.map((u) => u.id));
+    const totalUsers = reportUsers.length;
 
     const activities = await UserActivity.findAll({
         where: { date: dateStr },
@@ -25,28 +34,33 @@ async function getActivityDataForDate(dateStr) {
             },
         ],
     });
+    const filteredActivities = activities.filter((a) =>
+        reportUserIds.has(a.user_id)
+    );
 
-    const activeUsers = activities.filter((a) => a.activity_type === 'active');
-    const passiveUsers = activities.filter(
+    const activeUsers = filteredActivities.filter(
+        (a) => a.activity_type === 'active'
+    );
+    const passiveUsers = filteredActivities.filter(
         (a) => a.activity_type === 'passive'
     );
 
     // Get all users for inactive list
-    const activeUserIds = new Set(activities.map((a) => a.user_id));
-    const allUsers = await User.findAll({
-        attributes: ['id', 'email', 'name', 'surname'],
-    });
-    const inactiveUsers = allUsers.filter((u) => !activeUserIds.has(u.id));
+    const activeUserIds = new Set(filteredActivities.map((a) => a.user_id));
+    const inactiveUsers = reportUsers.filter((u) => !activeUserIds.has(u.id));
 
     // Previous day comparison
     const prevDate = moment(dateStr).subtract(1, 'day').format('YYYY-MM-DD');
     const prevActivities = await UserActivity.findAll({
         where: { date: prevDate },
     });
-    const prevActive = prevActivities.filter(
+    const filteredPrevActivities = prevActivities.filter((a) =>
+        reportUserIds.has(a.user_id)
+    );
+    const prevActive = filteredPrevActivities.filter(
         (a) => a.activity_type === 'active'
     ).length;
-    const prevPassive = prevActivities.filter(
+    const prevPassive = filteredPrevActivities.filter(
         (a) => a.activity_type === 'passive'
     ).length;
 
