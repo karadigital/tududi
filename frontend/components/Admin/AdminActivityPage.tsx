@@ -680,8 +680,14 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
 
             {/* Report preview modal */}
             {reportHtml && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="relative mx-4 max-h-[90vh] w-full max-w-3xl overflow-auto rounded-lg bg-white shadow-xl">
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+                    onClick={() => setReportHtml(null)}
+                >
+                    <div
+                        className="relative mx-4 max-h-[90vh] w-full max-w-3xl overflow-auto rounded-lg bg-white shadow-xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="sticky top-0 flex items-center justify-between border-b bg-gray-50 px-4 py-3">
                             <h3 className="font-semibold text-gray-900">
                                 {t(
