@@ -15,7 +15,9 @@ let cronJob = null;
 async function getActivityDataForDate(dateStr) {
     const EXCLUDED_DOMAIN = '@karadigital.co';
 
-    const isExcluded = (email) => email && email.endsWith(EXCLUDED_DOMAIN);
+    const isExcluded = (email) =>
+        typeof email === 'string' &&
+        email.toLowerCase().endsWith(EXCLUDED_DOMAIN);
 
     const allUsers = await User.findAll({
         attributes: ['id', 'email', 'name', 'surname'],
