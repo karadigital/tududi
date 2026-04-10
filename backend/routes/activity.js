@@ -11,6 +11,9 @@ const { logError } = require('../services/logService');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 
+const EXCLUDED_DOMAIN = '@karadigital.co';
+const isExcludedEmail = (email) => email && email.endsWith(EXCLUDED_DOMAIN);
+
 // Middleware: allow admin OR report recipient
 async function requireActivityAccess(req, res, next) {
     try {
@@ -57,8 +60,13 @@ router.get('/admin/activity', requireActivityAccess, async (req, res) => {
                 .json({ error: 'startDate and endDate are required' });
         }
 
-        // Get all users for inactive count
-        const totalUsers = await User.count();
+        // Get all users, excluding internal domain
+        const allUsers = await User.findAll({
+            attributes: ['id', 'email', 'name', 'surname'],
+        });
+        const reportUsers = allUsers.filter((u) => !isExcludedEmail(u.email));
+        const reportUserIds = new Set(reportUsers.map((u) => u.id));
+        const totalUsers = reportUsers.length;
 
         // Get activity records in range
         const activities = await UserActivity.findAll({
@@ -74,12 +82,18 @@ router.get('/admin/activity', requireActivityAccess, async (req, res) => {
             ],
             order: [['date', 'DESC']],
         });
+        const filteredActivities = activities.filter((a) =>
+            reportUserIds.has(a.user_id)
+        );
 
         // Get the latest date in range that has data
-        const latestDate = activities.length > 0 ? activities[0].date : endDate;
+        const latestDate =
+            filteredActivities.length > 0
+                ? filteredActivities[0].date
+                : endDate;
 
         // Count for latest date
-        const latestActivities = activities.filter(
+        const latestActivities = filteredActivities.filter(
             (a) => a.date === latestDate
         );
         const activeCount = latestActivities.filter(
@@ -91,11 +105,7 @@ router.get('/admin/activity', requireActivityAccess, async (req, res) => {
         const inactiveCount = totalUsers - activeCount - passiveCount;
 
         // Build user list for the latest date
-        const allUsers = await User.findAll({
-            attributes: ['id', 'email', 'name', 'surname'],
-        });
-
-        const users = allUsers.map((u) => {
+        const users = reportUsers.map((u) => {
             const activity = latestActivities.find((a) => a.user_id === u.id);
             return {
                 id: u.id,
@@ -132,7 +142,17 @@ router.get(
     async (req, res) => {
         try {
             const days = parseInt(req.query.days, 10) || 30;
-            const totalUsers = await User.count();
+
+            // Exclude internal domain users
+            const allUsers = await User.findAll({
+                attributes: ['id', 'email'],
+            });
+            const reportUserIds = new Set(
+                allUsers
+                    .filter((u) => !isExcludedEmail(u.email))
+                    .map((u) => u.id)
+            );
+            const totalUsers = reportUserIds.size;
 
             // If days === 0, treat as "all time" — no date filter
             let whereClause = {};
@@ -147,13 +167,16 @@ router.get(
 
             const activities = await UserActivity.findAll({
                 where: whereClause,
-                attributes: ['date', 'activity_type'],
+                attributes: ['date', 'activity_type', 'user_id'],
                 order: [['date', 'ASC']],
             });
+            const filteredActivities = activities.filter((a) =>
+                reportUserIds.has(a.user_id)
+            );
 
             // Group by date
             const byDate = {};
-            for (const a of activities) {
+            for (const a of filteredActivities) {
                 if (!byDate[a.date]) {
                     byDate[a.date] = { active: 0, passive: 0 };
                 }
