@@ -280,20 +280,36 @@ router.delete(
     }
 );
 
-// POST /api/admin/activity-report/send - manual trigger
+// POST /api/admin/activity-report/preview - generate report without sending
+router.post(
+    '/admin/activity-report/preview',
+    requireAdmin,
+    async (req, res) => {
+        try {
+            const {
+                generateReportHtml,
+            } = require('../services/activityReportService');
+            const date = req.body.date || moment().format('YYYY-MM-DD');
+            const html = await generateReportHtml(date);
+            res.json({ date, html });
+        } catch (err) {
+            logError('Error generating report preview:', err);
+            res.status(500).json({ error: 'Failed to generate preview' });
+        }
+    }
+);
+
+// POST /api/admin/activity-report/send - send report to recipients
 router.post('/admin/activity-report/send', requireAdmin, async (req, res) => {
     try {
         const {
             sendDailyReport,
-            generateReportHtml,
         } = require('../services/activityReportService');
         const date = req.body.date || undefined;
         const result = await sendDailyReport(date);
-        const html = await generateReportHtml(result.date);
         res.json({
-            message: `Report generated for ${result.date}`,
+            message: `Report sent for ${result.date}`,
             ...result,
-            html,
         });
     } catch (err) {
         logError('Error sending activity report:', err);

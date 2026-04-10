@@ -134,14 +134,25 @@ export const deleteReportRecipient = async (id: number): Promise<void> => {
     await handleAuthResponse(response, 'Failed to delete recipient.');
 };
 
+export const previewActivityReport = async (
+    date: string
+): Promise<{ date: string; html: string }> => {
+    const response = await fetch(getApiPath('admin/activity-report/preview'), {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify({ date }),
+    });
+    await handleAuthResponse(response, 'Failed to generate preview.');
+    return await response.json();
+};
+
 export const sendActivityReport = async (
     date?: string
-): Promise<{
-    message: string;
-    sent: number;
-    errors: number;
-    html?: string;
-}> => {
+): Promise<{ message: string; sent: number; errors: number }> => {
     const response = await fetch(getApiPath('admin/activity-report/send'), {
         method: 'POST',
         credentials: 'include',
