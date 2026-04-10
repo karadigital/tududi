@@ -289,6 +289,10 @@ function initializeActivityReportCron() {
         return;
     }
 
+    if (cronJob) {
+        return;
+    }
+
     cronJob = cron.schedule(
         CRON_EXPRESSION,
         async () => {
