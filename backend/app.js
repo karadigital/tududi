@@ -17,6 +17,7 @@ const {
 const {
     initializeActivityReportCron,
 } = require('./services/activityReportService');
+const { initializeEmailService } = require('./services/emailService');
 const { setConfig, getConfig } = require('./config/config');
 const config = getConfig();
 const API_VERSION = process.env.API_VERSION || 'v1';
@@ -263,6 +264,9 @@ async function startServer() {
 
         // Start activity tracker flush timer
         startFlushTimer();
+
+        // Initialize email service
+        initializeEmailService();
 
         // Initialize daily activity report cron
         initializeActivityReportCron();
