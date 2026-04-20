@@ -1,6 +1,6 @@
 const { Op, QueryTypes } = require('sequelize');
 const { sequelize } = require('../models');
-const { Project, Task, Note, Permission } = require('../models');
+const { Project, Task, Note, Permission, Workspace } = require('../models');
 const { isAdminByUserId } = require('./rolesService');
 
 const ACCESS = { NONE: 'none', RO: 'ro', RW: 'rw', ADMIN: 'admin' };
@@ -552,6 +552,23 @@ async function canDeleteProject(userId, projectUid) {
     return project.user_id === userId;
 }
 
+/**
+ * Check if a user can delete a workspace.
+ * Only the workspace creator or super admin can delete workspaces.
+ */
+async function canDeleteWorkspace(userId, workspaceUid) {
+    if (await isAdminByUserId(userId)) return true;
+
+    const workspace = await Workspace.findOne({
+        where: { uid: workspaceUid },
+        attributes: ['creator'],
+        raw: true,
+    });
+
+    if (!workspace) return false;
+    return workspace.creator === userId;
+}
+
 async function getAccessibleWorkspaceIds(userId, isSuperAdmin = null) {
     // Superadmin sees all workspaces
     const isAdmin =
@@ -622,6 +639,7 @@ module.exports = {
     actionableTasksWhere,
     canDeleteTask,
     canDeleteProject,
+    canDeleteWorkspace,
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
     getDepartmentMemberUserIds,
