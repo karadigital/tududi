@@ -393,6 +393,50 @@ describe('/api workspaces', () => {
             expect(stillExists).not.toBeNull();
         });
 
+        it('should allow admin to delete workspace they did not create', async () => {
+            const owner = await createTestUser({
+                email: 'owner@example.com',
+            });
+
+            const ws = await Workspace.create({
+                name: 'Owned By Other',
+                creator: owner.id,
+            });
+
+            const project = await Project.create({
+                name: 'Project In Owned Workspace',
+                user_id: owner.id,
+                workspace_id: ws.id,
+            });
+
+            const admin = await createTestUser({
+                email: 'admin@example.com',
+                is_admin: true,
+            });
+
+            const adminAgent = request.agent(app);
+            await adminAgent.post('/api/login').send({
+                email: admin.email,
+                password: 'password123',
+            });
+
+            const response = await adminAgent.delete(
+                `/api/workspace/${ws.uid}`
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.message).toBe('Workspace deleted');
+
+            const deleted = await Workspace.findOne({
+                where: { uid: ws.uid },
+            });
+            expect(deleted).toBeNull();
+
+            const orphanedProject = await Project.findByPk(project.id);
+            expect(orphanedProject).not.toBeNull();
+            expect(orphanedProject.workspace_id).toBeNull();
+        });
+
         it('should return 404 for non-existent workspace', async () => {
             const response = await agent.delete(
                 '/api/workspace/abcd1234efghijk'

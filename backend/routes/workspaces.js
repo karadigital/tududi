@@ -7,6 +7,7 @@ const {
     hasWorkspaceAccess,
     getAccessibleWorkspaceIds,
     getDepartmentMemberUserIds,
+    canDeleteWorkspace,
 } = require('../services/permissionsService');
 const _ = require('lodash');
 const router = express.Router();
@@ -247,7 +248,8 @@ router.delete('/workspace/:uid', validateUid('uid'), async (req, res) => {
             return res.status(404).json({ error: 'Workspace not found.' });
         }
 
-        if (workspace.creator !== safeUserId) {
+        const allowed = await canDeleteWorkspace(safeUserId, req.params.uid);
+        if (!allowed) {
             return res
                 .status(403)
                 .json({ error: 'Not authorized to modify this workspace.' });
