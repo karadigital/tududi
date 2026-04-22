@@ -1,5 +1,5 @@
 const express = require('express');
-const { Workspace, sequelize } = require('../models');
+const { Workspace, User, sequelize } = require('../models');
 const { QueryTypes } = require('sequelize');
 const { isValidUid } = require('../utils/slug-utils');
 const { logError } = require('../services/logService');
@@ -123,6 +123,13 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
                 'created_at',
                 'updated_at',
             ],
+            include: [
+                {
+                    model: User,
+                    as: 'Creator',
+                    attributes: ['email'],
+                },
+            ],
         });
 
         if (!workspace) {
@@ -134,9 +141,15 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
             return res.status(404).json({ error: 'Workspace not found' });
         }
 
-        // Remove internal id and replace creator with is_creator
-        const { id, creator, ...workspaceData } = workspace.toJSON();
-        res.json({ ...workspaceData, is_creator: creator === safeUserId });
+        // Remove internal id and replace creator with is_creator; flatten owner_email
+        const workspaceJson = workspace.toJSON();
+        const owner_email = workspaceJson.Creator?.email ?? null;
+        const { id, creator, Creator, ...workspaceData } = workspaceJson;
+        res.json({
+            ...workspaceData,
+            is_creator: creator === safeUserId,
+            owner_email,
+        });
     } catch (error) {
         logError('Error fetching workspace:', error);
         res.status(500).json({ error: 'Internal server error' });

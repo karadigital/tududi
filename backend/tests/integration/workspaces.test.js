@@ -265,6 +265,19 @@ describe('/api workspaces', () => {
 
             expect(response.status).toBe(401);
         });
+
+        it('should include owner_email on single workspace response', async () => {
+            const ws = await Workspace.create({
+                name: 'Solo',
+                creator: user.id,
+            });
+
+            const response = await agent.get(`/api/workspaces/${ws.uid}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body.owner_email).toBe('test@example.com');
+            expect(response.body.Creator).toBeUndefined();
+        });
     });
 
     describe('PATCH /api/workspace/:uid', () => {
