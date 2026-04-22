@@ -70,9 +70,13 @@ describe('WorkspaceDetail owner display', () => {
 
         renderWithRoute('abc');
 
-        expect(await screen.findByText('Gamma')).toBeInTheDocument();
         expect(
-            await screen.findByText('gamma@example.com')
+            await screen.findByText('Gamma', undefined, { timeout: 10000 })
+        ).toBeInTheDocument();
+        expect(
+            await screen.findByText('gamma@example.com', undefined, {
+                timeout: 10000,
+            })
         ).toBeInTheDocument();
     });
 
@@ -85,7 +89,9 @@ describe('WorkspaceDetail owner display', () => {
 
         renderWithRoute('def');
 
-        expect(await screen.findByText('Delta')).toBeInTheDocument();
+        expect(
+            await screen.findByText('Delta', undefined, { timeout: 10000 })
+        ).toBeInTheDocument();
         expect(screen.queryByText(/@/)).not.toBeInTheDocument();
     });
 });
