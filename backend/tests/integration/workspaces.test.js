@@ -159,6 +159,29 @@ describe('/api workspaces', () => {
 
             expect(response.status).toBe(401);
         });
+
+        it('should include owner_email matching the creator email', async () => {
+            await Workspace.create({ name: 'Alpha', creator: user.id });
+
+            const response = await agent.get('/api/workspaces');
+
+            expect(response.status).toBe(200);
+            expect(response.body.length).toBeGreaterThan(0);
+            const alpha = response.body.find((w) => w.name === 'Alpha');
+            expect(alpha).toBeDefined();
+            expect(alpha.owner_email).toBe('test@example.com');
+        });
+
+        it('should still order results by name ascending after join', async () => {
+            await Workspace.create({ name: 'Zulu', creator: user.id });
+            await Workspace.create({ name: 'Alpha', creator: user.id });
+
+            const response = await agent.get('/api/workspaces');
+
+            const names = response.body.map((w) => w.name);
+            const sorted = [...names].sort();
+            expect(names).toEqual(sorted);
+        });
     });
 
     describe('GET /api/workspaces/:uid', () => {

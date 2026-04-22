@@ -53,6 +53,7 @@ router.get('/workspaces', async (req, res) => {
         if (safeMemberIds.length > 0) {
             query = `
                 SELECT w.uid, w.name, w.creator, w.created_at,
+                    u.email AS owner_email,
                     (SELECT COUNT(DISTINCT p.id) FROM projects p
                      WHERE p.workspace_id = w.id
                      AND (p.user_id = :userId OR p.id IN (
@@ -61,6 +62,7 @@ router.get('/workspaces', async (req, res) => {
                         AND t.project_id IS NOT NULL
                      ))) AS my_project_count
                 FROM workspaces w
+                LEFT JOIN users u ON u.id = w.creator
                 WHERE w.id IN (:workspaceIds)
                 ORDER BY w.name ASC`;
             replacements = {
@@ -71,10 +73,12 @@ router.get('/workspaces', async (req, res) => {
         } else {
             query = `
                 SELECT w.uid, w.name, w.creator, w.created_at,
+                    u.email AS owner_email,
                     (SELECT COUNT(*) FROM projects
                      WHERE projects.workspace_id = w.id
                      AND projects.user_id = :userId) AS my_project_count
                 FROM workspaces w
+                LEFT JOIN users u ON u.id = w.creator
                 WHERE w.id IN (:workspaceIds)
                 ORDER BY w.name ASC`;
             replacements = { userId: safeUserId, workspaceIds };
