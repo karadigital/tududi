@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, useEffect } from 'react';
 import {
     TagIcon,
     Squares2X2Icon,
@@ -43,6 +43,14 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
         project.image_url && isPresetBanner(project.image_url)
             ? getCreatorFromBannerUrl(project.image_url)
             : null;
+
+    useEffect(() => {
+        if (project.Workspace && !project.Workspace.owner_email) {
+            console.log('Workspace owner email unavailable', {
+                uid: project.Workspace.uid,
+            });
+        }
+    }, [project.Workspace?.uid, project.Workspace?.owner_email]);
 
     return (
         <div className="w-full">
@@ -99,6 +107,9 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                                 className="text-xs text-white/90 hover:text-blue-200 transition-colors cursor-pointer font-medium"
                             >
                                 {project.Workspace!.name}
+                                {project.Workspace!.owner_email && (
+                                    <>{` · ${project.Workspace!.owner_email}`}</>
+                                )}
                             </button>
                         </BannerBadge>
                     )}
