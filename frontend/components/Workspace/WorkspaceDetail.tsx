@@ -55,6 +55,14 @@ const WorkspaceDetail: React.FC = () => {
     }, [uid]);
 
     useEffect(() => {
+        if (workspace && !workspace.owner_email) {
+            console.log('Workspace owner email unavailable', {
+                uid: workspace.uid,
+            });
+        }
+    }, [workspace?.uid, workspace?.owner_email]);
+
+    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 dropdownRef.current &&
@@ -136,9 +144,16 @@ const WorkspaceDetail: React.FC = () => {
                     >
                         <ArrowLeftIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                     </Link>
-                    <h2 className="text-2xl font-light text-gray-900 dark:text-white">
-                        {workspace.name}
-                    </h2>
+                    <div className="flex flex-col">
+                        <h2 className="text-2xl font-light text-gray-900 dark:text-white">
+                            {workspace.name}
+                        </h2>
+                        {workspace.owner_email && (
+                            <span className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                {workspace.owner_email}
+                            </span>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 mb-4 px-2 sm:px-4 lg:px-6">
