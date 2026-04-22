@@ -7,6 +7,7 @@ const {
     Task,
     Note,
     Permission,
+    Workspace,
     sequelize,
 } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
@@ -127,6 +128,30 @@ describe('Projects Routes', () => {
             expect(response.status).toBe(401);
             expect(response.body.error).toBe('Authentication required');
         });
+
+        it('should include workspace.owner_email on project list response', async () => {
+            const ws = await Workspace.create({
+                name: 'WS',
+                creator: user.id,
+            });
+            await Project.create({
+                name: 'P1',
+                user_id: user.id,
+                workspace_id: ws.id,
+            });
+
+            const response = await agent.get('/api/projects');
+
+            expect(response.status).toBe(200);
+            const list = Array.isArray(response.body)
+                ? response.body
+                : response.body.projects;
+            const project = list.find((p) => p.name === 'P1');
+            expect(project).toBeDefined();
+            expect(project.Workspace).toBeDefined();
+            expect(project.Workspace.owner_email).toBe('test@example.com');
+            expect(project.Workspace.Creator).toBeUndefined();
+        });
     });
 
     describe('GET /api/project/:id', () => {
@@ -212,6 +237,29 @@ describe('Projects Routes', () => {
 
             expect(response.status).toBe(401);
             expect(response.body.error).toBe('Authentication required');
+        });
+
+        it('should include workspace.owner_email on single project response', async () => {
+            const ws = await Workspace.create({
+                name: 'WS2',
+                creator: user.id,
+            });
+            const p = await Project.create({
+                name: 'P2',
+                user_id: user.id,
+                workspace_id: ws.id,
+            });
+
+            const sluggedName = p.name.toLowerCase().replace(/\s+/g, '-');
+            const uidSlug = `${p.uid}-${sluggedName}`;
+
+            const response = await agent.get(`/api/project/${uidSlug}`);
+
+            expect(response.status).toBe(200);
+            const body = response.body.project || response.body;
+            expect(body.Workspace).toBeDefined();
+            expect(body.Workspace.owner_email).toBe('test@example.com');
+            expect(body.Workspace.Creator).toBeUndefined();
         });
     });
 
