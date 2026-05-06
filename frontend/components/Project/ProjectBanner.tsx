@@ -97,8 +97,21 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                                     )
                                 }
                                 className="text-xs text-white/90 hover:text-blue-200 transition-colors cursor-pointer font-medium"
+                                aria-label={
+                                    project.Workspace!.owner_email
+                                        ? t(
+                                              'projects.workspaceWithOwner',
+                                              `Workspace ${project.Workspace!.name}, owner ${project.Workspace!.owner_email}`
+                                          )
+                                        : t(
+                                              'projects.workspace',
+                                              `Workspace ${project.Workspace!.name}`
+                                          )
+                                }
                             >
                                 {project.Workspace!.name}
+                                {project.Workspace!.owner_email &&
+                                    ` · ${project.Workspace!.owner_email}`}
                             </button>
                         </BannerBadge>
                     )}

@@ -299,6 +299,14 @@ router.get('/projects', async (req, res) => {
                     model: Workspace,
                     required: false,
                     attributes: ['id', 'uid', 'name'],
+                    include: [
+                        {
+                            model: User,
+                            as: 'Creator',
+                            required: false,
+                            attributes: ['email'],
+                        },
+                    ],
                 },
                 {
                     model: Tag,
@@ -364,6 +372,12 @@ router.get('/projects', async (req, res) => {
 
             const projectJson = project.toJSON();
             const shareCount = shareCountMap[project.id] || 0;
+
+            if (projectJson.Workspace) {
+                projectJson.Workspace.owner_email =
+                    projectJson.Workspace.Creator?.email ?? null;
+                delete projectJson.Workspace.Creator;
+            }
 
             return {
                 ...projectJson,
@@ -509,6 +523,14 @@ router.get(
                         model: Workspace,
                         required: false,
                         attributes: ['id', 'uid', 'name'],
+                        include: [
+                            {
+                                model: User,
+                                as: 'Creator',
+                                required: false,
+                                attributes: ['email'],
+                            },
+                        ],
                     },
                     {
                         model: Tag,
@@ -530,6 +552,12 @@ router.get(
             });
 
             const projectJson = project.toJSON();
+
+            if (projectJson.Workspace) {
+                projectJson.Workspace.owner_email =
+                    projectJson.Workspace.Creator?.email ?? null;
+                delete projectJson.Workspace.Creator;
+            }
 
             // Normalize task data to match frontend expectations
             const normalizedTasks = projectJson.Tasks
@@ -805,11 +833,25 @@ router.patch(
                         model: Workspace,
                         required: false,
                         attributes: ['id', 'uid', 'name'],
+                        include: [
+                            {
+                                model: User,
+                                as: 'Creator',
+                                required: false,
+                                attributes: ['email'],
+                            },
+                        ],
                     },
                 ],
             });
 
             const projectJson = projectWithAssociations.toJSON();
+
+            if (projectJson.Workspace) {
+                projectJson.Workspace.owner_email =
+                    projectJson.Workspace.Creator?.email ?? null;
+                delete projectJson.Workspace.Creator;
+            }
 
             // Compute per-user pin state for response
             const patchPinResult = await sequelize.query(
