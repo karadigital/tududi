@@ -127,6 +127,7 @@ router.get('/workspaces/:uid', validateUid('uid'), async (req, res) => {
                 {
                     model: User,
                     as: 'Creator',
+                    required: false,
                     attributes: ['email'],
                 },
             ],

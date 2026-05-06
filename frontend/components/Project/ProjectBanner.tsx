@@ -110,9 +110,8 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                                 }
                             >
                                 {project.Workspace!.name}
-                                {project.Workspace!.owner_email && (
-                                    <>{` · ${project.Workspace!.owner_email}`}</>
-                                )}
+                                {project.Workspace!.owner_email &&
+                                    ` · ${project.Workspace!.owner_email}`}
                             </button>
                         </BannerBadge>
                     )}
