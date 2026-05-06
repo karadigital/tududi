@@ -143,10 +143,7 @@ describe('Projects Routes', () => {
             const response = await agent.get('/api/projects');
 
             expect(response.status).toBe(200);
-            const list = Array.isArray(response.body)
-                ? response.body
-                : response.body.projects;
-            const project = list.find((p) => p.name === 'P1');
+            const project = response.body.projects.find((p) => p.name === 'P1');
             expect(project).toBeDefined();
             expect(project.Workspace).toBeDefined();
             expect(project.Workspace.owner_email).toBe('test@example.com');
