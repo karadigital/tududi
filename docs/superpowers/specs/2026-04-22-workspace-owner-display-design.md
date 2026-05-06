@@ -20,7 +20,7 @@ Show the workspace owner (the user who created it) alongside the workspace name 
 
 ## Acceptance criteria (from user)
 
-1. Workspace display shows owner name together with workspace name in all three target surfaces (see Scope).
+1. Workspace display shows owner email together with workspace name in all three target surfaces (see Scope).
 2. Format:
    - Stacked on list cards and detail header: `Workspace Name` / `Owner Email`.
    - Inline on `ProjectBanner` badge: `Workspace Name · owner@email.com`.
@@ -50,7 +50,7 @@ Flatten server-side so frontend never sees `Creator` nesting — consistent shap
 
 Data flow:
 
-```
+```text
 DB: workspaces.creator → users.id
       │
       ▼

@@ -55,14 +55,6 @@ const WorkspaceDetail: React.FC = () => {
     }, [uid]);
 
     useEffect(() => {
-        if (workspace && !workspace.owner_email) {
-            console.log('Workspace owner email unavailable', {
-                uid: workspace.uid,
-            });
-        }
-    }, [workspace?.uid, workspace?.owner_email]);
-
-    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (
                 dropdownRef.current &&

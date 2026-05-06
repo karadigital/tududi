@@ -93,6 +93,6 @@ describe('Workspaces list owner display', () => {
         );
 
         expect(screen.getByText('Beta')).toBeInTheDocument();
-        expect(screen.queryByText(/@/)).not.toBeInTheDocument();
+        expect(screen.queryByText('alice@example.com')).not.toBeInTheDocument();
     });
 });

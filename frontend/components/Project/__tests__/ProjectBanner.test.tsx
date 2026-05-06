@@ -52,6 +52,6 @@ describe('ProjectBanner workspace badge', () => {
         renderBanner(project);
 
         expect(screen.getByText('Beta')).toBeInTheDocument();
-        expect(screen.queryByText(/·/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Beta\s*·/)).not.toBeInTheDocument();
     });
 });

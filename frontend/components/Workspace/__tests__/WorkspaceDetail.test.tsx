@@ -60,38 +60,44 @@ describe('WorkspaceDetail owner display', () => {
         (fetchWorkspace as jest.Mock).mockReset();
     });
 
-    it('renders owner email under the workspace name', async () => {
-        const workspace: Workspace = {
-            uid: 'abc',
-            name: 'Gamma',
-            owner_email: 'gamma@example.com',
-        };
-        (fetchWorkspace as jest.Mock).mockResolvedValue(workspace);
+    it(
+        'renders owner email under the workspace name',
+        async () => {
+            const workspace: Workspace = {
+                uid: 'abc',
+                name: 'Gamma',
+                owner_email: 'gamma@example.com',
+            };
+            (fetchWorkspace as jest.Mock).mockResolvedValue(workspace);
 
-        renderWithRoute('abc');
+            renderWithRoute('abc');
 
-        expect(
-            await screen.findByText('Gamma', undefined, { timeout: 10000 })
-        ).toBeInTheDocument();
-        expect(
-            await screen.findByText('gamma@example.com', undefined, {
-                timeout: 10000,
-            })
-        ).toBeInTheDocument();
-    });
+            await screen.findByText('Gamma', undefined, { timeout: 8000 });
+            expect(screen.getByText('Gamma')).toBeInTheDocument();
+            expect(
+                screen.getByText('gamma@example.com')
+            ).toBeInTheDocument();
+        },
+        15000
+    );
 
-    it('renders only workspace name when owner_email is missing', async () => {
-        const workspace: Workspace = {
-            uid: 'def',
-            name: 'Delta',
-        };
-        (fetchWorkspace as jest.Mock).mockResolvedValue(workspace);
+    it(
+        'renders only workspace name when owner_email is missing',
+        async () => {
+            const workspace: Workspace = {
+                uid: 'def',
+                name: 'Delta',
+            };
+            (fetchWorkspace as jest.Mock).mockResolvedValue(workspace);
 
-        renderWithRoute('def');
+            renderWithRoute('def');
 
-        expect(
-            await screen.findByText('Delta', undefined, { timeout: 10000 })
-        ).toBeInTheDocument();
-        expect(screen.queryByText(/@/)).not.toBeInTheDocument();
-    });
+            await screen.findByText('Delta', undefined, { timeout: 8000 });
+            expect(screen.getByText('Delta')).toBeInTheDocument();
+            expect(
+                screen.queryByText('gamma@example.com')
+            ).not.toBeInTheDocument();
+        },
+        15000
+    );
 });

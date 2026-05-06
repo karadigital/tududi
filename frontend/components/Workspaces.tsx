@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline';
 import ConfirmDialog from './Shared/ConfirmDialog';
 import WorkspaceModal from './Workspace/WorkspaceModal';
@@ -17,7 +16,6 @@ interface WorkspaceCardProps {
     justOpenedRef: React.MutableRefObject<boolean>;
     onEdit: (workspace: Workspace) => void;
     onDelete: (workspace: Workspace) => void;
-    t: TFunction;
 }
 
 const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
@@ -27,20 +25,12 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
     justOpenedRef,
     onEdit,
     onDelete,
-    t,
 }) => {
-    useEffect(() => {
-        if (workspace && !workspace.owner_email) {
-            console.log('Workspace owner email unavailable', {
-                uid: workspace.uid,
-            });
-        }
-    }, [workspace?.uid, workspace?.owner_email]);
+    const { t } = useTranslation();
 
     return (
-        <Link
-            to={`/workspaces/${workspace.uid}`}
-            className={`bg-gray-50 dark:bg-gray-900 rounded-lg shadow-md relative flex flex-col group hover:opacity-90 transition-opacity cursor-pointer ${
+        <div
+            className={`bg-gray-50 dark:bg-gray-900 rounded-lg shadow-md relative flex flex-col group hover:opacity-90 transition-opacity ${
                 dropdownOpen === workspace.uid ? 'z-50' : ''
             }`}
             style={{
@@ -48,8 +38,10 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                 maxHeight: '120px',
             }}
         >
-            {/* Workspace Content - Centered */}
-            <div className="p-4 flex-1 flex items-center justify-center">
+            <Link
+                to={`/workspaces/${workspace.uid}`}
+                className="flex-1 flex items-center justify-center p-4 cursor-pointer rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
+            >
                 <div className="text-center flex flex-col">
                     <h3 className="text-lg font-light text-gray-900 dark:text-gray-100 line-clamp-2 uppercase">
                         {workspace.name}
@@ -60,7 +52,7 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                         </span>
                     )}
                 </div>
-            </div>
+            </Link>
 
             {/* Three Dots Dropdown - Bottom Right */}
             <div
@@ -68,8 +60,8 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                 data-workspace-dropdown="true"
             >
                 <button
+                    type="button"
                     onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
                         const newDropdownState =
                             dropdownOpen === workspace.uid
@@ -81,21 +73,27 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                         }
                         setDropdownOpen(newDropdownState);
                     }}
-                    className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-400 focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-300"
                     aria-label={t(
                         'workspaces.toggleDropdownMenu',
                         'Toggle dropdown menu'
                     )}
+                    aria-haspopup="menu"
+                    aria-expanded={dropdownOpen === workspace.uid}
                     data-testid={`workspace-dropdown-${workspace.uid}`}
                 >
                     <EllipsisVerticalIcon className="h-5 w-5" />
                 </button>
 
                 {dropdownOpen === workspace.uid && (
-                    <div className="absolute right-0 top-full mt-1 w-28 bg-white dark:bg-gray-700 shadow-lg rounded-md z-[60]">
+                    <div
+                        role="menu"
+                        className="absolute right-0 top-full mt-1 w-28 bg-white dark:bg-gray-700 shadow-lg rounded-md z-[60]"
+                    >
                         <button
+                            type="button"
+                            role="menuitem"
                             onClick={(e) => {
-                                e.preventDefault();
                                 e.stopPropagation();
                                 onEdit(workspace);
                                 setDropdownOpen(null);
@@ -106,8 +104,9 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                             {t('workspaces.edit', 'Edit')}
                         </button>
                         <button
+                            type="button"
+                            role="menuitem"
                             onClick={(e) => {
-                                e.preventDefault();
                                 e.stopPropagation();
                                 onDelete(workspace);
                                 setDropdownOpen(null);
@@ -120,7 +119,7 @@ const WorkspaceCard: React.FC<WorkspaceCardProps> = ({
                     </div>
                 )}
             </div>
-        </Link>
+        </div>
     );
 };
 
@@ -265,7 +264,6 @@ const Workspaces: React.FC = () => {
                                 justOpenedRef={justOpenedRef}
                                 onEdit={handleEditWorkspace}
                                 onDelete={openConfirmDialog}
-                                t={t}
                             />
                         ))}
                     </div>

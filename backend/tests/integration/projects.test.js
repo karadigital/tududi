@@ -256,7 +256,7 @@ describe('Projects Routes', () => {
             const response = await agent.get(`/api/project/${uidSlug}`);
 
             expect(response.status).toBe(200);
-            const body = response.body.project || response.body;
+            const body = response.body;
             expect(body.Workspace).toBeDefined();
             expect(body.Workspace.owner_email).toBe('test@example.com');
             expect(body.Workspace.Creator).toBeUndefined();
