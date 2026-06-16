@@ -47,6 +47,8 @@
     "db:seed": "cd backend && node scripts/seed-dev-data.js",
     "db:reset-and-seed": "cd backend && NODE_ENV=development node scripts/reset-and-seed.js",
     "user:create": "cd backend && node scripts/user-create.js",
+    "data:export": "cd backend && node scripts/export-data.js",
+    "data:import": "cd backend && node scripts/import-data.js",
     "migration:create": "cd backend && node scripts/migration-create.js",
     "migration:run": "cd backend && npx sequelize-cli db:migrate",
     "migration:undo": "cd backend && npx sequelize-cli db:migrate:undo",

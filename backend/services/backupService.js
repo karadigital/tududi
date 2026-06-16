@@ -127,6 +127,7 @@ async function exportUserData(userId) {
             taskEvents,
             views,
         ] = await Promise.all([
+
             Area.findAll({ where: { user_id: userId } }),
             Project.findAll({
                 where: { user_id: userId },
@@ -172,6 +173,14 @@ async function exportUserData(userId) {
             View.findAll({ where: { user_id: userId } }),
         ]);
 
+        // Build UID lookup maps so FK relationships survive cross-instance import
+        const areaUidMap = {};
+        areas.forEach((a) => { areaUidMap[a.id] = a.uid; });
+        const projectUidMap = {};
+        projects.forEach((p) => { projectUidMap[p.id] = p.uid; });
+        const taskUidMap = {};
+        tasks.forEach((t) => { taskUidMap[t.id] = t.uid; });
+
         // Build the backup object
         const backup = {
             version: packageJson.version,
@@ -207,23 +216,20 @@ async function exportUserData(userId) {
                 areas: areas.map((area) => area.toJSON()),
                 projects: projects.map((project) => {
                     const projectData = project.toJSON();
-                    // Include per-user pin state for backup
-                    projectData.pin_to_sidebar = pinnedProjectIds.has(
-                        project.id
-                    );
-                    // Extract tag UIDs for relationship mapping
-                    projectData.tag_uids = (project.Tags || []).map(
-                        (tag) => tag.uid
-                    );
+                    projectData.pin_to_sidebar = pinnedProjectIds.has(project.id);
+                    projectData.tag_uids = (project.Tags || []).map((tag) => tag.uid);
+                    projectData.area_uid = project.area_id ? areaUidMap[project.area_id] : null;
                     delete projectData.Tags;
                     return projectData;
                 }),
                 tasks: tasks.map((task) => {
                     const taskData = task.toJSON();
-                    // Extract tag UIDs and related data
                     taskData.tag_uids = (task.Tags || []).map((tag) => tag.uid);
                     taskData.completions = taskData.Completions || [];
                     taskData.attachments = taskData.Attachments || [];
+                    taskData.project_uid = task.project_id ? projectUidMap[task.project_id] : null;
+                    taskData.parent_task_uid = task.parent_task_id ? taskUidMap[task.parent_task_id] : null;
+                    taskData.recurring_parent_uid = task.recurring_parent_id ? taskUidMap[task.recurring_parent_id] : null;
                     delete taskData.Tags;
                     delete taskData.Completions;
                     delete taskData.Attachments;
@@ -233,6 +239,7 @@ async function exportUserData(userId) {
                 notes: notes.map((note) => {
                     const noteData = note.toJSON();
                     noteData.tag_uids = (note.Tags || []).map((tag) => tag.uid);
+                    noteData.project_uid = note.project_id ? projectUidMap[note.project_id] : null;
                     delete noteData.Tags;
                     return noteData;
                 }),
@@ -356,11 +363,12 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                     stats.projects.skipped++;
                     uidToIdMap.projects[projectData.uid] = existingProject.id;
                 } else if (!existingProject) {
-                    // Map area_id if it exists
                     let areaId = null;
-                    if (projectData.area_id) {
+                    if (projectData.area_uid) {
+                        areaId = uidToIdMap.areas[projectData.area_uid] || null;
+                    } else if (projectData.area_id) {
                         const area = await Area.findOne({
-                            where: { id: projectData.area_id },
+                            where: { id: projectData.area_id, user_id: userId },
                             transaction,
                         });
                         areaId = area ? area.id : null;
@@ -429,11 +437,12 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                     stats.tasks.skipped++;
                     uidToIdMap.tasks[taskData.uid] = existingTask.id;
                 } else if (!existingTask) {
-                    // Map project_id if it exists
                     let projectId = null;
-                    if (taskData.project_id) {
+                    if (taskData.project_uid) {
+                        projectId = uidToIdMap.projects[taskData.project_uid] || null;
+                    } else if (taskData.project_id) {
                         const project = await Project.findOne({
-                            where: { id: taskData.project_id },
+                            where: { id: taskData.project_id, user_id: userId },
                             transaction,
                         });
                         projectId = project ? project.id : null;
@@ -529,31 +538,42 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                     if (task) {
                         const updates = {};
 
-                        if (taskData.parent_task_id) {
+                        if (taskData.parent_task_uid) {
+                            const newId = uidToIdMap.tasks[taskData.parent_task_uid];
+                            if (newId) {
+                                updates.parent_task_id = newId;
+                            } else {
+                                const parentTask = await Task.findOne({
+                                    where: { uid: taskData.parent_task_uid, user_id: userId },
+                                    transaction,
+                                });
+                                if (parentTask) updates.parent_task_id = parentTask.id;
+                            }
+                        } else if (taskData.parent_task_id) {
                             const parentTask = await Task.findOne({
-                                where: {
-                                    id: taskData.parent_task_id,
-                                    user_id: userId,
-                                },
+                                where: { id: taskData.parent_task_id, user_id: userId },
                                 transaction,
                             });
-                            if (parentTask) {
-                                updates.parent_task_id = parentTask.id;
-                            }
+                            if (parentTask) updates.parent_task_id = parentTask.id;
                         }
 
-                        if (taskData.recurring_parent_id) {
+                        if (taskData.recurring_parent_uid) {
+                            const newId = uidToIdMap.tasks[taskData.recurring_parent_uid];
+                            if (newId) {
+                                updates.recurring_parent_id = newId;
+                            } else {
+                                const recurringParent = await Task.findOne({
+                                    where: { uid: taskData.recurring_parent_uid, user_id: userId },
+                                    transaction,
+                                });
+                                if (recurringParent) updates.recurring_parent_id = recurringParent.id;
+                            }
+                        } else if (taskData.recurring_parent_id) {
                             const recurringParent = await Task.findOne({
-                                where: {
-                                    id: taskData.recurring_parent_id,
-                                    user_id: userId,
-                                },
+                                where: { id: taskData.recurring_parent_id, user_id: userId },
                                 transaction,
                             });
-                            if (recurringParent) {
-                                updates.recurring_parent_id =
-                                    recurringParent.id;
-                            }
+                            if (recurringParent) updates.recurring_parent_id = recurringParent.id;
                         }
 
                         if (Object.keys(updates).length > 0) {
@@ -575,11 +595,12 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                 if (existingNote && options.merge) {
                     stats.notes.skipped++;
                 } else if (!existingNote) {
-                    // Map project_id if it exists
                     let projectId = null;
-                    if (noteData.project_id) {
+                    if (noteData.project_uid) {
+                        projectId = uidToIdMap.projects[noteData.project_uid] || null;
+                    } else if (noteData.project_id) {
                         const project = await Project.findOne({
-                            where: { id: noteData.project_id },
+                            where: { id: noteData.project_id, user_id: userId },
                             transaction,
                         });
                         projectId = project ? project.id : null;
