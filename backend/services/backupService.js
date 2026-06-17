@@ -12,6 +12,7 @@ const {
     RecurringCompletion,
     TaskAttachment,
     Backup,
+    Workspace,
 } = require('../models');
 const fs = require('fs').promises;
 const path = require('path');
@@ -118,6 +119,7 @@ async function exportUserData(userId) {
 
         // Fetch all user-owned entities
         const [
+            workspaces,
             areas,
             projects,
             tasks,
@@ -127,7 +129,7 @@ async function exportUserData(userId) {
             taskEvents,
             views,
         ] = await Promise.all([
-
+            Workspace.findAll({ where: { creator: userId } }),
             Area.findAll({ where: { user_id: userId } }),
             Project.findAll({
                 where: { user_id: userId },
@@ -174,6 +176,8 @@ async function exportUserData(userId) {
         ]);
 
         // Build UID lookup maps so FK relationships survive cross-instance import
+        const workspaceUidMap = {};
+        workspaces.forEach((w) => { workspaceUidMap[w.id] = w.uid; });
         const areaUidMap = {};
         areas.forEach((a) => { areaUidMap[a.id] = a.uid; });
         const projectUidMap = {};
@@ -213,12 +217,14 @@ async function exportUserData(userId) {
                 notification_preferences: user.notification_preferences,
             },
             data: {
+                workspaces: workspaces.map((ws) => ws.toJSON()),
                 areas: areas.map((area) => area.toJSON()),
                 projects: projects.map((project) => {
                     const projectData = project.toJSON();
                     projectData.pin_to_sidebar = pinnedProjectIds.has(project.id);
                     projectData.tag_uids = (project.Tags || []).map((tag) => tag.uid);
                     projectData.area_uid = project.area_id ? areaUidMap[project.area_id] : null;
+                    projectData.workspace_uid = project.workspace_id ? workspaceUidMap[project.workspace_id] : null;
                     delete projectData.Tags;
                     return projectData;
                 }),
@@ -280,6 +286,7 @@ async function importUserData(userId, backupData, options = { merge: true }) {
         }
 
         const stats = {
+            workspaces: { created: 0, skipped: 0 },
             areas: { created: 0, skipped: 0 },
             projects: { created: 0, skipped: 0 },
             tasks: { created: 0, skipped: 0 },
@@ -291,6 +298,7 @@ async function importUserData(userId, backupData, options = { merge: true }) {
 
         // Map to track old UIDs to new IDs for foreign key relationships
         const uidToIdMap = {
+            workspaces: {},
             areas: {},
             projects: {},
             tasks: {},
@@ -298,7 +306,33 @@ async function importUserData(userId, backupData, options = { merge: true }) {
             notes: {},
         };
 
-        // Import tags first (no dependencies)
+        // Import workspaces first (no dependencies except user)
+        if (backupData.data.workspaces) {
+            for (const wsData of backupData.data.workspaces) {
+                const existingWs = await Workspace.findOne({
+                    where: { uid: wsData.uid, creator: userId },
+                    transaction,
+                });
+
+                if (existingWs && options.merge) {
+                    stats.workspaces.skipped++;
+                    uidToIdMap.workspaces[wsData.uid] = existingWs.id;
+                } else if (!existingWs) {
+                    const newWs = await Workspace.create(
+                        {
+                            uid: wsData.uid,
+                            name: wsData.name,
+                            creator: userId,
+                        },
+                        { transaction }
+                    );
+                    stats.workspaces.created++;
+                    uidToIdMap.workspaces[wsData.uid] = newWs.id;
+                }
+            }
+        }
+
+        // Import tags (no dependencies)
         if (backupData.data.tags) {
             for (const tagData of backupData.data.tags) {
                 const existingTag = await Tag.findOne({
@@ -374,6 +408,17 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                         areaId = area ? area.id : null;
                     }
 
+                    let workspaceId = null;
+                    if (projectData.workspace_uid) {
+                        workspaceId = uidToIdMap.workspaces[projectData.workspace_uid] || null;
+                    } else if (projectData.workspace_id) {
+                        const ws = await Workspace.findOne({
+                            where: { id: projectData.workspace_id, creator: userId },
+                            transaction,
+                        });
+                        workspaceId = ws ? ws.id : null;
+                    }
+
                     const newProject = await Project.create(
                         {
                             uid: projectData.uid,
@@ -388,6 +433,7 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                             state: projectData.state,
                             user_id: userId,
                             area_id: areaId,
+                            workspace_id: workspaceId,
                         },
                         { transaction }
                     );
@@ -513,12 +559,14 @@ async function importUserData(userId, backupData, options = { merge: true }) {
                         for (const attachment of taskData.attachments) {
                             await TaskAttachment.create(
                                 {
+                                    uid: attachment.uid,
                                     task_id: newTask.id,
                                     user_id: userId,
-                                    file_name: attachment.file_name,
-                                    file_url: attachment.file_url,
+                                    original_filename: attachment.original_filename,
+                                    stored_filename: attachment.stored_filename,
                                     file_size: attachment.file_size,
-                                    file_type: attachment.file_type,
+                                    mime_type: attachment.mime_type,
+                                    file_path: attachment.file_path,
                                 },
                                 { transaction }
                             );
@@ -722,7 +770,7 @@ function validateBackupData(backupData) {
     }
 
     // Check data structure
-    const requiredFields = ['areas', 'projects', 'tasks', 'tags', 'notes'];
+    const requiredFields = ['workspaces', 'areas', 'projects', 'tasks', 'tags', 'notes'];
     for (const field of requiredFields) {
         if (backupData.data && !Array.isArray(backupData.data[field])) {
             errors.push(`Invalid or missing data.${field} array`);

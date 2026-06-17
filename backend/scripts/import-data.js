@@ -36,17 +36,18 @@ const {
     checkVersionCompatibility,
 } = require('../services/backupService');
 
-const ALL_TYPES = ['tags', 'areas', 'projects', 'tasks', 'notes', 'inbox_items', 'views'];
+const ALL_TYPES = ['workspaces', 'tags', 'areas', 'projects', 'tasks', 'notes', 'inbox_items', 'views'];
 
 // Dependency map: importing X also requires these types to resolve FK relationships
 const DEPENDENCIES = {
-    projects: ['tags', 'areas'],
+    projects: ['workspaces', 'tags', 'areas'],
     tasks: ['tags', 'projects'],
     notes: ['tags', 'projects'],
     inbox_items: [],
     views: [],
     areas: [],
     tags: [],
+    workspaces: [],
 };
 
 function parseArgs() {
