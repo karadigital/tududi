@@ -55,6 +55,9 @@ test-results/
 # Test files
 backend/tests/test-files/
 
+# Backend env credential
+backend/.env.test
+
 # Temporary files
 tmp/
 *.bak

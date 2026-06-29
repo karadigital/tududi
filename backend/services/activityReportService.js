@@ -13,16 +13,18 @@ const CRON_EXPRESSION = '0 8 * * 1-5';
 let cronJob = null;
 
 async function getActivityDataForDate(dateStr) {
-    const EXCLUDED_DOMAIN = '@karadigital.co';
-
-    const isExcluded = (email) =>
-        typeof email === 'string' &&
-        email.toLowerCase().endsWith(EXCLUDED_DOMAIN);
-
     const allUsers = await User.findAll({
-        attributes: ['id', 'email', 'name', 'surname'],
+        attributes: [
+            'id',
+            'email',
+            'name',
+            'surname',
+            'exclude_from_activity_reports',
+        ],
     });
-    const reportUsers = allUsers.filter((u) => !isExcluded(u.email));
+    const reportUsers = allUsers.filter(
+        (u) => !u.exclude_from_activity_reports
+    );
     const reportUserIds = new Set(reportUsers.map((u) => u.id));
     const totalUsers = reportUsers.length;
 
