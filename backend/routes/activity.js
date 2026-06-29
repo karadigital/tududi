@@ -6,9 +6,6 @@ const { logError } = require('../services/logService');
 const { Op } = require('sequelize');
 const moment = require('moment-timezone');
 
-const EXCLUDED_DOMAIN = '@karadigital.co';
-const isExcludedEmail = (email) => email && email.endsWith(EXCLUDED_DOMAIN);
-
 // Middleware: allow admin OR report recipient
 async function requireActivityAccess(req, res, next) {
     try {
@@ -55,11 +52,19 @@ router.get('/admin/activity', requireActivityAccess, async (req, res) => {
                 .json({ error: 'startDate and endDate are required' });
         }
 
-        // Get all users, excluding internal domain
+        // Get all users, excluding flagged users
         const allUsers = await User.findAll({
-            attributes: ['id', 'email', 'name', 'surname'],
+            attributes: [
+                'id',
+                'email',
+                'name',
+                'surname',
+                'exclude_from_activity_reports',
+            ],
         });
-        const reportUsers = allUsers.filter((u) => !isExcludedEmail(u.email));
+        const reportUsers = allUsers.filter(
+            (u) => !u.exclude_from_activity_reports
+        );
         const reportUserIds = new Set(reportUsers.map((u) => u.id));
         const totalUsers = reportUsers.length;
 
@@ -147,13 +152,13 @@ router.get(
                     .json({ error: 'Invalid days parameter' });
             }
 
-            // Exclude internal domain users
+            // Exclude flagged users
             const allUsers = await User.findAll({
-                attributes: ['id', 'email'],
+                attributes: ['id', 'exclude_from_activity_reports'],
             });
             const reportUserIds = new Set(
                 allUsers
-                    .filter((u) => !isExcludedEmail(u.email))
+                    .filter((u) => !u.exclude_from_activity_reports)
                     .map((u) => u.id)
             );
             const totalUsers = reportUserIds.size;

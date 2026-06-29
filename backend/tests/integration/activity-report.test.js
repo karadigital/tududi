@@ -68,6 +68,44 @@ describe('Activity Report', () => {
             expect(html).toContain('Active');
             expect(html).toContain('Passive');
         });
+
+        it('should exclude users flagged exclude_from_activity_reports', async () => {
+            const {
+                generateReportHtml,
+            } = require('../../services/activityReportService');
+
+            const includedUser = await createTestUser({
+                email: 'report-included@example.com',
+            });
+            const excludedUser = await createTestUser({
+                email: 'report-excluded@example.com',
+            });
+            await excludedUser.update({
+                exclude_from_activity_reports: true,
+            });
+
+            const now = new Date();
+            await UserActivity.create({
+                user_id: includedUser.id,
+                date: '2026-04-09',
+                activity_type: 'active',
+                first_seen_at: now,
+                last_seen_at: now,
+                action_counts: {},
+            });
+            await UserActivity.create({
+                user_id: excludedUser.id,
+                date: '2026-04-09',
+                activity_type: 'active',
+                first_seen_at: now,
+                last_seen_at: now,
+                action_counts: {},
+            });
+
+            const html = await generateReportHtml('2026-04-09');
+            expect(html).toContain('report-included@example.com');
+            expect(html).not.toContain('report-excluded@example.com');
+        });
     });
 
     describe('POST /api/admin/activity-report/send', () => {
