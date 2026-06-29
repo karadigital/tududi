@@ -42,6 +42,15 @@ export interface ReportRecipient {
     AddedBy?: { id: number; email: string; name?: string };
 }
 
+export interface AdminUserRow {
+    id: number;
+    email: string;
+    name?: string;
+    surname?: string;
+    role: 'admin' | 'user';
+    exclude_from_activity_reports: boolean;
+}
+
 export const fetchActivitySummary = async (
     startDate: string,
     endDate: string
@@ -163,5 +172,31 @@ export const sendActivityReport = async (
         body: JSON.stringify(date ? { date } : {}),
     });
     await handleAuthResponse(response, 'Failed to send report.');
+    return await response.json();
+};
+
+export const fetchAdminUsers = async (): Promise<AdminUserRow[]> => {
+    const response = await fetch(getApiPath('admin/users'), {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+    });
+    await handleAuthResponse(response, 'Failed to fetch users.');
+    return await response.json();
+};
+
+export const setUserActivityExclusion = async (
+    id: number,
+    excluded: boolean
+): Promise<AdminUserRow> => {
+    const response = await fetch(getApiPath(`admin/users/${id}`), {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+        },
+        body: JSON.stringify({ exclude_from_activity_reports: excluded }),
+    });
+    await handleAuthResponse(response, 'Failed to update user.');
     return await response.json();
 };
