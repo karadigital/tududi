@@ -813,6 +813,8 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                             {reportUsers.map((u) => {
                                 const included =
                                     !u.exclude_from_activity_reports;
+                                const fullName =
+                                    `${u.name || ''} ${u.surname || ''}`.trim();
                                 return (
                                     <li
                                         key={u.id}
@@ -821,12 +823,12 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                         <span
                                             className={`text-sm ${included ? 'text-gray-900 dark:text-white' : 'text-gray-400 line-through'}`}
                                         >
-                                            {u.name || u.surname
-                                                ? `${u.name || ''} ${u.surname || ''}`.trim()
-                                                : u.email}
-                                            <span className="ml-2 text-xs text-gray-400">
-                                                {u.email}
-                                            </span>
+                                            {fullName || u.email}
+                                            {fullName && (
+                                                <span className="ml-2 text-xs text-gray-400">
+                                                    {u.email}
+                                                </span>
+                                            )}
                                         </span>
                                         <label className="relative inline-flex cursor-pointer items-center">
                                             <input
@@ -844,7 +846,7 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                                 )}
                                                 className="peer sr-only"
                                             />
-                                            <div className="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full dark:bg-gray-600"></div>
+                                            <div className="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 dark:bg-gray-600 dark:peer-focus-visible:ring-offset-gray-800"></div>
                                         </label>
                                     </li>
                                 );

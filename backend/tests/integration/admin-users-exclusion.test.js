@@ -1,6 +1,5 @@
 const request = require('supertest');
 const app = require('../../app');
-const { Role } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
 
 async function loginAgent(email, password = 'password123') {
@@ -13,11 +12,9 @@ describe('Admin users — exclude_from_activity_reports', () => {
     let adminUser, adminAgent, target;
 
     beforeEach(async () => {
-        adminUser = await createTestUser({ email: 'au-admin@example.com' });
-        await Role.destroy({ where: {} });
-        await Role.findOrCreate({
-            where: { user_id: adminUser.id },
-            defaults: { user_id: adminUser.id, is_admin: true },
+        adminUser = await createTestUser({
+            email: 'au-admin@example.com',
+            is_admin: true,
         });
         adminAgent = await loginAgent('au-admin@example.com');
         target = await createTestUser({ email: 'au-target@example.com' });

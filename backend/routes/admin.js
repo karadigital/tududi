@@ -133,8 +133,13 @@ router.post('/admin/users', requireAdmin, async (req, res) => {
         if (name) userData.name = name;
         if (surname) userData.surname = surname;
         if (req.body.exclude_from_activity_reports !== undefined) {
+            if (typeof req.body.exclude_from_activity_reports !== 'boolean') {
+                return res.status(400).json({
+                    error: 'exclude_from_activity_reports must be a boolean',
+                });
+            }
             userData.exclude_from_activity_reports =
-                !!req.body.exclude_from_activity_reports;
+                req.body.exclude_from_activity_reports;
         }
         const user = await User.create(userData);
         // Optionally assign admin role if requested and allowed
@@ -208,8 +213,13 @@ router.put('/admin/users/:id', requireAdmin, async (req, res) => {
         if (surname !== undefined) user.surname = surname || null;
 
         if (req.body.exclude_from_activity_reports !== undefined) {
+            if (typeof req.body.exclude_from_activity_reports !== 'boolean') {
+                return res.status(400).json({
+                    error: 'exclude_from_activity_reports must be a boolean',
+                });
+            }
             user.exclude_from_activity_reports =
-                !!req.body.exclude_from_activity_reports;
+                req.body.exclude_from_activity_reports;
         }
 
         await user.save();
