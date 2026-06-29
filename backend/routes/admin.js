@@ -80,7 +80,14 @@ const { requireAdmin } = require('../middleware/requireAdmin');
 router.get('/admin/users', requireAdmin, async (req, res) => {
     try {
         const users = await User.findAll({
-            attributes: ['id', 'email', 'name', 'surname', 'created_at'],
+            attributes: [
+                'id',
+                'email',
+                'name',
+                'surname',
+                'created_at',
+                'exclude_from_activity_reports',
+            ],
         });
         // Fetch roles in bulk
         const roles = await Role.findAll({
@@ -94,6 +101,7 @@ router.get('/admin/users', requireAdmin, async (req, res) => {
             surname: u.surname,
             created_at: u.created_at,
             role: userIdToRole.get(u.id) ? 'admin' : 'user',
+            exclude_from_activity_reports: u.exclude_from_activity_reports,
         }));
         res.json(result);
     } catch (err) {
@@ -124,6 +132,10 @@ router.post('/admin/users', requireAdmin, async (req, res) => {
         const userData = { email, password };
         if (name) userData.name = name;
         if (surname) userData.surname = surname;
+        if (req.body.exclude_from_activity_reports !== undefined) {
+            userData.exclude_from_activity_reports =
+                !!req.body.exclude_from_activity_reports;
+        }
         const user = await User.create(userData);
         // Optionally assign admin role if requested and allowed
         const makeAdmin = role === 'admin';
@@ -147,6 +159,7 @@ router.post('/admin/users', requireAdmin, async (req, res) => {
             surname: user.surname,
             created_at: user.created_at,
             role: makeAdmin ? 'admin' : 'user',
+            exclude_from_activity_reports: user.exclude_from_activity_reports,
         });
     } catch (err) {
         logError('Error creating user:', err);
@@ -194,6 +207,11 @@ router.put('/admin/users/:id', requireAdmin, async (req, res) => {
         if (name !== undefined) user.name = name || null;
         if (surname !== undefined) user.surname = surname || null;
 
+        if (req.body.exclude_from_activity_reports !== undefined) {
+            user.exclude_from_activity_reports =
+                !!req.body.exclude_from_activity_reports;
+        }
+
         await user.save();
 
         // Update role if provided
@@ -219,6 +237,7 @@ router.put('/admin/users/:id', requireAdmin, async (req, res) => {
             surname: user.surname,
             created_at: user.created_at,
             role: userRole?.is_admin ? 'admin' : 'user',
+            exclude_from_activity_reports: user.exclude_from_activity_reports,
         });
     } catch (err) {
         logError('Error updating user:', err);
