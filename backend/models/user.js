@@ -144,6 +144,11 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 defaultValue: true,
             },
+            exclude_from_activity_reports: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
+            },
             today_settings: {
                 type: DataTypes.JSON,
                 allowNull: true,
