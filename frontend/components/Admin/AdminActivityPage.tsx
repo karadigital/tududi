@@ -387,16 +387,18 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                 >
                     {t('admin.activity.dailyUsers', 'Daily User List')}
                 </button>
-                <button
-                    onClick={() => setActiveTab('report-users')}
-                    className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
-                        activeTab === 'report-users'
-                            ? 'bg-white text-gray-900 shadow dark:bg-gray-700 dark:text-white'
-                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
-                    }`}
-                >
-                    {t('admin.activity.reportUsers', 'Report Users')}
-                </button>
+                {isAdmin && (
+                    <button
+                        onClick={() => setActiveTab('report-users')}
+                        className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
+                            activeTab === 'report-users'
+                                ? 'bg-white text-gray-900 shadow dark:bg-gray-700 dark:text-white'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                        }`}
+                    >
+                        {t('admin.activity.reportUsers', 'Report Users')}
+                    </button>
+                )}
             </div>
 
             {/* Trends Tab */}
@@ -787,7 +789,7 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
             )}
 
             {/* Report Users Tab */}
-            {activeTab === 'report-users' && (
+            {activeTab === 'report-users' && isAdmin && (
                 <div>
                     <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                         {t(
@@ -796,8 +798,15 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                         )}
                     </p>
                     {loadingReportUsers ? (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             {t('admin.activity.loading', 'Loading…')}
+                        </p>
+                    ) : reportUsers.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {t(
+                                'admin.activity.noReportUsers',
+                                'No users found'
+                            )}
                         </p>
                     ) : (
                         <ul className="divide-y dark:divide-gray-700">
