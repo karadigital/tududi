@@ -29,9 +29,12 @@ import {
     TrendEntry,
     ReportRecipient,
     ActivityUser,
+    AdminUserRow,
+    fetchAdminUsers,
+    setUserActivityExclusion,
 } from '../../utils/activityService';
 
-type TabType = 'trends' | 'daily';
+type TabType = 'trends' | 'daily' | 'report-users';
 type DatePreset = '1' | '7' | '30' | '0';
 type StatusFilter = 'all' | 'active' | 'passive' | 'inactive';
 
@@ -127,6 +130,10 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
     const [newRecipientEmail, setNewRecipientEmail] = useState('');
     const [loadingRecipients, setLoadingRecipients] = useState(false);
 
+    // Report-users tab state
+    const [reportUsers, setReportUsers] = useState<AdminUserRow[]>([]);
+    const [loadingReportUsers, setLoadingReportUsers] = useState(false);
+
     // Report send state
     const [reportDate, setReportDate] = useState(formatDate(new Date()));
     const [reportHtml, setReportHtml] = useState<string | null>(null);
@@ -201,6 +208,50 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
     useEffect(() => {
         loadRecipients();
     }, [loadRecipients]);
+
+    const loadReportUsers = useCallback(async () => {
+        setLoadingReportUsers(true);
+        try {
+            const data = await fetchAdminUsers();
+            setReportUsers(data);
+        } catch {
+            showErrorToast(
+                t('admin.activity.loadUsersError', 'Failed to load users')
+            );
+        } finally {
+            setLoadingReportUsers(false);
+        }
+    }, [showErrorToast, t]);
+
+    useEffect(() => {
+        if (activeTab === 'report-users') {
+            loadReportUsers();
+        }
+    }, [activeTab, loadReportUsers]);
+
+    const handleToggleReportUser = async (
+        id: number,
+        currentlyExcluded: boolean
+    ) => {
+        try {
+            await setUserActivityExclusion(id, !currentlyExcluded);
+            setReportUsers((prev) =>
+                prev.map((u) =>
+                    u.id === id
+                        ? {
+                              ...u,
+                              exclude_from_activity_reports: !currentlyExcluded,
+                          }
+                        : u
+                )
+            );
+            showSuccessToast(t('admin.activity.userUpdated', 'User updated'));
+        } catch {
+            showErrorToast(
+                t('admin.activity.userUpdateError', 'Failed to update user')
+            );
+        }
+    };
 
     const handleAddRecipient = async () => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -335,6 +386,16 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                     }`}
                 >
                     {t('admin.activity.dailyUsers', 'Daily User List')}
+                </button>
+                <button
+                    onClick={() => setActiveTab('report-users')}
+                    className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition ${
+                        activeTab === 'report-users'
+                            ? 'bg-white text-gray-900 shadow dark:bg-gray-700 dark:text-white'
+                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'
+                    }`}
+                >
+                    {t('admin.activity.reportUsers', 'Report Users')}
                 </button>
             </div>
 
@@ -721,6 +782,65 @@ const AdminActivityPage: React.FC<{ isAdmin?: boolean }> = ({
                                 </tbody>
                             </table>
                         </div>
+                    )}
+                </div>
+            )}
+
+            {/* Report Users Tab */}
+            {activeTab === 'report-users' && (
+                <div>
+                    <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                        {t(
+                            'admin.activity.reportUsersHelp',
+                            'Users switched off are excluded from the activity report.'
+                        )}
+                    </p>
+                    {loadingReportUsers ? (
+                        <p className="text-sm text-gray-500">
+                            {t('admin.activity.loading', 'Loading…')}
+                        </p>
+                    ) : (
+                        <ul className="divide-y dark:divide-gray-700">
+                            {reportUsers.map((u) => {
+                                const included =
+                                    !u.exclude_from_activity_reports;
+                                return (
+                                    <li
+                                        key={u.id}
+                                        className="flex items-center justify-between py-2"
+                                    >
+                                        <span
+                                            className={`text-sm ${included ? 'text-gray-900 dark:text-white' : 'text-gray-400 line-through'}`}
+                                        >
+                                            {u.name || u.surname
+                                                ? `${u.name || ''} ${u.surname || ''}`.trim()
+                                                : u.email}
+                                            <span className="ml-2 text-xs text-gray-400">
+                                                {u.email}
+                                            </span>
+                                        </span>
+                                        <label className="relative inline-flex cursor-pointer items-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={included}
+                                                onChange={() =>
+                                                    handleToggleReportUser(
+                                                        u.id,
+                                                        u.exclude_from_activity_reports
+                                                    )
+                                                }
+                                                aria-label={t(
+                                                    'admin.activity.toggleReportUser',
+                                                    `Toggle ${u.email} in report`
+                                                )}
+                                                className="peer sr-only"
+                                            />
+                                            <div className="peer h-5 w-9 rounded-full bg-gray-300 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:bg-blue-600 peer-checked:after:translate-x-full dark:bg-gray-600"></div>
+                                        </label>
+                                    </li>
+                                );
+                            })}
+                        </ul>
                     )}
                 </div>
             )}
