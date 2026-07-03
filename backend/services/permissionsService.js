@@ -54,7 +54,9 @@ async function getDepartmentMemberUserIds(userId, cache = null) {
              UNION
              SELECT DISTINCT user_id FROM areas WHERE id IN (:areaIds)
          ) m
-         WHERE user_id NOT IN (SELECT user_id FROM roles WHERE is_admin = 1)`,
+         WHERE user_id NOT IN (
+             SELECT user_id FROM roles WHERE is_admin = 1 AND user_id IS NOT NULL
+         )`,
         {
             replacements: { areaIds },
             type: QueryTypes.SELECT,
@@ -177,10 +179,19 @@ async function getAccess(
         // Check if user is assigned to the task
         if (t.assigned_to_user_id === userId) return ACCESS.RW;
 
-        // Check if user is a department admin and the task owner is in their department
-        // Department admins have read-only access to tasks in their department
+        // Check if user is a department admin and the task owner or assignee is
+        // in their department. Department admins have read-only access to tasks
+        // in their department. Mirrors the list filter in
+        // ownershipOrPermissionWhere, which matches both owner and assignee — an
+        // admin-created task assigned to a member must stay openable, not just
+        // visible in the list.
         const memberUserIds = await getDepartmentMemberUserIds(userId, cache);
-        if (memberUserIds.includes(t.user_id)) return ACCESS.RO;
+        if (
+            memberUserIds.includes(t.user_id) ||
+            memberUserIds.includes(t.assigned_to_user_id)
+        ) {
+            return ACCESS.RO;
+        }
 
         // Check if user has access through the parent project
         if (t.project_id) {

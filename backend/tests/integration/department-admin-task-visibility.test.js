@@ -437,6 +437,15 @@ describe('Department Admin Task Visibility', () => {
 
             const taskIds = res.body.tasks.map((t) => t.id);
             expect(taskIds).toContain(assignedTask.id);
+
+            // ...and can actually open it (getAccess must be assignee-aware,
+            // not just the list filter — a task visible in the list but 403 on
+            // open is the regression this guards).
+            await assignedTask.reload();
+            const single = await deptHeadAgent.get(
+                `/api/task/${assignedTask.uid}`
+            );
+            expect(single.status).toBe(200);
         });
 
         it('getDepartmentMemberUserIds excludes the superadmin area owner', async () => {
