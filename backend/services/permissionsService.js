@@ -42,15 +42,21 @@ async function getDepartmentMemberUserIds(userId, cache = null) {
 
     const areaIds = adminAreas.map((row) => row.id);
 
-    // Get all member user IDs from those areas
+    // Get all member user IDs from those areas, excluding superadmins.
+    // Departments can only be created by a superadmin (areas.user_id = the
+    // creating admin), so the `UNION SELECT user_id FROM areas` term below
+    // would otherwise pull that superadmin into every department's member set.
+    // A superadmin already sees everything, so treating them as a member only
+    // leaks their tasks to each department head (ASID-5).
     const members = await sequelize.query(
-        `SELECT DISTINCT user_id
-         FROM areas_members
-         WHERE area_id IN (:areaIds)
-         UNION
-         SELECT DISTINCT user_id
-         FROM areas
-         WHERE id IN (:areaIds)`,
+        `SELECT user_id FROM (
+             SELECT DISTINCT user_id FROM areas_members WHERE area_id IN (:areaIds)
+             UNION
+             SELECT DISTINCT user_id FROM areas WHERE id IN (:areaIds)
+         ) m
+         WHERE user_id NOT IN (
+             SELECT user_id FROM roles WHERE is_admin = 1 AND user_id IS NOT NULL
+         )`,
         {
             replacements: { areaIds },
             type: QueryTypes.SELECT,
@@ -173,10 +179,19 @@ async function getAccess(
         // Check if user is assigned to the task
         if (t.assigned_to_user_id === userId) return ACCESS.RW;
 
-        // Check if user is a department admin and the task owner is in their department
-        // Department admins have read-only access to tasks in their department
+        // Check if user is a department admin and the task owner or assignee is
+        // in their department. Department admins have read-only access to tasks
+        // in their department. Mirrors the list filter in
+        // ownershipOrPermissionWhere, which matches both owner and assignee — an
+        // admin-created task assigned to a member must stay openable, not just
+        // visible in the list.
         const memberUserIds = await getDepartmentMemberUserIds(userId, cache);
-        if (memberUserIds.includes(t.user_id)) return ACCESS.RO;
+        if (
+            memberUserIds.includes(t.user_id) ||
+            memberUserIds.includes(t.assigned_to_user_id)
+        ) {
+            return ACCESS.RO;
+        }
 
         // Check if user has access through the parent project
         if (t.project_id) {
@@ -354,6 +369,9 @@ async function ownershipOrPermissionWhere(resourceType, userId, cache = null) {
             );
             if (memberUserIds.length > 0) {
                 conditions.push({ user_id: { [Op.in]: memberUserIds } }); // Tasks owned by department members
+                conditions.push({
+                    assigned_to_user_id: { [Op.in]: memberUserIds },
+                }); // Tasks assigned to department members (e.g. admin-created then assigned)
             }
         }
 

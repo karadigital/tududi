@@ -369,4 +369,95 @@ describe('Department Admin Task Visibility', () => {
             );
         });
     });
+
+    describe('Superadmin-owned department (ASID-5 cross-department leak)', () => {
+        // Reproduces the real deployment: a superadmin creates the department
+        // (so areas.user_id = superadmin), and a separate non-admin user is the
+        // department head (areas_members role='admin'). The superadmin must NOT
+        // leak into the dept head's "member" set.
+        let superadmin,
+            deptHead,
+            deptMember,
+            outsider,
+            department,
+            deptHeadAgent;
+
+        beforeEach(async () => {
+            superadmin = await createTestUser({
+                email: uniqueEmail('superadmin'),
+            });
+            await makeSuperadmin(superadmin.id);
+
+            deptHead = await createTestUser({ email: uniqueEmail('depthead') });
+            deptMember = await createTestUser({
+                email: uniqueEmail('deptmember'),
+            });
+            outsider = await createTestUser({ email: uniqueEmail('outsider') });
+
+            // Superadmin owns the department (only admins can create departments)
+            department = await Area.create({
+                name: 'Superadmin Owned Department',
+                user_id: superadmin.id,
+            });
+
+            // Real department head + a real member
+            await addAreaMember(department.id, deptHead.id, 'admin');
+            await addAreaMember(department.id, deptMember.id, 'member');
+
+            deptHeadAgent = await loginAgent(deptHead.email);
+        });
+
+        it('dept head does NOT see superadmin-owned tasks assigned outside the department', async () => {
+            // Task created by the superadmin (bulk-import style), assigned to an
+            // outsider. This is exactly the leaked BAU/Operations case.
+            const leakedTask = await Task.create({
+                name: 'Superadmin Task Assigned To Outsider',
+                user_id: superadmin.id,
+                assigned_to_user_id: outsider.id,
+            });
+
+            const res = await deptHeadAgent.get('/api/tasks');
+            expect(res.status).toBe(200);
+
+            const taskIds = res.body.tasks.map((t) => t.id);
+            expect(taskIds).not.toContain(leakedTask.id);
+        });
+
+        it('dept head STILL sees superadmin-owned tasks assigned to a real member', async () => {
+            // Bulk-create-and-assign workflow: admin owns the task, a real
+            // department member is the assignee. The dept head must keep seeing it.
+            const assignedTask = await Task.create({
+                name: 'Superadmin Task Assigned To Member',
+                user_id: superadmin.id,
+                assigned_to_user_id: deptMember.id,
+            });
+
+            const res = await deptHeadAgent.get('/api/tasks');
+            expect(res.status).toBe(200);
+
+            const taskIds = res.body.tasks.map((t) => t.id);
+            expect(taskIds).toContain(assignedTask.id);
+
+            // ...and can actually open it (getAccess must be assignee-aware,
+            // not just the list filter — a task visible in the list but 403 on
+            // open is the regression this guards).
+            await assignedTask.reload();
+            const single = await deptHeadAgent.get(
+                `/api/task/${assignedTask.uid}`
+            );
+            expect(single.status).toBe(200);
+        });
+
+        it('getDepartmentMemberUserIds excludes the superadmin area owner', async () => {
+            const permissionsService = require('../../services/permissionsService');
+            const memberIds =
+                await permissionsService.getDepartmentMemberUserIds(
+                    deptHead.id
+                );
+
+            expect(memberIds).not.toContain(superadmin.id);
+            expect(memberIds).toContain(deptHead.id);
+            expect(memberIds).toContain(deptMember.id);
+        });
+    });
 });
