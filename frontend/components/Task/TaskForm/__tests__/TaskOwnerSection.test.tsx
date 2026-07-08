@@ -82,4 +82,6 @@ it('shows an error toast and does not report a new owner when the transfer fails
         )
     );
     expect(onTransferred).not.toHaveBeenCalled();
+    // Dropdown stays open so the user can retry (error is rethrown).
+    expect(screen.getByText('Bob')).toBeInTheDocument();
 }, 15000);

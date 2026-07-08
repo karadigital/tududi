@@ -25,10 +25,12 @@ const TaskOwnerSection: React.FC<TaskOwnerSectionProps> = ({
         try {
             await transferTaskOwner(taskUid, userId);
             onTransferred(userId);
-        } catch {
+        } catch (error) {
             showErrorToast(
                 t('task.ownerTransferFailed', 'Failed to transfer task owner')
             );
+            // Rethrow so the dropdown stays open for retry.
+            throw error;
         }
     };
 

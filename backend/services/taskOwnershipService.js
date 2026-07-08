@@ -83,6 +83,12 @@ async function transferTaskOwner(taskId, newOwnerUserId, requesterUserId) {
             throw new Error('Task has no department');
         }
 
+        // No-op before candidate validation: re-affirming the current owner
+        // must succeed even if that owner is not in the resolved department.
+        if (task.user_id === newOwnerUserId) {
+            return;
+        }
+
         const candidates = await getDepartmentCandidates(areaId);
         if (!candidates.some((c) => c.id === newOwnerUserId)) {
             throw new Error('New owner is not a member of the task department');
@@ -100,10 +106,6 @@ async function transferTaskOwner(taskId, newOwnerUserId, requesterUserId) {
         });
         if (!newOwner) {
             throw new Error('New owner user not found');
-        }
-
-        if (task.user_id === newOwnerUserId) {
-            return; // no-op
         }
 
         const previousOwner = task.Owner;

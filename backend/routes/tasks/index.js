@@ -1104,11 +1104,14 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
 // Transfer task ownership
 router.post(
     '/task/:uid/transfer-owner',
-    requireTaskWriteAccess,
+    // Read access only: transferTaskOwner is the authoritative gate (owner or
+    // dept admin). requireTaskWriteAccess would 403 a dept admin on a
+    // project-less task, since dept admins only get RO on department tasks.
+    requireTaskReadAccess,
     async (req, res) => {
         try {
-            const { new_owner_user_id } = req.body;
-            if (!new_owner_user_id) {
+            const newOwnerUserId = parseInt(req.body.new_owner_user_id, 10);
+            if (!newOwnerUserId) {
                 return res
                     .status(400)
                     .json({ error: 'new_owner_user_id is required' });
@@ -1121,7 +1124,7 @@ router.post(
 
             await transferTaskOwner(
                 task.id,
-                new_owner_user_id,
+                newOwnerUserId,
                 req.currentUser.id
             );
 
@@ -1163,6 +1166,22 @@ router.get(
             }
             const areaId = await resolveTaskDepartmentAreaId(task);
             const members = areaId ? await getDepartmentCandidates(areaId) : [];
+            // Always surface the current owner so the picker can display them,
+            // even if they are not a member of the resolved department.
+            if (task.user_id && !members.some((m) => m.id === task.user_id)) {
+                const { User } = require('../../models');
+                const owner = await User.findByPk(task.user_id, {
+                    attributes: [
+                        'id',
+                        'uid',
+                        'email',
+                        'name',
+                        'surname',
+                        'avatar_image',
+                    ],
+                });
+                if (owner) members.unshift(owner);
+            }
             res.json(members);
         } catch (error) {
             logError('Error fetching owner candidates:', error);

@@ -86,6 +86,26 @@ describe('taskOwnershipService', () => {
         expect(task.user_id).toBe(owner.id);
     });
 
+    it('is a no-op when transferring to the current owner outside the dept', async () => {
+        // Owner is not a member of the department resolved via the project
+        // area; re-affirming them must not throw a membership error.
+        const project = await Project.create({
+            name: 'P',
+            user_id: owner.id,
+            area_id: dept.id,
+        });
+        const task = await Task.create({
+            name: 'T',
+            user_id: outsider.id,
+            project_id: project.id,
+        });
+        await expect(
+            transferTaskOwner(task.id, outsider.id, outsider.id)
+        ).resolves.toBeUndefined();
+        await task.reload();
+        expect(task.user_id).toBe(outsider.id);
+    });
+
     it('rejects a new owner outside the department', async () => {
         const task = await Task.create({ name: 'T', user_id: owner.id });
         await expect(
@@ -106,7 +126,8 @@ describe('taskOwnershipService', () => {
 });
 
 describe('owner-transfer routes', () => {
-    let owner, member, outsider, dept, ownerAgent, outsiderAgent;
+    let owner, member, outsider, admin, dept, ownerAgent, outsiderAgent;
+    let adminAgent;
 
     beforeEach(async () => {
         const stamp = Date.now();
@@ -115,9 +136,11 @@ describe('owner-transfer routes', () => {
         outsider = await createTestUser({
             email: `rout_${stamp}@example.com`,
         });
+        admin = await createTestUser({ email: `radm_${stamp}@example.com` });
         dept = await Area.create({ name: 'RDept', user_id: owner.id });
         await addAreaMember(dept.id, owner.id, 'member');
         await addAreaMember(dept.id, member.id, 'member');
+        await addAreaMember(dept.id, admin.id, 'admin');
 
         ownerAgent = request.agent(app);
         await ownerAgent
@@ -127,6 +150,10 @@ describe('owner-transfer routes', () => {
         await outsiderAgent
             .post('/api/login')
             .send({ email: outsider.email, password: 'password123' });
+        adminAgent = request.agent(app);
+        await adminAgent
+            .post('/api/login')
+            .send({ email: admin.email, password: 'password123' });
     });
 
     it('transfers ownership for the owner', async () => {
@@ -175,6 +202,28 @@ describe('owner-transfer routes', () => {
         expect(task.user_id).toBe(owner.id);
     });
 
+    it('lets a department admin transfer a project-less task', async () => {
+        // Regression: dept admins only get RO on department tasks, so the
+        // route must not gate on write access — the service authorizes them.
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        const res = await adminAgent
+            .post(`/api/v1/task/${task.uid}/transfer-owner`)
+            .send({ new_owner_user_id: member.id });
+        expect(res.status).toBe(200);
+        await task.reload();
+        expect(task.user_id).toBe(member.id);
+    });
+
+    it('accepts a numeric-string new_owner_user_id', async () => {
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        const res = await ownerAgent
+            .post(`/api/v1/task/${task.uid}/transfer-owner`)
+            .send({ new_owner_user_id: String(member.id) });
+        expect(res.status).toBe(200);
+        await task.reload();
+        expect(task.user_id).toBe(member.id);
+    });
+
     it('returns 422 when the new owner is outside the department', async () => {
         const task = await Task.create({ name: 'RT', user_id: owner.id });
         const res = await ownerAgent
@@ -190,6 +239,26 @@ describe('owner-transfer routes', () => {
         );
         expect(res.status).toBe(200);
         const ids = res.body.map((u) => u.id).sort();
-        expect(ids).toEqual([owner.id, member.id].sort());
+        expect(ids).toEqual([owner.id, member.id, admin.id].sort());
+    });
+
+    it('includes the current owner in candidates even if not a dept member', async () => {
+        // Owner (outsider) is not a member of the task's department, resolved
+        // here via the project area. The picker must still show them.
+        const project = await Project.create({
+            name: 'RP',
+            user_id: owner.id,
+            area_id: dept.id,
+        });
+        const task = await Task.create({
+            name: 'RT',
+            user_id: outsider.id,
+            project_id: project.id,
+        });
+        const res = await ownerAgent.get(
+            `/api/v1/task/${task.uid}/owner-candidates`
+        );
+        expect(res.status).toBe(200);
+        expect(res.body.map((u) => u.id)).toContain(outsider.id);
     });
 });
