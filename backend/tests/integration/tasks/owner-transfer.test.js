@@ -1,3 +1,5 @@
+const request = require('supertest');
+const app = require('../../../app');
 const {
     Area,
     Notification,
@@ -99,5 +101,69 @@ describe('taskOwnershipService', () => {
             where: { user_id: member.id, type: 'task_owner_transferred' },
         });
         expect(notif).not.toBeNull();
+    });
+});
+
+describe('owner-transfer routes', () => {
+    let owner, member, outsider, dept, ownerAgent, outsiderAgent;
+
+    beforeEach(async () => {
+        const stamp = Date.now();
+        owner = await createTestUser({ email: `rown_${stamp}@example.com` });
+        member = await createTestUser({ email: `rmem_${stamp}@example.com` });
+        outsider = await createTestUser({
+            email: `rout_${stamp}@example.com`,
+        });
+        dept = await Area.create({ name: 'RDept', user_id: owner.id });
+        await addAreaMember(dept.id, owner.id, 'member');
+        await addAreaMember(dept.id, member.id, 'member');
+
+        ownerAgent = request.agent(app);
+        await ownerAgent
+            .post('/api/login')
+            .send({ email: owner.email, password: 'password123' });
+        outsiderAgent = request.agent(app);
+        await outsiderAgent
+            .post('/api/login')
+            .send({ email: outsider.email, password: 'password123' });
+    });
+
+    it('transfers ownership for the owner', async () => {
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        const res = await ownerAgent
+            .post(`/api/v1/task/${task.uid}/transfer-owner`)
+            .send({ new_owner_user_id: member.id });
+        expect(res.status).toBe(200);
+        await task.reload();
+        expect(task.user_id).toBe(member.id);
+    });
+
+    it('returns 403 for a non-owner non-admin requester', async () => {
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        const res = await outsiderAgent
+            .post(`/api/v1/task/${task.uid}/transfer-owner`)
+            .send({ new_owner_user_id: member.id });
+        // outsider cannot read the task, so middleware yields 403/404
+        expect([403, 404]).toContain(res.status);
+        await task.reload();
+        expect(task.user_id).toBe(owner.id);
+    });
+
+    it('returns 422 when the new owner is outside the department', async () => {
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        const res = await ownerAgent
+            .post(`/api/v1/task/${task.uid}/transfer-owner`)
+            .send({ new_owner_user_id: outsider.id });
+        expect(res.status).toBe(422);
+    });
+
+    it('lists department members as owner candidates', async () => {
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        const res = await ownerAgent.get(
+            `/api/v1/task/${task.uid}/owner-candidates`
+        );
+        expect(res.status).toBe(200);
+        const ids = res.body.map((u) => u.id).sort();
+        expect(ids).toEqual([owner.id, member.id].sort());
     });
 });
