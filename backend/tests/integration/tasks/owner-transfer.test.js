@@ -3,6 +3,7 @@ const app = require('../../../app');
 const {
     Area,
     Notification,
+    Permission,
     Project,
     Task,
     sequelize,
@@ -145,6 +146,31 @@ describe('owner-transfer routes', () => {
             .send({ new_owner_user_id: member.id });
         // outsider cannot read the task, so middleware yields 403/404
         expect([403, 404]).toContain(res.status);
+        await task.reload();
+        expect(task.user_id).toBe(owner.id);
+    });
+
+    it('returns exactly 403 for a requester who has rw access but is neither owner nor dept admin', async () => {
+        // Requester is outside the department entirely, but is granted
+        // explicit rw access directly on the task (e.g. a share), so
+        // requireTaskWriteAccess admits them. The service must still reject
+        // them because they are not the owner and not a dept admin.
+        const task = await Task.create({ name: 'RT', user_id: owner.id });
+        await Permission.create({
+            user_id: outsider.id,
+            resource_type: 'task',
+            resource_uid: task.uid,
+            access_level: 'rw',
+            propagation: 'direct',
+            granted_by_user_id: owner.id,
+        });
+
+        const res = await outsiderAgent
+            .post(`/api/v1/task/${task.uid}/transfer-owner`)
+            .send({ new_owner_user_id: member.id });
+
+        expect(res.status).toBe(403);
+        expect(res.body.error).toBe('Not authorized to transfer ownership');
         await task.reload();
         expect(task.user_id).toBe(owner.id);
     });

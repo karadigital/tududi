@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import SearchableUserDropdown from '../../Shared/SearchableUserDropdown';
 import { transferTaskOwner } from '../../../utils/tasksService';
+import { useToast } from '../../Shared/ToastContext';
 
 interface TaskOwnerSectionProps {
     taskUid: string;
@@ -15,10 +17,19 @@ const TaskOwnerSection: React.FC<TaskOwnerSectionProps> = ({
     onTransferred,
     disabled = false,
 }) => {
+    const { t } = useTranslation();
+    const { showErrorToast } = useToast();
+
     const handleChange = async (userId: number | null) => {
         if (userId === null) return; // owner cannot be unset
-        await transferTaskOwner(taskUid, userId);
-        onTransferred(userId);
+        try {
+            await transferTaskOwner(taskUid, userId);
+            onTransferred(userId);
+        } catch {
+            showErrorToast(
+                t('task.ownerTransferFailed', 'Failed to transfer task owner')
+            );
+        }
     };
 
     return (
