@@ -9,6 +9,7 @@ import {
     ClockIcon,
     PaperClipIcon,
     UserIcon,
+    UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Task } from '../../../entities/Task';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,7 @@ interface TaskSectionToggleProps {
         tags: boolean;
         project: boolean;
         assignee: boolean;
+        owner: boolean;
         priority: boolean;
         dueDate: boolean;
         deferUntil: boolean;
@@ -31,6 +33,7 @@ interface TaskSectionToggleProps {
     formData: Task;
     subtasksCount: number;
     attachmentsCount?: number;
+    isExistingTask?: boolean;
 }
 
 const TaskSectionToggle: React.FC<TaskSectionToggleProps> = ({
@@ -39,6 +42,7 @@ const TaskSectionToggle: React.FC<TaskSectionToggleProps> = ({
     formData,
     subtasksCount,
     attachmentsCount = 0,
+    isExistingTask = true,
 }) => {
     const { t } = useTranslation();
     const toggleButtons = [
@@ -59,6 +63,12 @@ const TaskSectionToggle: React.FC<TaskSectionToggleProps> = ({
             icon: UserIcon,
             title: t('forms.task.labels.assignee', 'Assignee'),
             hasValue: !!formData.assigned_to_user_id,
+        },
+        {
+            key: 'owner' as const,
+            icon: UserCircleIcon,
+            title: t('forms.task.labels.owner', 'Owner'),
+            hasValue: !!formData.user_id,
         },
         {
             key: 'priority' as const,
@@ -101,11 +111,15 @@ const TaskSectionToggle: React.FC<TaskSectionToggleProps> = ({
         },
     ];
 
+    const visibleButtons = toggleButtons.filter(
+        (b) => b.key !== 'owner' || isExistingTask
+    );
+
     return (
         <div className="flex-shrink-0 bg-white dark:bg-gray-800 px-3 py-2">
             <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-1">
-                    {toggleButtons.map(
+                    {visibleButtons.map(
                         ({ key, icon: Icon, title, hasValue }) => (
                             <button
                                 key={key}
