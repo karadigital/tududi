@@ -103,6 +103,24 @@ export const updateTask = async (
     return await response.json();
 };
 
+export const transferTaskOwner = async (
+    taskUid: string,
+    newOwnerId: number
+): Promise<Task> => {
+    const response = await fetch(
+        getApiPath(`task/${encodeURIComponent(taskUid)}/transfer-owner`),
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: getPostHeaders(),
+            body: JSON.stringify({ new_owner_user_id: newOwnerId }),
+        }
+    );
+
+    await handleAuthResponse(response, 'Failed to transfer task owner.');
+    return await response.json();
+};
+
 export const toggleTaskCompletion = async (
     taskUid: string,
     currentTask?: Task
