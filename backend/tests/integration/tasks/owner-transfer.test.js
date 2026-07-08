@@ -1,4 +1,10 @@
-const { Area, Project, Task, sequelize } = require('../../../models');
+const {
+    Area,
+    Notification,
+    Project,
+    Task,
+    sequelize,
+} = require('../../../models');
 const { createTestUser } = require('../../helpers/testUtils');
 const {
     resolveTaskDepartmentAreaId,
@@ -84,5 +90,14 @@ describe('taskOwnershipService', () => {
         ).rejects.toThrow('New owner is not a member of the task department');
         await task.reload();
         expect(task.user_id).toBe(owner.id);
+    });
+
+    it('notifies the new owner after a transfer', async () => {
+        const task = await Task.create({ name: 'T', user_id: owner.id });
+        await transferTaskOwner(task.id, member.id, owner.id);
+        const notif = await Notification.findOne({
+            where: { user_id: member.id, type: 'task_owner_transferred' },
+        });
+        expect(notif).not.toBeNull();
     });
 });
