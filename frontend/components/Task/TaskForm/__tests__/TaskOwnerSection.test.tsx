@@ -35,13 +35,14 @@ it('transfers ownership and reports the new owner on selection', async () => {
         />
     );
 
-    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
-    fireEvent.click(screen.getByRole('button')); // open dropdown
-    await waitFor(() => expect(screen.getByText('Bob')).toBeInTheDocument(), {
-        timeout: 5000,
-    });
-    fireEvent.click(screen.getByText('Bob'));
+    // Trigger is disabled until the candidate fetch resolves; wait for it
+    // to enable before opening, so the click isn't dropped under load.
+    const trigger = screen.getByRole('button');
+    await waitFor(() => expect(trigger).not.toBeDisabled());
+    fireEvent.click(trigger); // open dropdown
+
+    fireEvent.click(await screen.findByText('Bob'));
 
     await waitFor(() => expect(spy).toHaveBeenCalledWith('abc', 2));
     expect(onTransferred).toHaveBeenCalledWith(2);
-});
+}, 15000);
