@@ -46,6 +46,7 @@ module.exports = (sequelize) => {
                             'task_updated_for_subscriber',
                             'task_assignment_changed_for_subscriber',
                             'task_comment_added_for_subscriber',
+                            'task_owner_transferred',
                         ],
                     ],
                 },

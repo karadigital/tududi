@@ -27,6 +27,11 @@ const {
     assignTask,
     unassignTask,
 } = require('../../services/taskAssignmentService');
+const {
+    transferTaskOwner,
+    resolveTaskDepartmentAreaId,
+    getDepartmentCandidates,
+} = require('../../services/taskOwnershipService');
 
 const { serializeTask, serializeTasks } = require('./core/serializers');
 const { updateTaskTags } = require('./operations/tags');
@@ -1095,6 +1100,97 @@ router.post('/task/:uid/unassign', requireTaskWriteAccess, async (req, res) => {
         res.status(500).json({ error: 'Failed to unassign task' });
     }
 });
+
+// Transfer task ownership
+router.post(
+    '/task/:uid/transfer-owner',
+    // Read access only: transferTaskOwner is the authoritative gate (owner or
+    // dept admin). requireTaskWriteAccess would 403 a dept admin on a
+    // project-less task, since dept admins only get RO on department tasks.
+    requireTaskReadAccess,
+    async (req, res) => {
+        try {
+            const newOwnerUserId = parseInt(req.body.new_owner_user_id, 10);
+            if (!newOwnerUserId) {
+                return res
+                    .status(400)
+                    .json({ error: 'new_owner_user_id is required' });
+            }
+
+            const task = await taskRepository.findByUid(req.params.uid);
+            if (!task) {
+                return res.status(404).json({ error: 'Task not found' });
+            }
+
+            await transferTaskOwner(
+                task.id,
+                newOwnerUserId,
+                req.currentUser.id
+            );
+
+            const updatedTask = await Task.findByPk(task.id, {
+                include: TASK_INCLUDES_WITH_SUBTASKS,
+            });
+            const serialized = await serializeTask(
+                updatedTask,
+                req.currentUser.timezone
+            );
+            res.json(serialized);
+        } catch (error) {
+            logError('Error transferring task owner:', error);
+            if (error.message === 'Not authorized to transfer ownership') {
+                return res.status(403).json({ error: error.message });
+            }
+            if (
+                error.message ===
+                    'New owner is not a member of the task department' ||
+                error.message === 'New owner user not found' ||
+                error.message === 'Task has no department'
+            ) {
+                return res.status(422).json({ error: error.message });
+            }
+            res.status(500).json({ error: 'Failed to transfer task owner' });
+        }
+    }
+);
+
+// List eligible owners (department members) for a task
+router.get(
+    '/task/:uid/owner-candidates',
+    requireTaskReadAccess,
+    async (req, res) => {
+        try {
+            const task = await taskRepository.findByUid(req.params.uid);
+            if (!task) {
+                return res.status(404).json({ error: 'Task not found' });
+            }
+            const areaId = await resolveTaskDepartmentAreaId(task);
+            const members = areaId ? await getDepartmentCandidates(areaId) : [];
+            // Always surface the current owner so the picker can display them,
+            // even if they are not a member of the resolved department.
+            if (task.user_id && !members.some((m) => m.id === task.user_id)) {
+                const { User } = require('../../models');
+                const owner = await User.findByPk(task.user_id, {
+                    attributes: [
+                        'id',
+                        'uid',
+                        'email',
+                        'name',
+                        'surname',
+                        'avatar_image',
+                    ],
+                });
+                if (owner) members.unshift(owner);
+            }
+            res.json(members);
+        } catch (error) {
+            logError('Error fetching owner candidates:', error);
+            res.status(500).json({
+                error: 'Failed to fetch owner candidates',
+            });
+        }
+    }
+);
 
 // Subscribe to task
 router.post('/task/:uid/subscribe', requireTaskReadAccess, async (req, res) => {

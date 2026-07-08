@@ -29,6 +29,7 @@ import TaskAttachmentsSection, {
     PendingFile,
 } from './TaskForm/TaskAttachmentsSection';
 import TaskAssigneeSection from './TaskForm/TaskAssigneeSection';
+import TaskOwnerSection from './TaskForm/TaskOwnerSection';
 import TaskSectionToggle from './TaskForm/TaskSectionToggle';
 import TaskModalActions from './TaskForm/TaskModalActions';
 
@@ -91,6 +92,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
         tags: false,
         project: false,
         assignee: false,
+        owner: false,
         priority: false,
         dueDate: false,
         deferUntil: false,
@@ -104,6 +106,8 @@ const TaskModal: React.FC<TaskModalProps> = ({
         ...baseSections,
         subtasks: baseSections.subtasks || autoFocusSubtasks,
     };
+
+    const isExistingTask = !!formData.uid;
 
     const { showSuccessToast, showErrorToast } = useToast();
     const { t } = useTranslation();
@@ -173,6 +177,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                 tags: false,
                 project: false,
                 assignee: true,
+                owner: false,
                 priority: false,
                 dueDate: true,
                 deferUntil: false,
@@ -471,6 +476,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             handleClose();
         } catch (error) {
             console.error('Error saving task:', error);
+            showErrorToast(t('task.saveError', 'Failed to save task'));
             // Don't close modal on error so user can retry
         } finally {
             setIsSaving(false);
@@ -803,6 +809,51 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                                     </div>
                                                 )}
 
+                                                {expandedSections.owner &&
+                                                    isExistingTask && (
+                                                        <div
+                                                            data-testid="owner-section"
+                                                            data-state="expanded"
+                                                            className="border-b border-gray-200 dark:border-gray-700 pb-4 mb-4 px-4"
+                                                        >
+                                                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                                {t(
+                                                                    'forms.task.labels.owner',
+                                                                    'Owner'
+                                                                )}
+                                                            </h3>
+                                                            <TaskOwnerSection
+                                                                taskUid={
+                                                                    formData.uid!
+                                                                }
+                                                                selectedUserId={
+                                                                    formData.user_id ||
+                                                                    null
+                                                                }
+                                                                onTransferred={(
+                                                                    newOwnerId
+                                                                ) => {
+                                                                    setFormData(
+                                                                        {
+                                                                            ...formData,
+                                                                            user_id:
+                                                                                newOwnerId,
+                                                                        }
+                                                                    );
+                                                                    showSuccessToast(
+                                                                        t(
+                                                                            'task.ownerTransferred',
+                                                                            'Task owner updated'
+                                                                        )
+                                                                    );
+                                                                }}
+                                                                disabled={
+                                                                    isSaving
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
+
                                                 {expandedSections.priority && (
                                                     <div
                                                         data-testid="priority-section"
@@ -1091,6 +1142,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                                 {/* Section Icons - Above border, split layout */}
                                 <TaskSectionToggle
                                     expandedSections={expandedSections}
+                                    isExistingTask={isExistingTask}
                                     onToggleSection={toggleSection}
                                     formData={formData}
                                     subtasksCount={subtasks.length}
