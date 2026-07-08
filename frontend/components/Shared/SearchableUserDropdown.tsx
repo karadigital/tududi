@@ -22,6 +22,8 @@ interface SearchableUserDropdownProps {
     disabled?: boolean;
     className?: string;
     excludeUserIds?: number[];
+    fetchPath?: string;
+    allowUnassigned?: boolean;
 }
 
 const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
@@ -30,6 +32,8 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
     disabled = false,
     className = '',
     excludeUserIds = [],
+    fetchPath = 'users',
+    allowUnassigned = true,
 }) => {
     const { t } = useTranslation();
     const [users, setUsers] = useState<User[]>([]);
@@ -53,7 +57,7 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
             setIsLoadingUsers(true);
             setFetchError(null);
 
-            const response = await fetch(getApiPath('users'), {
+            const response = await fetch(getApiPath(fetchPath), {
                 method: 'GET',
                 credentials: 'include',
             });
@@ -157,8 +161,8 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
     const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (!isOpen) return;
 
-        // Total items = 1 (unassigned option) + filtered users
-        const totalItems = 1 + filteredUsers.length;
+        const offset = allowUnassigned ? 1 : 0;
+        const totalItems = offset + filteredUsers.length;
 
         if (event.key === 'ArrowDown') {
             event.preventDefault();
@@ -172,12 +176,11 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
             event.preventDefault();
             if (highlightedIndex === -1) return;
 
-            // Index 0 is "Unassigned", 1+ are users
-            if (highlightedIndex === 0) {
+            if (allowUnassigned && highlightedIndex === 0) {
                 handleSelect(null);
             } else {
-                const userIndex = highlightedIndex - 1;
-                if (userIndex < filteredUsers.length) {
+                const userIndex = highlightedIndex - offset;
+                if (userIndex >= 0 && userIndex < filteredUsers.length) {
                     handleSelect(filteredUsers[userIndex].id);
                 }
             }
@@ -283,35 +286,38 @@ const SearchableUserDropdown: React.FC<SearchableUserDropdownProps> = ({
                         ) : (
                             <>
                                 {/* Unassigned Option */}
-                                <button
-                                    type="button"
-                                    onClick={() => handleSelect(null)}
-                                    disabled={isSaving}
-                                    className={`w-full text-left px-4 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 ${
-                                        highlightedIndex === 0
-                                            ? 'bg-blue-50 dark:bg-blue-900/30'
-                                            : ''
-                                    } ${
-                                        selectedUserId === null
-                                            ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-                                            : 'text-gray-900 dark:text-gray-100'
-                                    }`}
-                                >
-                                    <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                                        <UserIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                                    </div>
-                                    <span className="flex-1">
-                                        {t('task.unassigned', 'Unassigned')}
-                                    </span>
-                                    {selectedUserId === null && (
-                                        <CheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
-                                    )}
-                                </button>
+                                {allowUnassigned && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSelect(null)}
+                                        disabled={isSaving}
+                                        className={`w-full text-left px-4 py-2 flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-50 ${
+                                            highlightedIndex === 0
+                                                ? 'bg-blue-50 dark:bg-blue-900/30'
+                                                : ''
+                                        } ${
+                                            selectedUserId === null
+                                                ? 'bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
+                                                : 'text-gray-900 dark:text-gray-100'
+                                        }`}
+                                    >
+                                        <div className="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                                            <UserIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                                        </div>
+                                        <span className="flex-1">
+                                            {t('task.unassigned', 'Unassigned')}
+                                        </span>
+                                        {selectedUserId === null && (
+                                            <CheckIcon className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+                                        )}
+                                    </button>
+                                )}
 
                                 {/* User List */}
                                 {filteredUsers.length > 0 ? (
                                     filteredUsers.map((user, index) => {
-                                        const itemIndex = index + 1; // +1 because 0 is "Unassigned"
+                                        const itemIndex =
+                                            index + (allowUnassigned ? 1 : 0);
                                         const isSelected =
                                             user.id === selectedUserId;
 
