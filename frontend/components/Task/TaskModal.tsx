@@ -476,6 +476,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
             handleClose();
         } catch (error) {
             console.error('Error saving task:', error);
+            showErrorToast(t('task.saveError', 'Failed to save task'));
             // Don't close modal on error so user can retry
         } finally {
             setIsSaving(false);
